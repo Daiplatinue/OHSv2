@@ -99,12 +99,12 @@ export interface Service {
   ]
   
   export const companyDetails = {
-    name: "Sisyphus Ventures",
+    name: "Servina CasaSwift",
     location: "United States",
     description:
       "Professional home services and repairs with guaranteed satisfaction. Available 24/7 for all your maintenance needs.",
-    logo: "https://uploads.dailydot.com/2024/07/side-eye-cat.jpg?q=65&auto=format&w=1200&ar=2:1&fit=crop",
-    coverPhoto: "https://cdn.pixabay.com/photo/2016/12/05/21/08/cologne-1884931_1280.jpg",
+    logo: "https://cdn.pixabay.com/photo/2025/04/13/21/14/woman-9532283_1280.jpg",
+    coverPhoto: "https://cdn.pixabay.com/photo/2017/02/20/19/29/architecture-2083687_1280.jpg",
     followers: 34.5,
   }
   

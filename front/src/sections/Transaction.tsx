@@ -602,7 +602,7 @@ function Transaction() {
               >
                 <div className="flex items-center">
                   <DollarSign className="h-6 w-6 mr-3 text-gray-400" />
-                  <span className="text-gray-700">Cash on Delivery</span>
+                  <span className="text-gray-700">Cash on Hand</span>
                 </div>
               </div>
             </div>
@@ -748,7 +748,7 @@ function Transaction() {
 
             {paymentMethod === "cash" && (
               <div className="bg-gray-300/60 p-6 rounded-lg mb-8 animate-fadeIn">
-                <h3 className="text-lg font-medium mb-4 text-gray-700">Cash on Delivery</h3>
+                <h3 className="text-lg font-medium mb-4 text-gray-700">Cash on Hand</h3>
                 <p className="text-gray-600">Payment will be collected upon service completion.</p>
               </div>
             )}
