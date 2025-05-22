@@ -28,6 +28,7 @@ import {
   MapPin,
   Users,
   FileText,
+  PowerOff,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import ProviderTrackingMap from "./ProviderTrackingMap"
@@ -1341,7 +1342,7 @@ const FloatingDock: React.FC = () => {
           <DockItem icon={<User size={20} strokeWidth={1.5} />} to="/profile" isActive={false} />
           <DockItem icon={<Newspaper size={20} strokeWidth={1.5} />} to="/news" isActive={false} />
           <DockItem icon={<MessageCircleMore size={20} strokeWidth={1.5} />} to="/chat" isActive={false} />
-          <DockItem icon={<LogOut size={20} strokeWidth={1.5} />} to="/logout" isActive={false} />
+          <DockItem icon={<PowerOff size={20} strokeWidth={1.5} />} to="/logout" isActive={false} />
 
           {/* Hide Dock Button */}
           <div

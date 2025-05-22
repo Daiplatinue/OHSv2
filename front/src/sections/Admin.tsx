@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react"
 import { Home, Users, DollarSign, Clock, Droplet, Wrench, Zap, Brush, Star, AlignLeft, BadgeAlert } from "lucide-react"
 import type { ApexOptions } from "apexcharts"
 import ReactApexChart from "react-apexcharts"
@@ -7,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Footer from "./Styles/Footer"
 
 function Admin() {
-  // Get current time for greeting
+  // Get current time for greeting and user data
   const currentHour = new Date().getHours()
   let greeting = "Good Morning"
   if (currentHour >= 12 && currentHour < 18) {
@@ -16,31 +17,60 @@ function Admin() {
     greeting = "Good Evening"
   }
 
-  // Metrics data
+  // State for user data
+  const [userData, setUserData] = useState({
+    firstname: "",
+    lastname: "",
+    middleName: "",
+  })
+
+  // Fetch user data on component mount
+  useEffect(() => {
+    const user = localStorage.getItem("user")
+    if (user) {
+      const parsedUser = JSON.parse(user)
+      setUserData(parsedUser)
+    }
+  }, [])
+
+  // Format user's full name
+  const fullName =
+    userData.lastname && userData.firstname
+      ? `${userData.lastname}, ${userData.firstname}${userData.middleName ? ` ${userData.middleName}.` : ""}`
+      : "Admin"
+
+  // State for tab management
+  const [activeTab, setActiveTab] = useState(0)
+
+  // Metrics data with improved formatting
   const metrics = [
     {
-      icon: <Home className="h-5 w-5 text-white" />,
+      icon: <Home className="h-4 w-4 text-[#0A84FF]" />,
       label: "Services",
       value: "421",
-      bgColor: "bg-[#0A84FF]",
+      trend: "+8%",
+      trendUp: true,
     },
     {
-      icon: <DollarSign className="h-5 w-5 text-white" />,
+      icon: <DollarSign className="h-4 w-4 text-[#30D158]" />,
       label: "Revenue",
-      value: "$ 8.2k",
-      bgColor: "bg-[#0A84FF]",
+      value: "$8.2k",
+      trend: "+12%",
+      trendUp: true,
     },
     {
-      icon: <Users className="h-5 w-5 text-white" />,
+      icon: <Users className="h-4 w-4 text-[#5E5CE6]" />,
       label: "Customers",
       value: "325",
-      bgColor: "bg-[#0A84FF]",
+      trend: "+5%",
+      trendUp: true,
     },
     {
-      icon: <Clock className="h-5 w-5 text-white" />,
+      icon: <Clock className="h-4 w-4 text-[#FF9F0A]" />,
       label: "Pending",
       value: "18",
-      bgColor: "bg-[#0A84FF]",
+      trend: "-2%",
+      trendUp: false,
     },
   ]
 
@@ -257,44 +287,74 @@ function Admin() {
       <main className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Main Dashboard */}
         <div className="overflow-hidden max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-[#0A84FF] to-[#5AC8FA] rounded-2xl p-6 mb-8 text-white shadow-sm">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-              <div>
-                <h1 className="text-2xl font-semibold">{greeting}, Admin</h1>
-                <p className="text-white/90 font-light">Manage your home service business from one dashboard</p>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-                {metrics.map((metric, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm"
-                  >
-                    <div className="rounded-full bg-white/20 p-1">{metric.icon}</div>
-                    <div>
-                      <span className="font-medium">{metric.value}</span>
-                      <span className="text-xs ml-1 font-light">{metric.label}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* Header - Animation removed */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0A84FF]/90 to-[#3dbbec] shadow-lg mb-7">
+            {/* Background blur patterns */}
+            <div className="absolute top-[-50%] left-[-20%] w-[70%] h-[200%] bg-white/20 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-[-50%] right-[-20%] w-[70%] h-[200%] bg-white/20 rounded-full blur-3xl"></div>
 
-            {/* Service Categories */}
-            <div className="flex overflow-x-auto pb-2 mt-6">
-              <div className="inline-flex rounded-xl p-1 bg-white/20 backdrop-blur-sm">
-                {serviceCategories.map((category, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-xl ${category.active
-                        ? "bg-white text-[#0A84FF] shadow-sm"
-                        : "bg-transparent text-white hover:bg-white/10"
-                      } cursor-pointer transition-colors mx-1 first:ml-0 last:mr-0`}
-                  >
-                    <div className={`${category.active ? "text-[#0A84FF]" : "text-white"}`}>{category.icon}</div>
-                    <span className="font-medium">{category.label}</span>
-                  </div>
-                ))}
+            {/* Content container with backdrop filter */}
+            <div className="relative backdrop-blur-[2px] p-8">
+              {/* Header top section */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-6 md:space-y-0">
+                <div>
+                  <h1 className="text-3xl font-medium text-white tracking-tight">
+                    {greeting} {fullName}
+                  </h1>
+                  <p className="text-white/80 font-light mt-1 text-sm tracking-wide">
+                    Your service business at a glance
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                  {metrics.map((metric, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center bg-white/10 backdrop-blur-md rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:bg-white/15 cursor-default"
+                    >
+                      <div className="flex items-center p-3 pl-4">
+                        <div className="rounded-full bg-white/90 p-2 mr-3 shadow-sm">{metric.icon}</div>
+                        <div>
+                          <div className="flex items-baseline">
+                            <span className="text-white font-medium text-lg tracking-tight">{metric.value}</span>
+                            <span
+                              className={`ml-1.5 text-xs font-medium ${metric.trendUp ? "text-[#30D158]" : "text-[#FF453A]"}`}
+                            >
+                              {metric.trend}
+                            </span>
+                          </div>
+                          <span className="text-white/70 text-xs font-light tracking-wide">{metric.label}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Service Categories Navigation */}
+              <div className="mt-8">
+                <div className="flex overflow-x-auto pb-2 gap-2 md:gap-3 scrollbar-hide">
+                  {serviceCategories.map((category, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setActiveTab(index)}
+                      className={`group flex items-center px-4 py-2.5 rounded-xl transition-all duration-300 ${
+                        activeTab === index ? "bg-white shadow-md" : "bg-white/10 hover:bg-white/20"
+                      }`}
+                    >
+                      <div
+                        className={`${activeTab === index ? "text-[#0A84FF]" : "text-white group-hover:scale-110"} transition-all duration-300`}
+                      >
+                        {category.icon}
+                      </div>
+                      <span
+                        className={`ml-2 font-medium text-sm ${activeTab === index ? "text-[#0A84FF]" : "text-white"}`}
+                      >
+                        {category.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -407,12 +467,13 @@ function Admin() {
                         <td className="py-3 text-sm font-light">{request.location}</td>
                         <td className="py-3 text-sm">
                           <span
-                            className={`px-2 py-0.5 rounded-full text-xs font-light ${request.status === "Pending"
+                            className={`px-2 py-0.5 rounded-full text-xs font-light ${
+                              request.status === "Pending"
                                 ? "bg-[#FFF8E6] text-[#FF9500]"
                                 : request.status === "In Progress"
                                   ? "bg-[#E9F6FF] text-[#0A84FF]"
                                   : "bg-[#E8F8EF] text-[#30D158]"
-                              }`}
+                            }`}
                           >
                             {request.status}
                           </span>
@@ -518,4 +579,3 @@ function Admin() {
 }
 
 export default Admin
-

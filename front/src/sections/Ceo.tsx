@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 
 import MyFloatingDockCeo from "./Styles/MyFloatingDock-Ceo"
+import Footer from "./Styles/Footer"
 
 export default function Ceo() {
   return (
@@ -324,11 +325,12 @@ export default function Ceo() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }
 
-function ActivityItem({ title, description, time } : any) {
+function ActivityItem({ title, description, time }: any) {
   return (
     <div className="border-l-2 border-[#0A84FF] pl-4 py-2">
       <h4 className="text-sm font-medium text-gray-800">{title}</h4>
@@ -338,7 +340,7 @@ function ActivityItem({ title, description, time } : any) {
   )
 }
 
-function QuickActionButton({ icon, label, bgColor } : any) {
+function QuickActionButton({ icon, label, bgColor }: any) {
   return (
     <button
       className={`flex flex-col items-center justify-center ${bgColor} hover:bg-opacity-80 rounded-xl p-4 transition-all shadow-sm`}
@@ -349,7 +351,7 @@ function QuickActionButton({ icon, label, bgColor } : any) {
   )
 }
 
-function ServiceDistributionBar({ name, percentage, color } : any) {
+function ServiceDistributionBar({ name, percentage, color }: any) {
   return (
     <div>
       <div className="flex justify-between items-center mb-1">
@@ -363,7 +365,7 @@ function ServiceDistributionBar({ name, percentage, color } : any) {
   )
 }
 
-function ServiceRequestRow({ customer, service, date, status, provider } : any) {
+function ServiceRequestRow({ customer, service, date, status, provider }: any) {
   return (
     <tr className="hover:bg-[#F2F2F7]/50">
       <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">{customer}</td>
@@ -372,13 +374,12 @@ function ServiceRequestRow({ customer, service, date, status, provider } : any) 
       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 font-light">{provider}</td>
       <td className="px-4 py-3 whitespace-nowrap">
         <span
-          className={`px-2 py-0.5 text-xs font-light rounded-full ${
-            status === "Completed"
+          className={`px-2 py-0.5 text-xs font-light rounded-full ${status === "Completed"
               ? "bg-[#E8F8EF] text-[#30D158]"
               : status === "In Progress"
                 ? "bg-[#E9F6FF] text-[#0A84FF]"
                 : "bg-[#FFF8E6] text-[#FF9500]"
-          }`}
+            }`}
         >
           {status}
         </span>

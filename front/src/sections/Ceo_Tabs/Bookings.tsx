@@ -41,6 +41,7 @@ import {
   companyDetails,
   userDetails,
 } from "./bookings-data"
+import Footer from "../Styles/Footer"
 
 const keyframes = `
   @keyframes fadeIn {
@@ -734,11 +735,10 @@ function Bookings() {
         <div className="flex flex-col">
           {/* Subscription info banner */}
           <div
-            className={`mb-6 p-4 rounded-lg flex items-center ${
-              services.length >= subscription.maxServices
-                ? "bg-red-50 border border-red-200"
-                : "bg-gray-50 border border-gray-200"
-            }`}
+            className={`mb-6 p-4 rounded-lg flex items-center ${services.length >= subscription.maxServices
+              ? "bg-red-50 border border-red-200"
+              : "bg-gray-50 border border-gray-200"
+              }`}
           >
             <div className="flex items-center">
               <Crown className={`h-5 w-5 mr-2 ${subscription.color}`} />
@@ -746,9 +746,8 @@ function Bookings() {
                 <h3 className="font-medium">
                   {subscription.name} Plan
                   <span
-                    className={`ml-2 text-sm ${
-                      services.length >= subscription.maxServices ? "text-red-600" : "text-gray-600"
-                    }`}
+                    className={`ml-2 text-sm ${services.length >= subscription.maxServices ? "text-red-600" : "text-gray-600"
+                      }`}
                   >
                     ({services.length}/
                     {subscription.maxServices === Number.POSITIVE_INFINITY ? "∞" : subscription.maxServices})
@@ -850,11 +849,10 @@ function Bookings() {
           <div className="mt-10 flex justify-center">
             <button
               onClick={handleCreateService}
-              className={`px-6 py-3 rounded-full flex items-center gap-2 ${
-                services.length >= subscription.maxServices
-                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                  : "bg-sky-500 text-white hover:bg-sky-600"
-              } transition-all`}
+              className={`px-6 py-3 rounded-full flex items-center gap-2 ${services.length >= subscription.maxServices
+                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                : "bg-sky-500 text-white hover:bg-sky-600"
+                } transition-all`}
               disabled={services.length >= subscription.maxServices}
             >
               <Plus className="h-4 w-4" />
@@ -988,15 +986,14 @@ function Bookings() {
             <div className="bg-gray-50 rounded-xl p-6">
               <div className="flex items-center mb-4">
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center mr-4 ${
-                    subscription.tier === "free"
-                      ? "bg-gray-200"
-                      : subscription.tier === "mid"
-                        ? "bg-blue-100"
-                        : subscription.tier === "premium"
-                          ? "bg-purple-100"
-                          : "bg-amber-100"
-                  }`}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center mr-4 ${subscription.tier === "free"
+                    ? "bg-gray-200"
+                    : subscription.tier === "mid"
+                      ? "bg-blue-100"
+                      : subscription.tier === "premium"
+                        ? "bg-purple-100"
+                        : "bg-amber-100"
+                    }`}
                 >
                   <Crown className={`h-6 w-6 ${subscription.color}`} />
                 </div>
@@ -1023,21 +1020,19 @@ function Bookings() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                     <div
-                      className={`h-2 rounded-full ${
-                        subscription.tier === "free"
-                          ? "bg-gray-500"
-                          : subscription.tier === "mid"
-                            ? "bg-blue-500"
-                            : subscription.tier === "premium"
-                              ? "bg-purple-500"
-                              : "bg-amber-500"
-                      }`}
+                      className={`h-2 rounded-full ${subscription.tier === "free"
+                        ? "bg-gray-500"
+                        : subscription.tier === "mid"
+                          ? "bg-blue-500"
+                          : subscription.tier === "premium"
+                            ? "bg-purple-500"
+                            : "bg-amber-500"
+                        }`}
                       style={{
-                        width: `${
-                          subscription.maxServices === Number.POSITIVE_INFINITY
-                            ? 10
-                            : Math.min(100, (services.length / subscription.maxServices) * 100)
-                        }%`,
+                        width: `${subscription.maxServices === Number.POSITIVE_INFINITY
+                          ? 10
+                          : Math.min(100, (services.length / subscription.maxServices) * 100)
+                          }%`,
                       }}
                     ></div>
                   </div>
@@ -1658,73 +1653,66 @@ function Bookings() {
             <nav className="flex -mb-px overflow-x-auto">
               <button
                 onClick={() => setActiveTab("services")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
-                  activeTab === "services"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "services"
+                  ? "border-sky-500 text-sky-500"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 Services
               </button>
               <button
                 onClick={() => setActiveTab("ongoing")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
-                  activeTab === "ongoing"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "ongoing"
+                  ? "border-sky-500 text-sky-500"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 Ongoing Bookings
               </button>
               <button
                 onClick={() => setActiveTab("pending")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
-                  activeTab === "pending"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "pending"
+                  ? "border-sky-500 text-sky-500"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 Pending Bookings
               </button>
               <button
                 onClick={() => setActiveTab("completed")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
-                  activeTab === "completed"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "completed"
+                  ? "border-sky-500 text-sky-500"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 Completed Bookings
               </button>
               <button
                 onClick={() => setActiveTab("personal")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
-                  activeTab === "personal"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "personal"
+                  ? "border-sky-500 text-sky-500"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 <User className="h-4 w-4" />
                 Personal Info
               </button>
               <button
                 onClick={() => setActiveTab("security")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
-                  activeTab === "security"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "security"
+                  ? "border-sky-500 text-sky-500"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 <Lock className="h-4 w-4" />
                 Security
               </button>
               <button
                 onClick={() => setActiveTab("delete")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
-                  activeTab === "delete"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "delete"
+                  ? "border-sky-500 text-sky-500"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 <Trash2 className="h-4 w-4" />
                 Delete Account
@@ -1784,13 +1772,12 @@ function Bookings() {
                     <h3 className="text-2xl font-light text-white tracking-tight">{selectedBooking.serviceName}</h3>
                     <div
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 
-                ${
-                  selectedBooking.status === "pending"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : selectedBooking.status === "ongoing"
-                      ? "bg-sky-100 text-sky-800"
-                      : "bg-green-100 text-green-800"
-                }`}
+                ${selectedBooking.status === "pending"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : selectedBooking.status === "ongoing"
+                            ? "bg-sky-100 text-sky-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
                     >
                       {selectedBooking.status === "pending"
                         ? "Pending"
@@ -1898,13 +1885,12 @@ function Bookings() {
                       <button
                         onClick={() => handleMarkAsCompleted(selectedBooking.id)}
                         disabled={ceoMarkedCompleted.includes(selectedBooking.id) || isLoading || showSuccess}
-                        className={`w-full px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${
-                          ceoMarkedCompleted.includes(selectedBooking.id) || showSuccess
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : isLoading && processingBookingId === selectedBooking.id
-                              ? "bg-sky-400 cursor-wait"
-                              : "bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-200"
-                        }`}
+                        className={`w-full px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${ceoMarkedCompleted.includes(selectedBooking.id) || showSuccess
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : isLoading && processingBookingId === selectedBooking.id
+                            ? "bg-sky-400 cursor-wait"
+                            : "bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-200"
+                          }`}
                       >
                         {isLoading && processingBookingId === selectedBooking.id ? (
                           <span className="flex items-center justify-center">
@@ -1957,11 +1943,10 @@ function Bookings() {
                         <button
                           onClick={() => handleAcceptBooking(selectedBooking.id)}
                           disabled={isLoading}
-                          className={`flex-1 px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${
-                            isLoading && processingBookingId === selectedBooking.id
-                              ? "bg-sky-400 cursor-wait"
-                              : "bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-200"
-                          }`}
+                          className={`flex-1 px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${isLoading && processingBookingId === selectedBooking.id
+                            ? "bg-sky-400 cursor-wait"
+                            : "bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-200"
+                            }`}
                         >
                           {isLoading && processingBookingId === selectedBooking.id ? (
                             <span className="flex items-center justify-center">
@@ -2535,13 +2520,12 @@ function Bookings() {
                     <button
                       onClick={() => handleDeclineBooking(selectedBooking.id)}
                       disabled={!declineReason.trim() || isLoading}
-                      className={`flex-1 px-4 py-2.5 text-white rounded-lg transition-colors ${
-                        !declineReason.trim()
-                          ? "bg-gray-400 cursor-not-allowed"
-                          : isLoading && processingBookingId === selectedBooking.id
-                            ? "bg-red-400 cursor-wait"
-                            : "bg-red-500 hover:bg-red-600"
-                      }`}
+                      className={`flex-1 px-4 py-2.5 text-white rounded-lg transition-colors ${!declineReason.trim()
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : isLoading && processingBookingId === selectedBooking.id
+                          ? "bg-red-400 cursor-wait"
+                          : "bg-red-500 hover:bg-red-600"
+                        }`}
                     >
                       {isLoading && processingBookingId === selectedBooking.id ? (
                         <span className="flex items-center justify-center">
@@ -2672,9 +2656,8 @@ function Bookings() {
                   <button
                     onClick={handleSubmitNewService}
                     disabled={!allRequirementsMet}
-                    className={`px-4 py-2.5 text-white rounded-lg transition-colors ${
-                      !allRequirementsMet ? "bg-gray-400 cursor-not-allowed" : "bg-sky-500 hover:bg-sky-600"
-                    }`}
+                    className={`px-4 py-2.5 text-white rounded-lg transition-colors ${!allRequirementsMet ? "bg-gray-400 cursor-not-allowed" : "bg-sky-500 hover:bg-sky-600"
+                      }`}
                   >
                     Create Service
                   </button>
@@ -2709,11 +2692,10 @@ function Bookings() {
                 {subscriptionPlans.map((plan) => (
                   <div
                     key={plan.tier}
-                    className={`border rounded-xl p-5 flex flex-col ${
-                      plan.tier === subscription.tier
-                        ? "border-sky-500 bg-sky-50"
-                        : "border-gray-200 hover:border-sky-300 hover:shadow-md"
-                    } transition-all cursor-pointer`}
+                    className={`border rounded-xl p-5 flex flex-col ${plan.tier === subscription.tier
+                      ? "border-sky-500 bg-sky-50"
+                      : "border-gray-200 hover:border-sky-300 hover:shadow-md"
+                      } transition-all cursor-pointer`}
                     onClick={() => handleSelectPlan(plan.tier as SubscriptionTier)}
                   >
                     <div
@@ -2745,11 +2727,10 @@ function Bookings() {
 
                     <button
                       onClick={() => handleSelectPlan(plan.tier as SubscriptionTier)}
-                      className={`w-full py-2 rounded-lg mt-auto ${
-                        plan.tier === subscription.tier
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : `${plan.textColor.replace("text", "bg")} text-white hover:opacity-90`
-                      }`}
+                      className={`w-full py-2 rounded-lg mt-auto ${plan.tier === subscription.tier
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : `${plan.textColor.replace("text", "bg")} text-white hover:opacity-90`
+                        }`}
                       disabled={plan.tier === subscription.tier}
                     >
                       {plan.tier === subscription.tier ? "Current Plan" : "Select Plan"}
@@ -2798,6 +2779,7 @@ function Bookings() {
           </Dialog.Panel>
         </div>
       </Dialog>
+      <Footer />
     </div>
   )
 }

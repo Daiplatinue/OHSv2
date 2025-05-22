@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { Eye, EyeOff, X } from "lucide-react"
+import { useNavigate } from "react-router-dom" // Replace next/router with react-router-dom
 import CustomerRequirements from "./Styles/CustomerRequirements"
 import ManagerRequirements from "./Styles/ManagerRequirements"
 
@@ -117,6 +118,65 @@ function App() {
   const [, setSalaryCertificate] = useState<File | null>(null)
   const [, setUploadedDocuments] = useState<{ [key: string]: File[] }>({})
   const [, setActiveCategoryIndex] = useState(0)
+
+  // Replace router with navigate
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  interface LoginResponse {
+    type: "customer" | "manager" | "admin" | "provider" | string
+    [key: string]: any
+  }
+
+  interface LoginError extends Error {
+    message: string
+  }
+
+  const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3000"}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const data: LoginResponse = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed")
+      }
+
+      // Store user data in localStorage
+      localStorage.setItem("user", JSON.stringify(data))
+
+      // Redirect based on user type
+      if (data.type === "customer") {
+        navigate("/")
+      } else if (data.type === "manager") {
+        navigate("/ceo")
+      } else if (data.type === "admin") {
+        navigate("/admin")
+      } else if (data.type === "provider") {
+        navigate("/provider")
+      } else {
+        // Default fallback
+        navigate("/")
+      }
+    } catch (err) {
+      const error = err as LoginError
+      console.error("Login error:", error)
+      setError(error.message || "Failed to login. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -253,12 +313,15 @@ function App() {
           </div>
 
           <button
+            onClick={handleLogin}
             className={`w-full bg-gray-200 text-gray-500 hover:bg-gray-300 rounded-full h-12 font-medium transition-colors
-              ${!email || !password ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
-            disabled={!email || !password}
+    ${!email || !password || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
+            disabled={!email || !password || loading}
           >
-            Sign in
+            {loading ? "Signing in..." : "Sign in"}
           </button>
+
+          {error && <div className="mt-2 text-red-500 text-sm text-center">{error}</div>}
 
           <div className="relative flex items-center justify-center text-xs text-gray-500 my-4 mt-[-15px]">
             <span className="bg-white px-2 mt-10">or sign in with</span>
@@ -400,9 +463,7 @@ function App() {
                   <CustomerRequirements onClose={() => setShowModal(false)} parentModal={true} />
                 ) : accountType === "manager" ? (
                   <ManagerRequirements />
-                ) : (
-                  null
-                )}
+                ) : null}
               </>
             )}
           </div>

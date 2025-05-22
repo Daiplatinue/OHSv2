@@ -1,8 +1,7 @@
-import type React from "react"
-
-import { useState, useRef } from "react"
-import { Eye, EyeOff, Upload, ChevronLeft, ChevronRight, Camera, ImageIcon, Check } from "lucide-react"
+import React, { useState, useRef, useEffect } from "react"
+import { Eye, EyeOff, Upload, ChevronLeft, ChevronRight, Camera, ImageIcon, Check, CheckCircle2 } from "lucide-react"
 import LocationSelector from "./LocationSelectorAuth"
+import axios from "axios"
 
 interface Location {
   name: string
@@ -19,7 +18,7 @@ interface CustomerRequirementsProps {
   parentModal?: boolean
 }
 
-export default function RegisterForm({ parentModal = false }: CustomerRequirementsProps) {
+export default function CustomerRequirements({ onClose, parentModal = false }: CustomerRequirementsProps) {
   // Form state
   const [currentStep, setCurrentStep] = useState(1)
   const [firstName, setFirstName] = useState("")
@@ -35,6 +34,11 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
   const [bio, setBio] = useState("")
   const [isAnimating, setIsAnimating] = useState(false)
   const [animationDirection, setAnimationDirection] = useState("next")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState(false)
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
+  const [, setUserData] = useState<any>(null)
 
   // ID document state
   const [frontId, setFrontId] = useState<File | null>(null)
@@ -45,7 +49,6 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
   // Location state
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
   const [showLocationModal, setShowLocationModal] = useState(false)
-  const [pricePerKm, setPricePerKm] = useState("25") // Default price per km
 
   // Profile state
   const [profilePicture, setProfilePicture] = useState<File | null>(null)
@@ -87,6 +90,31 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
       validator: (password: string) => /[^A-Za-z0-9]/.test(password),
     }
   ];
+
+  // Animation keyframes for success modal
+  const keyframes = `
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes bounceIn {
+      0% { transform: scale(0); opacity: 0; }
+      60% { transform: scale(1.2); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    @keyframes slideInUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+  `
 
   const calculatePasswordStrength = () => {
     const metRequirements = passwordRequirements.filter(req => req.validator(password)).length;
@@ -136,6 +164,34 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
     }
   };
 
+  // Reset form after successful submission
+  useEffect(() => {
+    if (success) {
+      // Reset all form fields
+      setFirstName("")
+      setLastName("")
+      setMiddleName("")
+      setEmail("")
+      setMobileNumber("")
+      setPassword("")
+      setConfirmPassword("")
+      setGender("")
+      setBio("")
+      setFrontId(null)
+      setBackId(null)
+      setFrontIdPreview(null)
+      setBackIdPreview(null)
+      setSelectedLocation(null)
+      setProfilePicture(null)
+      setCoverPhoto(null)
+      setProfilePicturePreview(null)
+      setCoverPhotoPreview(null)
+
+      // Reset to first step
+      setCurrentStep(1)
+    }
+  }, [success])
+
   // Handle file selection and preview
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -169,7 +225,7 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
   }
 
   const isStep2Valid = () => {
-    return selectedLocation !== null && pricePerKm.trim() !== ""
+    return selectedLocation !== null
   }
 
   const isStep3Valid = () => {
@@ -209,49 +265,106 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
     }, 250)
   }
 
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSuccessModalClose = () => {
+    setIsSuccessModalOpen(false)
+    
+    // Call onClose if provided (to close the parent modal)
+    if (onClose) {
+      onClose()
+    }
   }
 
-  // Calculate price based on distance and user-defined price per km
-  const calculateEstimatedPrice = (distance: number) => {
-    const rate = parseFloat(pricePerKm) || 25 // Default to 25 if invalid input
-    return Math.round((distance * rate) * 100) / 100
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+
+    try {
+      // Create form data object with all user information
+      const userData = {
+        firstname: firstName,
+        lastname: lastName,
+        middleName: middleName,
+        email: email,
+        contact: mobileNumber,
+        password: password,
+        gender: gender,
+        bio: bio,
+        location: selectedLocation,
+        frontId: frontIdPreview,
+        backId: backIdPreview,
+        profilePicture: profilePicturePreview,
+        coverPhoto: coverPhotoPreview,
+        // Add type and status as requested
+        type: 'customer',
+        status: 'pending'
+      }
+
+      // Fixed API URL - using the actual backend URL instead of environment variable
+      const response = await axios.post("http://localhost:3000/register-customer", userData, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const data = response.data
+
+      // You may want to check for a success property or status in your API response
+      // For now, we assume success if no error is thrown
+      setUserData(data)
+      setSuccess(true)
+      
+      // Show success modal instead of just setting success flag
+      setIsSuccessModalOpen(true)
+
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'An error occurred during registration')
+    } finally {
+      setLoading(false)
+    }
   }
 
   // Handle location selection with price calculation
   const handleLocationSelect = (location: Location) => {
     const updatedLocation = {
       ...location,
-      price: calculateEstimatedPrice(location.distance)
     }
     setSelectedLocation(updatedLocation)
   }
 
-  // Handle price per km change
-  const handlePricePerKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setPricePerKm(value)
-
-    // Update price for selected location if it exists
-    if (selectedLocation) {
-      const updatedLocation = {
-        ...selectedLocation,
-        price: calculateEstimatedPrice(selectedLocation.distance)
-      }
-      setSelectedLocation(updatedLocation)
-    }
-  }
-
   return (
     <div className="py-4 px-2">
+      {/* Include animation keyframes */}
+      <style>{keyframes}</style>
+
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold mb-1">HandyGo</h1>
           <h2 className="text-3xl font-bold text-sky-400">Create Your Account</h2>
         </div>
+
+        {/* Success message */}
+        {success && !isSuccessModalOpen && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+            <div className="flex items-center justify-center">
+              <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mb-3">
+                <Check className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <h3 className="text-lg font-medium text-green-800">Registration Successful!</h3>
+            <p className="text-green-600">Your account has been created successfully. You can now log in.</p>
+          </div>
+        )}
+
+        {/* Error message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <h3 className="text-lg font-medium text-red-800">Registration Failed</h3>
+            <p className="text-red-600">{error}</p>
+          </div>
+        )}
 
         {/* SwiftUI-inspired progress indicator */}
         <div className="mb-6 px-30 ml-20">
@@ -294,7 +407,7 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
         </div>
 
         {/* Form content with animations */}
-        <div className="bg-white rounded-xl overflow-hidden">
+        <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
           <div className="p-4 relative">
             <form onSubmit={handleSubmit}>
               <div
@@ -522,29 +635,6 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
                     <div className="grid md:grid-cols-2 gap-6">
                       {/* Left side - Location selection and price settings */}
                       <div>
-                        {/* Price per km setting */}
-                        <div className="mb-4">
-                          <label htmlFor="price-per-km" className="mb-1 block text-sm font-medium">
-                            Price per Kilometer (₱)
-                          </label>
-                          <div className="relative">
-                            <input
-                              id="price-per-km"
-                              type="number"
-                              min="1"
-                              step="0.5"
-                              value={pricePerKm}
-                              onChange={handlePricePerKmChange}
-                              placeholder="Enter price per km"
-                              className="w-full px-3 py-2 pl-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            />
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₱</span>
-                          </div>
-                          <p className="text-xs text-gray-500 mt-1">
-                            This determines how much will be charged per kilometer of travel distance.
-                          </p>
-                        </div>
-
                         <button
                           type="button"
                           onClick={() => setShowLocationModal(true)}
@@ -602,29 +692,6 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
                                 <p className="text-sm">
                                   Lat: {selectedLocation.lat.toFixed(6)}, Lng: {selectedLocation.lng.toFixed(6)}
                                 </p>
-                              </div>
-
-                              <div className="pt-2 border-t">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <label className="text-xs text-gray-500">Price Settings</label>
-                                    <p className="text-sm">₱{pricePerKm} per kilometer</p>
-                                  </div>
-                                  <div className="text-right">
-                                    <label className="text-xs text-gray-500">Total Distance</label>
-                                    <p className="text-sm">{selectedLocation.distance.toFixed(1)} km</p>
-                                  </div>
-                                </div>
-
-                                <div className="mt-2">
-                                  <label className="text-xs text-gray-500">Estimated Service Price</label>
-                                  <p className="text-lg font-bold text-sky-600">
-                                    ₱{selectedLocation.price?.toFixed(2)}
-                                  </p>
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Based on ₱{pricePerKm} per km × {selectedLocation.distance.toFixed(1)} km
-                                  </p>
-                                </div>
                               </div>
                             </div>
                           </div>
@@ -908,7 +975,7 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
                     <h3 className="text-lg font-medium mb-4">Review Your Profile</h3>
 
                     {/* Profile Header - Similar to MyProfile.tsx */}
-                    <div className="bg-white rounded-xl overflow-hidden mb-6">
+                    <div className="bg-white rounded-xl overflow-hidden mb-6 border border-gray-100">
                       {/* Cover Photo */}
                       <div className="relative h-60 overflow-hidden">
                         {coverPhotoPreview ? (
@@ -994,7 +1061,7 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
                     {/* Tabs Navigation */}
                     <div className="border-b border-gray-200 mb-6">
                       <nav className="flex -mb-px overflow-x-auto">
-                        <button className="py-4 px-6 font-medium text-sm border-b-2 border-sky-500 text-sky-500 flex items-center gap-2 whitespace-nowrap">
+                        <button type="button" className="py-4 px-6 font-medium text-sm border-b-2 border-sky-500 text-sky-500 flex items-center gap-2 whitespace-nowrap">
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             width="16"
@@ -1016,7 +1083,7 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
                     </div>
 
                     {/* Personal Information Section */}
-                    <div className="bg-white rounded-xl p-6 mb-6">
+                    <div className="bg-white rounded-xl p-6 mb-6 border border-gray-100">
                       <div className="flex justify-between items-center mb-6">
                         <h2 className="text-xl font-semibold">Personal Information</h2>
                       </div>
@@ -1071,17 +1138,17 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
                             <h4 className="text-sm font-medium text-gray-500 mb-1">Gender</h4>
                             <p className="text-gray-900 capitalize">{gender}</p>
                           </div>
-                          {selectedLocation && (
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-500 mb-1">Service Price</h4>
-                              <p className="text-gray-900">
-                                <span className="font-bold text-sky-600">₱{selectedLocation.price?.toFixed(2)}</span>
-                                <span className="text-sm text-gray-500 ml-2">
-                                  (₱{pricePerKm}/km × {selectedLocation.distance.toFixed(1)} km)
-                                </span>
-                              </p>
-                            </div>
-                          )}
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-500 mb-1">Account Type</h4>
+                            <p className="text-gray-900">
+                              <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
+                                Customer
+                              </span>
+                              <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                                Pending
+                              </span>
+                            </p>
+                          </div>
                         </div>
                         {bio && (
                           <div className="mt-6">
@@ -1162,9 +1229,21 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
                 ) : (
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-sky-500 text-white rounded-full hover:bg-sky-600 transition-all duration-300 hover:shadow-md"
+                    disabled={loading}
+                    className={`px-5 py-2 rounded-full transition-all duration-300 hover:shadow-md flex items-center ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-sky-500 hover:bg-sky-600 text-white"
+                      }`}
                   >
-                    Create Account
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      "Create Account"
+                    )}
                   </button>
                 )}
               </div>
@@ -1172,18 +1251,61 @@ export default function RegisterForm({ parentModal = false }: CustomerRequiremen
           </div>
         </div>
 
+        {/* Success Modal - Similar to the one in Transaction.tsx */}
+        {isSuccessModalOpen && (
+          <div
+            className="fixed inset-0 bg-black/30 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            style={{ animation: "fadeIn 0.3s ease-out" }}
+          >
+            <div
+              className="mx-auto max-w-md w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20 p-6"
+              style={{ animation: "fadeIn 0.5s ease-out" }}
+            >
+              <div className="flex flex-col items-center text-center">
+                <div
+                  className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6"
+                  style={{ animation: "pulse 2s ease-in-out infinite" }}
+                >
+                  <CheckCircle2 className="h-10 w-10 text-green-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
+                </div>
+
+                <h3 className="text-xl font-medium text-gray-900 mb-2" style={{ animation: "slideInUp 0.4s ease-out" }}>
+                  Registration Successful!
+                </h3>
+
+                <p className="text-gray-600 mb-6" style={{ animation: "fadeIn 0.5s ease-out 0.2s both" }}>
+                  Your account has been created successfully. You can now log in to access all features.
+                </p>
+
+                <button
+                  onClick={handleSuccessModalClose}
+                  className="px-8 py-3 bg-blue-500 text-white rounded-full font-medium shadow-sm hover:bg-blue-600 active:scale-95 transition-all duration-200"
+                  style={{ animation: "fadeIn 0.5s ease-out 0.3s both" }}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Location selection modal - only render if not in parent modal */}
         {showLocationModal && !parentModal && (
-          <LocationSelector
-            isOpen={showLocationModal}
-            onClose={() => setShowLocationModal(false)}
-            onSelectLocation={(location) => {
-              handleLocationSelect(location)
-              setShowLocationModal(false)
-            }}
-            companyLocation={companyLocation}
-            previousLocation={selectedLocation}
-          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/20" onClick={() => setShowLocationModal(false)}></div>
+            <div className="relative bg-white rounded-xl w-full max-w-3xl max-h-[80vh] overflow-auto p-4 z-10">
+              <LocationSelector
+                isOpen={showLocationModal}
+                onClose={() => setShowLocationModal(false)}
+                onSelectLocation={(location) => {
+                  handleLocationSelect(location)
+                  setShowLocationModal(false)
+                }}
+                companyLocation={companyLocation}
+                previousLocation={selectedLocation}
+              />
+            </div>
+          </div>
         )}
 
         {/* Location selection - render directly in parent modal */}

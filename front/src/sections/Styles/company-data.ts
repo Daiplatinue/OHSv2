@@ -444,8 +444,8 @@ export const sparkleCleanData: CompanyDetails = {
   phone: "+1 (617) 555-8765",
   email: "clean@sparkleclean.com",
   website: "www.sparkleclean.com",
-  logo: "https://cdn.pixabay.com/photo/2013/07/13/10/07/man-156584_1280.png",
-  coverPhoto: "https://cdn.pixabay.com/photo/2017/08/01/09/34/white-2563976_1280.jpg",
+  logo: "https://cdn.pixabay.com/photo/2021/08/31/11/58/woman-6588614_1280.jpg",
+  coverPhoto: "https://cdn.pixabay.com/photo/2021/08/31/11/58/woman-6588614_1280.jpg",
   rating: 4.9,
   reviews: 4200,
   services: [

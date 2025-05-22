@@ -107,12 +107,6 @@ const FloatingDock: React.FC = () => {
             isActive={location.pathname === "/ceo"}
           />
           <DockItem
-            icon={<PhilippinePeso size={20} strokeWidth={1.5} color="gray" />}
-            label="Balance"
-            to="/ceo/my-balance"
-            isActive={location.pathname === "/ceo/my-balance"}
-          />
-          <DockItem
             icon={<Album size={20} strokeWidth={1.5} color="gray" />}
             label="Bookings"
             to="/ceo/bookings"
@@ -122,12 +116,6 @@ const FloatingDock: React.FC = () => {
             icon={<MessageCircleMore size={20} strokeWidth={1.5} color="gray" />}
             label="Chats"
             to="/ceo"
-            isActive={location.pathname === "/settings"}
-          />
-          <DockItem
-            icon={<Mail size={20} strokeWidth={1.5} color="gray" />}
-            label="Emails"
-            to="/ceo/email"
             isActive={location.pathname === "/settings"}
           />
           <DockItem

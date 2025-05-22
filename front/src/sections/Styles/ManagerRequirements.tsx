@@ -23,6 +23,8 @@ import {
   CheckSquare,
 } from "lucide-react"
 import LocationSelector from "./LocationSelectorAuth"
+import axios from "axios"
+import ImagePopup from "../Styles/ImagePopup"
 
 interface Location {
   name: string
@@ -43,8 +45,6 @@ interface OperatingHours {
 interface InsuranceDocument {
   file: File | null
   preview: string | null
-  expiryDate: string
-  policyNumber: string
 }
 
 export default function ManagerRequirements() {
@@ -89,38 +89,26 @@ export default function ManagerRequirements() {
   const [generalLiability, setGeneralLiability] = useState<InsuranceDocument>({
     file: null,
     preview: null,
-    expiryDate: "",
-    policyNumber: "",
   })
   const [workersComp, setWorkersComp] = useState<InsuranceDocument>({
     file: null,
     preview: null,
-    expiryDate: "",
-    policyNumber: "",
   })
   const [professionalIndemnity, setProfessionalIndemnity] = useState<InsuranceDocument>({
     file: null,
     preview: null,
-    expiryDate: "",
-    policyNumber: "",
   })
   const [propertyDamage, setPropertyDamage] = useState<InsuranceDocument>({
     file: null,
     preview: null,
-    expiryDate: "",
-    policyNumber: "",
   })
   const [businessInterruption, setBusinessInterruption] = useState<InsuranceDocument>({
     file: null,
     preview: null,
-    expiryDate: "",
-    policyNumber: "",
   })
   const [bondingInsurance, setBondingInsurance] = useState<InsuranceDocument>({
     file: null,
     preview: null,
-    expiryDate: "",
-    policyNumber: "",
   })
 
   // Step 5 - Profile Setup
@@ -128,6 +116,12 @@ export default function ManagerRequirements() {
   const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null)
   const [coverPhoto, setCoverPhoto] = useState<File | null>(null)
   const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(null)
+
+  const [loading, setLoading] = useState(false)
+  const [, setError] = useState("")
+  const [, setSuccess] = useState(false)
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
+  const [, setUserData] = useState<any>(null)
 
   // Refs for profile pictures
   const profilePictureRef = useRef<HTMLInputElement>(null)
@@ -247,18 +241,6 @@ export default function ManagerRequirements() {
     }
   }
 
-  // Handle insurance field change
-  const handleInsuranceFieldChange = (
-    field: "expiryDate" | "policyNumber",
-    value: string,
-    setter: React.Dispatch<React.SetStateAction<InsuranceDocument>>,
-  ) => {
-    setter((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
-  }
-
   // Handle operating hours change
   const handleOperatingHoursChange = (index: number, field: keyof OperatingHours, value: string | boolean) => {
     const updatedHours = [...operatingHours]
@@ -280,12 +262,12 @@ export default function ManagerRequirements() {
 
   // Handle file upload with warning
   const handleUploadClick = (type: string) => {
-    // Only show warning if it hasn't been shown before for this type
-    if (!uploadWarningShown[type]) {
+    // Only show warning if it hasn't been shown before for any document type
+    if (!Object.values(uploadWarningShown).some((shown) => shown)) {
       setCurrentUploadType(type)
       setShowWarningModal(true)
     } else {
-      // If warning was already shown, directly trigger the file input
+      // If warning was already shown for any document, directly trigger the file input
       triggerFileInput(type)
     }
   }
@@ -326,11 +308,13 @@ export default function ManagerRequirements() {
   }
 
   const handleConfirmUpload = () => {
-    // Mark this upload type as having shown the warning
-    setUploadWarningShown({
-      ...uploadWarningShown,
-      [currentUploadType]: true,
-    })
+    // Mark ALL document types as having shown the warning
+    const allShown = Object.keys(uploadWarningShown).reduce<Record<string, boolean>>((acc, key) => {
+      acc[key] = true
+      return acc
+    }, {})
+
+    setUploadWarningShown(allShown)
 
     // Hide the warning modal
     setShowWarningModal(false)
@@ -366,14 +350,7 @@ export default function ManagerRequirements() {
 
   const isStep4Valid = () => {
     // Require at least general liability and workers comp
-    return (
-      generalLiability.file !== null &&
-      generalLiability.expiryDate !== "" &&
-      generalLiability.policyNumber !== "" &&
-      workersComp.file !== null &&
-      workersComp.expiryDate !== "" &&
-      workersComp.policyNumber !== ""
-    )
+    return generalLiability.file !== null && workersComp.file !== null
   }
 
   const isStep5Valid = () => {
@@ -422,10 +399,96 @@ export default function ManagerRequirements() {
   }
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Submit form data
-    console.log("Form submitted")
+    setLoading(true)
+    setError("")
+
+    try {
+      // Create form data object with all business information
+      const userData = {
+        firstname: businessName.split(" ")[0] || businessName, // Use first part of business name as firstname
+        lastname: businessName.split(" ").slice(1).join(" ") || "Company", // Use rest of business name as lastname
+        middleName: "",
+        email: businessEmail,
+        contact: companyNumber,
+        password: "DefaultPassword123!", // You should implement a password field in the form
+        gender: "",
+        bio: aboutCompany,
+        location: companyLocation,
+        frontId: secRegistrationPreview,
+        backId: businessPermitPreview,
+        profilePicture: profilePicturePreview,
+        coverPhoto: coverPhotoPreview,
+        // Business specific fields
+        businessName: businessName,
+        foundedDate: foundedDate,
+        teamSize: teamSize,
+        tinNumber: tinNumber,
+        cityCoverage: cityCoverage,
+        operatingHours: operatingHours,
+        // Business permits and registrations
+        secRegistrationPreview: secRegistrationPreview,
+        birRegistrationPreview: birRegistrationPreview,
+        businessPermitPreview: businessPermitPreview,
+        eccCertificatePreview: eccCertificatePreview,
+        // Insurance and liability coverage
+        generalLiability: {
+          preview: generalLiability.preview,
+        },
+        propertyDamage: {
+          preview: propertyDamage.preview,
+        },
+        workersComp: {
+          preview: workersComp.preview,
+        },
+        businessInterruption: {
+          preview: businessInterruption.preview,
+        },
+        professionalIndemnity: {
+          preview: professionalIndemnity.preview,
+        },
+        bondingInsurance: {
+          preview: bondingInsurance.preview,
+        },
+        // Add type and status as requested
+        type: businessName ? "ceo" : "manager",
+        status: "pending",
+      }
+
+      // Fixed API URL - using the actual backend URL instead of environment variable
+      const response = await axios.post("http://localhost:3000/register-manager", userData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      const data = response.data
+
+      // You may want to check for a success property or status in your API response
+      // For now, we assume success if no error is thrown
+      setUserData(data)
+      setSuccess(true)
+
+      // Show success modal instead of just setting success flag
+      setIsSuccessModalOpen(true)
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "An error occurred during registration")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // First, add these new state variables at the top of the component with the other state declarations
+  const [popupImage, setPopupImage] = useState<string | null>(null)
+  const [isImagePopupOpen, setIsImagePopupOpen] = useState(false)
+
+  // Add this function after the other handler functions
+  const handleImageClick = (imageUrl: string | null) => {
+    if (imageUrl) {
+      setPopupImage(imageUrl)
+      setIsImagePopupOpen(true)
+    }
   }
 
   return (
@@ -799,12 +862,23 @@ export default function ManagerRequirements() {
                             onClick={() => handleUploadClick("sec")}
                           >
                             {secRegistrationPreview ? (
-                              <div className="relative w-full h-40">
+                              <div
+                                className="relative w-full h-40 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleImageClick(secRegistrationPreview)
+                                }}
+                              >
                                 <img
                                   src={secRegistrationPreview || "/placeholder.svg"}
                                   alt="SEC Registration Preview"
-                                  className="object-contain w-full h-full"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <>
@@ -835,12 +909,23 @@ export default function ManagerRequirements() {
                             onClick={() => handleUploadClick("business")}
                           >
                             {businessPermitPreview ? (
-                              <div className="relative w-full h-40">
+                              <div
+                                className="relative w-full h-40 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleImageClick(businessPermitPreview)
+                                }}
+                              >
                                 <img
                                   src={businessPermitPreview || "/placeholder.svg"}
                                   alt="Business Permit Preview"
-                                  className="object-contain w-full h-full"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <>
@@ -874,12 +959,23 @@ export default function ManagerRequirements() {
                             onClick={() => handleUploadClick("bir")}
                           >
                             {birRegistrationPreview ? (
-                              <div className="relative w-full h-40">
+                              <div
+                                className="relative w-full h-40 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleImageClick(birRegistrationPreview)
+                                }}
+                              >
                                 <img
                                   src={birRegistrationPreview || "/placeholder.svg"}
                                   alt="BIR Registration Preview"
-                                  className="object-contain w-full h-full"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <>
@@ -912,12 +1008,23 @@ export default function ManagerRequirements() {
                             onClick={() => handleUploadClick("ecc")}
                           >
                             {eccCertificatePreview ? (
-                              <div className="relative w-full h-40">
+                              <div
+                                className="relative w-full h-40 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleImageClick(eccCertificatePreview)
+                                }}
+                              >
                                 <img
                                   src={eccCertificatePreview || "/placeholder.svg"}
                                   alt="ECC Preview"
-                                  className="object-contain w-full h-full"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <>
@@ -987,12 +1094,23 @@ export default function ManagerRequirements() {
                             onClick={() => handleUploadClick("generalLiability")}
                           >
                             {generalLiability.preview ? (
-                              <div className="relative w-full h-32">
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleImageClick(generalLiability.preview)
+                                }}
+                              >
                                 <img
                                   src={generalLiability.preview || "/placeholder.svg"}
                                   alt="General Liability Insurance Preview"
-                                  className="object-contain w-full h-full"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <>
@@ -1008,38 +1126,6 @@ export default function ManagerRequirements() {
                               accept=".jpg,.jpeg,.png,.pdf"
                               onChange={(e) => handleInsuranceFileChange(e, "generalLiability", setGeneralLiability)}
                             />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label htmlFor="gl-policy" className="block text-xs text-gray-500 mb-1">
-                                Policy Number
-                              </label>
-                              <input
-                                id="gl-policy"
-                                type="text"
-                                value={generalLiability.policyNumber}
-                                onChange={(e) =>
-                                  handleInsuranceFieldChange("policyNumber", e.target.value, setGeneralLiability)
-                                }
-                                placeholder="e.g., GL-12345678"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor="gl-expiry" className="block text-xs text-gray-500 mb-1">
-                                Expiry Date
-                              </label>
-                              <input
-                                id="gl-expiry"
-                                type="date"
-                                value={generalLiability.expiryDate}
-                                onChange={(e) =>
-                                  handleInsuranceFieldChange("expiryDate", e.target.value, setGeneralLiability)
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              />
-                            </div>
                           </div>
                         </div>
 
@@ -1062,12 +1148,23 @@ export default function ManagerRequirements() {
                             onClick={() => handleUploadClick("workersComp")}
                           >
                             {workersComp.preview ? (
-                              <div className="relative w-full h-32">
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleImageClick(workersComp.preview)
+                                }}
+                              >
                                 <img
                                   src={workersComp.preview || "/placeholder.svg"}
                                   alt="Worker's Compensation Insurance Preview"
-                                  className="object-contain w-full h-full"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <>
@@ -1083,38 +1180,6 @@ export default function ManagerRequirements() {
                               accept=".jpg,.jpeg,.png,.pdf"
                               onChange={(e) => handleInsuranceFileChange(e, "workersComp", setWorkersComp)}
                             />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label htmlFor="wc-policy" className="block text-xs text-gray-500 mb-1">
-                                Policy Number
-                              </label>
-                              <input
-                                id="wc-policy"
-                                type="text"
-                                value={workersComp.policyNumber}
-                                onChange={(e) =>
-                                  handleInsuranceFieldChange("policyNumber", e.target.value, setWorkersComp)
-                                }
-                                placeholder="e.g., WC-12345678"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor="wc-expiry" className="block text-xs text-gray-500 mb-1">
-                                Expiry Date
-                              </label>
-                              <input
-                                id="wc-expiry"
-                                type="date"
-                                value={workersComp.expiryDate}
-                                onChange={(e) =>
-                                  handleInsuranceFieldChange("expiryDate", e.target.value, setWorkersComp)
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              />
-                            </div>
                           </div>
                         </div>
 
@@ -1139,12 +1204,23 @@ export default function ManagerRequirements() {
                             onClick={() => handleUploadClick("professionalIndemnity")}
                           >
                             {professionalIndemnity.preview ? (
-                              <div className="relative w-full h-32">
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleImageClick(professionalIndemnity.preview)
+                                }}
+                              >
                                 <img
                                   src={professionalIndemnity.preview || "/placeholder.svg"}
                                   alt="Professional Indemnity Insurance Preview"
-                                  className="object-contain w-full h-full"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <>
@@ -1162,38 +1238,6 @@ export default function ManagerRequirements() {
                                 handleInsuranceFileChange(e, "professionalIndemnity", setProfessionalIndemnity)
                               }
                             />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label htmlFor="pi-policy" className="block text-xs text-gray-500 mb-1">
-                                Policy Number
-                              </label>
-                              <input
-                                id="pi-policy"
-                                type="text"
-                                value={professionalIndemnity.policyNumber}
-                                onChange={(e) =>
-                                  handleInsuranceFieldChange("policyNumber", e.target.value, setProfessionalIndemnity)
-                                }
-                                placeholder="e.g., PI-12345678"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor="pi-expiry" className="block text-xs text-gray-500 mb-1">
-                                Expiry Date
-                              </label>
-                              <input
-                                id="pi-expiry"
-                                type="date"
-                                value={professionalIndemnity.expiryDate}
-                                onChange={(e) =>
-                                  handleInsuranceFieldChange("expiryDate", e.target.value, setProfessionalIndemnity)
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              />
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -1219,12 +1263,23 @@ export default function ManagerRequirements() {
                             onClick={() => handleUploadClick("propertyDamage")}
                           >
                             {propertyDamage.preview ? (
-                              <div className="relative w-full h-32">
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleImageClick(propertyDamage.preview)
+                                }}
+                              >
                                 <img
                                   src={propertyDamage.preview || "/placeholder.svg"}
                                   alt="Property Damage Insurance Preview"
-                                  className="object-contain w-full h-full"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <>
@@ -1240,38 +1295,6 @@ export default function ManagerRequirements() {
                               accept=".jpg,.jpeg,.png,.pdf"
                               onChange={(e) => handleInsuranceFileChange(e, "propertyDamage", setPropertyDamage)}
                             />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label htmlFor="pd-policy" className="block text-xs text-gray-500 mb-1">
-                                Policy Number
-                              </label>
-                              <input
-                                id="pd-policy"
-                                type="text"
-                                value={propertyDamage.policyNumber}
-                                onChange={(e) =>
-                                  handleInsuranceFieldChange("policyNumber", e.target.value, setPropertyDamage)
-                                }
-                                placeholder="e.g., PD-12345678"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor="pd-expiry" className="block text-xs text-gray-500 mb-1">
-                                Expiry Date
-                              </label>
-                              <input
-                                id="pd-expiry"
-                                type="date"
-                                value={propertyDamage.expiryDate}
-                                onChange={(e) =>
-                                  handleInsuranceFieldChange("expiryDate", e.target.value, setPropertyDamage)
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              />
-                            </div>
                           </div>
                         </div>
 
@@ -1296,12 +1319,23 @@ export default function ManagerRequirements() {
                             onClick={() => handleUploadClick("businessInterruption")}
                           >
                             {businessInterruption.preview ? (
-                              <div className="relative w-full h-32">
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleImageClick(businessInterruption.preview)
+                                }}
+                              >
                                 <img
                                   src={businessInterruption.preview || "/placeholder.svg"}
                                   alt="Business Interruption Insurance Preview"
-                                  className="object-contain w-full h-full"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <>
@@ -1319,38 +1353,6 @@ export default function ManagerRequirements() {
                                 handleInsuranceFileChange(e, "businessInterruption", setBusinessInterruption)
                               }
                             />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label htmlFor="bi-policy" className="block text-xs text-gray-500 mb-1">
-                                Policy Number
-                              </label>
-                              <input
-                                id="bi-policy"
-                                type="text"
-                                value={businessInterruption.policyNumber}
-                                onChange={(e) =>
-                                  handleInsuranceFieldChange("policyNumber", e.target.value, setBusinessInterruption)
-                                }
-                                placeholder="e.g., BI-12345678"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor="bi-expiry" className="block text-xs text-gray-500 mb-1">
-                                Expiry Date
-                              </label>
-                              <input
-                                id="bi-expiry"
-                                type="date"
-                                value={businessInterruption.expiryDate}
-                                onChange={(e) =>
-                                  handleInsuranceFieldChange("expiryDate", e.target.value, setBusinessInterruption)
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              />
-                            </div>
                           </div>
                         </div>
 
@@ -1373,12 +1375,23 @@ export default function ManagerRequirements() {
                             onClick={() => handleUploadClick("bondingInsurance")}
                           >
                             {bondingInsurance.preview ? (
-                              <div className="relative w-full h-32">
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleImageClick(bondingInsurance.preview)
+                                }}
+                              >
                                 <img
                                   src={bondingInsurance.preview || "/placeholder.svg"}
                                   alt="Bonding Insurance Preview"
-                                  className="object-contain w-full h-full"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <>
@@ -1394,38 +1407,6 @@ export default function ManagerRequirements() {
                               accept=".jpg,.jpeg,.png,.pdf"
                               onChange={(e) => handleInsuranceFileChange(e, "bondingInsurance", setBondingInsurance)}
                             />
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label htmlFor="bond-policy" className="block text-xs text-gray-500 mb-1">
-                                Policy Number
-                              </label>
-                              <input
-                                id="bond-policy"
-                                type="text"
-                                value={bondingInsurance.policyNumber}
-                                onChange={(e) =>
-                                  handleInsuranceFieldChange("policyNumber", e.target.value, setBondingInsurance)
-                                }
-                                placeholder="e.g., BO-12345678"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor="bond-expiry" className="block text-xs text-gray-500 mb-1">
-                                Expiry Date
-                              </label>
-                              <input
-                                id="bond-expiry"
-                                type="date"
-                                value={bondingInsurance.expiryDate}
-                                onChange={(e) =>
-                                  handleInsuranceFieldChange("expiryDate", e.target.value, setBondingInsurance)
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              />
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -1835,10 +1816,6 @@ export default function ManagerRequirements() {
                                   <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
                                     <Shield className="h-6 w-6 text-sky-500" />
                                   </div>
-                                  <div>
-                                    <p className="text-sm font-medium">Policy #{generalLiability.policyNumber}</p>
-                                    <p className="text-xs text-gray-500">Expires: {generalLiability.expiryDate}</p>
-                                  </div>
                                 </div>
                               </div>
                             ) : (
@@ -1852,10 +1829,6 @@ export default function ManagerRequirements() {
                                 <div className="flex items-center">
                                   <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
                                     <HardHat className="h-6 w-6 text-sky-500" />
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-medium">Policy #{workersComp.policyNumber}</p>
-                                    <p className="text-xs text-gray-500">Expires: {workersComp.expiryDate}</p>
                                   </div>
                                 </div>
                               </div>
@@ -1872,10 +1845,6 @@ export default function ManagerRequirements() {
                                   <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
                                     <Briefcase className="h-6 w-6 text-sky-500" />
                                   </div>
-                                  <div>
-                                    <p className="text-sm font-medium">Policy #{professionalIndemnity.policyNumber}</p>
-                                    <p className="text-xs text-gray-500">Expires: {professionalIndemnity.expiryDate}</p>
-                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -1887,10 +1856,6 @@ export default function ManagerRequirements() {
                                 <div className="flex items-center">
                                   <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
                                     <Home className="h-6 w-6 text-sky-500" />
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-medium">Policy #{propertyDamage.policyNumber}</p>
-                                    <p className="text-xs text-gray-500">Expires: {propertyDamage.expiryDate}</p>
                                   </div>
                                 </div>
                               </div>
@@ -1904,10 +1869,6 @@ export default function ManagerRequirements() {
                                   <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
                                     <PauseCircle className="h-6 w-6 text-sky-500" />
                                   </div>
-                                  <div>
-                                    <p className="text-sm font-medium">Policy #{businessInterruption.policyNumber}</p>
-                                    <p className="text-xs text-gray-500">Expires: {businessInterruption.expiryDate}</p>
-                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -1919,10 +1880,6 @@ export default function ManagerRequirements() {
                                 <div className="flex items-center">
                                   <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
                                     <CheckSquare className="h-6 w-6 text-sky-500" />
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-medium">Policy #{bondingInsurance.policyNumber}</p>
-                                    <p className="text-xs text-gray-500">Expires: {bondingInsurance.expiryDate}</p>
                                   </div>
                                 </div>
                               </div>
@@ -1992,9 +1949,36 @@ export default function ManagerRequirements() {
                 ) : (
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-sky-500 text-white rounded-full hover:bg-sky-600 transition-all duration-300 hover:shadow-md"
+                    disabled={loading}
+                    className={`px-5 py-2 rounded-full transition-all duration-300 hover:shadow-md flex items-center ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-sky-500 hover:bg-sky-600 text-white"}`}
                   >
-                    Submit Registration
+                    {loading ? (
+                      <>
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      "Submit Registration"
+                    )}
                   </button>
                 )}
               </div>
@@ -2059,6 +2043,45 @@ export default function ManagerRequirements() {
         </div>
       )}
 
+      {/* Success Modal */}
+      {isSuccessModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          style={{ animation: "fadeIn 0.3s ease-out" }}
+        >
+          <div
+            className="mx-auto max-w-md w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20 p-6"
+            style={{ animation: "fadeIn 0.5s ease-out" }}
+          >
+            <div className="flex flex-col items-center text-center">
+              <div
+                className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6"
+                style={{ animation: "pulse 2s ease-in-out infinite" }}
+              >
+                <CheckSquare className="h-10 w-10 text-green-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
+              </div>
+
+              <h3 className="text-xl font-medium text-gray-900 mb-2" style={{ animation: "slideInUp 0.4s ease-out" }}>
+                Registration Successful!
+              </h3>
+
+              <p className="text-gray-600 mb-6" style={{ animation: "fadeIn 0.5s ease-out 0.2s both" }}>
+                Your business account has been created successfully. Our team will review your application and you'll be
+                notified once approved.
+              </p>
+
+              <button
+                onClick={() => setIsSuccessModalOpen(false)}
+                className="px-8 py-3 bg-blue-500 text-white rounded-full font-medium shadow-sm hover:bg-blue-600 active:scale-95 transition-all duration-200"
+                style={{ animation: "fadeIn 0.5s ease-out 0.3s both" }}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Location Selector Modal */}
       {showLocationModal && !showWarningModal && (
         <LocationSelector
@@ -2072,6 +2095,8 @@ export default function ManagerRequirements() {
           previousLocation={companyLocation}
         />
       )}
+      {/* Image Popup */}
+      <ImagePopup imageUrl={popupImage} isOpen={isImagePopupOpen} onClose={() => setIsImagePopupOpen(false)} />
     </div>
   )
 }
