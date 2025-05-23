@@ -139,7 +139,7 @@ const FloatingDock: React.FC = () => {
           <DockItem
             icon={<PowerOff size={20} strokeWidth={1.5} color="gray" />}
             label="Logout"
-            to="/login-alt"
+            to="/login"
             isActive={location.pathname === "/logout"}
           />
 

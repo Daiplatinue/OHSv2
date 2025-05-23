@@ -545,6 +545,45 @@ const getNotificationStats = async (req, res) => {
   }
 }
 
+// Clear all notifications for a user
+const clearAllNotifications = async (req, res) => {
+  try {
+    const { userId } = req.params
+
+    // Validate user ID
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      })
+    }
+
+    // Validate userId format
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID format",
+      })
+    }
+
+    // Delete all notifications for the user
+    const result = await Notification.deleteMany({ userId: userId })
+
+    return res.status(200).json({
+      success: true,
+      message: "All notifications cleared successfully",
+      count: result.deletedCount,
+    })
+  } catch (error) {
+    console.error("Error clearing all notifications:", error)
+    return res.status(500).json({
+      success: false,
+      message: "Failed to clear all notifications",
+      error: error.message,
+    })
+  }
+}
+
 export {
   createNotification,
   createWelcomeNotification,
@@ -555,4 +594,5 @@ export {
   deleteNotification,
   createBookingNotification,
   getNotificationStats,
+  clearAllNotifications,
 }

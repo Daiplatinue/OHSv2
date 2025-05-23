@@ -30,14 +30,10 @@ import {
   updateBookingStatus,
 } from "./controller/bookingController.js"
 
-import {
-  createNotification,
-  getUserNotifications,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
-  deleteNotification,
-  createBookingNotification,
-} from "./controller/notificationController.js"
+import { createBookingNotification } from "./controller/notificationController.js"
+
+// Import the WebSocket server initialization function
+import { initWebSocketServer } from "./websocket-server.js"
 
 import { User } from "./models/user.js"
 
@@ -203,15 +199,21 @@ app.get("/bookings/user/:userId", getUserBookings)
 app.get("/bookings/:id", getBookingById)
 app.patch("/bookings/:id/status", updateBookingStatus)
 
+// Replace the existing notification routes with the new router
+import notificationRoutes from "./routes/notification-route.js"
+app.use("/notifications", notificationRoutes)
+
 // Notification routes
-app.post("/notifications", authenticateToken, createNotification)
-app.get("/notifications/user/:userId", authenticateToken, getUserNotifications)
-app.put("/notifications/:notificationId/read", authenticateToken, markNotificationAsRead)
-app.put("/notifications/user/:userId/read-all", authenticateToken, markAllNotificationsAsRead)
-app.delete("/notifications/:notificationId", authenticateToken, deleteNotification)
-app.post("/notifications/booking", authenticateToken, createBookingNotification)
+// app.post("/notifications", authenticateToken, createNotification)
+// app.get("/notifications/user/:userId", authenticateToken, getUserNotifications)
+// app.put("/notifications/:notificationId/read", authenticateToken, markNotificationAsRead)
+// app.put("/notifications/user/:userId/read-all", authenticateToken, markAllNotificationsAsRead)
+// app.delete("/notifications/:notificationId", authenticateToken, deleteNotification)
+// app.post("/notifications/booking", authenticateToken, createBookingNotification)
 
 // Create notification after booking status change
+import { sendNotificationToUser } from "./websocket-server.js"
+
 app.use((req, res, next) => {
   const originalSend = res.send
 
@@ -226,13 +228,27 @@ app.use((req, res, next) => {
           const booking = responseBody.booking
 
           // Create a notification for the booking status change
-          createBookingNotification({
-            userId: booking.userId,
-            bookingId: booking._id,
-            status: booking.status,
-            serviceName: booking.productName || booking.service,
-            providerName: booking.providerName || booking.companyName,
-          }).catch((err) => {
+          createBookingNotification(
+            {
+              body: {
+                userId: booking.userId,
+                bookingId: booking._id,
+                status: booking.status,
+                serviceName: booking.productName || booking.service,
+                providerName: booking.providerName || booking.companyName,
+              },
+            },
+            {
+              status: (code) => ({
+                json: (data) => {
+                  // If notification was created successfully, send it via WebSocket
+                  if (data.success && data.notification) {
+                    sendNotificationToUser(booking.userId, data.notification)
+                  }
+                },
+              }),
+            },
+          ).catch((err) => {
             console.error("Error creating notification after booking update:", err)
           })
         }
@@ -268,6 +284,9 @@ app.use((err, req, res, next) => {
 })
 
 const server = createServer(app)
+
+// Initialize WebSocket server
+const wss = initWebSocketServer(server)
 
 const PORT = process.env.PORT || 3000
 server.listen(PORT, () => {

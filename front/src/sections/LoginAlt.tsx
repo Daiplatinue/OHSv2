@@ -1,5 +1,9 @@
+"use client"
+
+import type React from "react"
+
 import { useState, useEffect } from "react"
-import { Eye, EyeOff, X } from "lucide-react"
+import { Eye, EyeOff, X, AlertTriangle, XCircle, Clock } from "lucide-react"
 import { useNavigate } from "react-router-dom" // Replace next/router with react-router-dom
 import CustomerRequirements from "./Styles/CustomerRequirements"
 import ManagerRequirements from "./Styles/ManagerRequirements"
@@ -113,6 +117,8 @@ function App() {
   const [showModal, setShowModal] = useState(false)
   const [accountType, setAccountType] = useState<string | null>(null)
   const [registrationStep, setRegistrationStep] = useState<"type" | "requirements">("type")
+  const [showPendingWarning, setShowPendingWarning] = useState(false)
+  const [modalVisible, setModalVisible] = useState(false) // For animation
 
   const [, setValidId] = useState<File | null>(null)
   const [, setSalaryCertificate] = useState<File | null>(null)
@@ -153,20 +159,44 @@ function App() {
         throw new Error(data.message || "Login failed")
       }
 
-      // Store user data in localStorage
-      localStorage.setItem("user", JSON.stringify(data))
+      // Verify data structure
+      if (!data.user) {
+        console.error("Missing user data in response:", data)
+        throw new Error("Invalid response format")
+      }
 
-      // Redirect based on user type
-      if (data.type === "customer") {
+      // Store user data in localStorage - make sure we're storing the user object
+      localStorage.setItem("user", JSON.stringify(data.user))
+
+      // Add console logs for debugging
+      console.log("Login successful, user data:", data.user)
+      console.log("User type:", data.user.type || "undefined")
+      console.log("User status:", data.user.status || "undefined")
+
+      // Check user status before allowing navigation
+      if (data.user.status !== "active") {
+        // Show warning modal based on status
+        setShowPendingWarning(true)
+        setTimeout(() => setModalVisible(true), 10) // Slight delay for animation
+        // Don't navigate - user must resolve account status first
+        return
+      }
+
+      // Only proceed with navigation if account is active
+      if (data.user.type === "customer") {
+        console.log("Redirecting to customer page: /")
         navigate("/")
-      } else if (data.type === "manager") {
+      } else if (data.user.type === "manager") {
+        console.log("Redirecting to manager page: /ceo")
         navigate("/ceo")
-      } else if (data.type === "admin") {
+      } else if (data.user.type === "admin") {
+        console.log("Redirecting to admin page: /admin")
         navigate("/admin")
-      } else if (data.type === "provider") {
+      } else if (data.user.type === "provider") {
+        console.log("Redirecting to provider page: /provider")
         navigate("/provider")
       } else {
-        // Default fallback
+        console.log("Unknown user type, redirecting to home: /")
         navigate("/")
       }
     } catch (err) {
@@ -176,6 +206,11 @@ function App() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const closeStatusModal = () => {
+    setModalVisible(false)
+    setTimeout(() => setShowPendingWarning(false), 300) // Wait for animation to complete
   }
 
   useEffect(() => {
@@ -225,6 +260,46 @@ function App() {
     }
   }, [accountType])
 
+  // Get user data for status modal
+  const userData = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}") : {}
+  const userStatus = userData.status || "pending"
+
+  // Status-specific content
+  const getStatusContent = () => {
+    switch (userStatus) {
+      case "pending":
+        return {
+          icon: <Clock className="h-8 w-8 text-amber-500" />,
+          title: "Account Pending Approval",
+          description: "Your account is awaiting administrator approval. You'll be notified once approved.",
+          color: "amber",
+        }
+      case "inactive":
+        return {
+          icon: <XCircle className="h-8 w-8 text-gray-500" />,
+          title: "Account Inactive",
+          description: "Your account is currently inactive. Please contact support to reactivate it.",
+          color: "gray",
+        }
+      case "suspended":
+        return {
+          icon: <AlertTriangle className="h-8 w-8 text-red-500" />,
+          title: "Account Suspended",
+          description: "Your account has been suspended. Please contact our support team for assistance.",
+          color: "red",
+        }
+      default:
+        return {
+          icon: <AlertTriangle className="h-8 w-8 text-amber-500" />,
+          title: "Account Status Issue",
+          description: "There's an issue with your account. Please contact our support team for help.",
+          color: "amber",
+        }
+    }
+  }
+
+  const statusContent = getStatusContent()
+
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* Left side with image and description */}
@@ -235,8 +310,9 @@ function App() {
             {slideshowImages.map((image, index) => (
               <div
                 key={index}
-                className={`absolute inset-0 transition-opacity duration-1000 ${activeSlide === index ? "opacity-100" : "opacity-0"
-                  }`}
+                className={`absolute inset-0 transition-opacity duration-1000 ${
+                  activeSlide === index ? "opacity-100" : "opacity-0"
+                }`}
               >
                 <img
                   src={image.src || "/placeholder.svg"}
@@ -252,8 +328,9 @@ function App() {
             {slideshowImages.map((_, index) => (
               <button
                 key={index}
-                className={`w-4 h-2 rounded-full transition-all ${activeSlide === index ? "bg-white w-7" : "bg-white/50"
-                  }`}
+                className={`w-4 h-2 rounded-full transition-all ${
+                  activeSlide === index ? "bg-white w-7" : "bg-white/50"
+                }`}
                 onClick={() => setActiveSlide(index)}
                 aria-label={`Go to slide ${index + 1}`}
               />
@@ -466,6 +543,61 @@ function App() {
                 ) : null}
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Swift UI / Apple-inspired Status Modal */}
+      {showPendingWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop with blur effect */}
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300"
+            style={{ opacity: modalVisible ? 1 : 0 }}
+            onClick={closeStatusModal}
+          />
+
+          {/* Modal card with Apple-inspired design */}
+          <div
+            className="relative bg-white/90 backdrop-blur-md rounded-2xl max-w-md w-full shadow-2xl overflow-hidden transition-all duration-300 transform"
+            style={{
+              opacity: modalVisible ? 1 : 0,
+              transform: modalVisible ? "scale(1)" : "scale(0.95)",
+              boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            {/* Status icon at top */}
+            <div className={`w-full flex justify-center pt-8 pb-2`}>
+              <div className={`rounded-full p-4 bg-${statusContent.color}-50`}>{statusContent.icon}</div>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 pb-6 pt-2">
+              <h3 className="text-xl font-semibold text-center mb-2 font-['SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif]">
+                {statusContent.title}
+              </h3>
+
+              <p className="text-center text-gray-600 mb-8 font-['SF Pro Text', -apple-system, BlinkMacSystemFont, system-ui, sans-serif] text-sm leading-relaxed">
+                {statusContent.description}
+              </p>
+
+              {/* Apple-style buttons */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => (window.location.href = "mailto:support@handygo.com")}
+                  className="w-full py-3 px-4 bg-blue-500 text-white font-medium rounded-full hover:bg-blue-600 transition-colors duration-200 flex justify-center items-center"
+                >
+                  Contact Support
+                </button>
+
+                <button
+                  onClick={closeStatusModal}
+                  className="w-full py-3 px-4 bg-gray-200 text-gray-800 font-medium rounded-full hover:bg-gray-300 transition-colors duration-200"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

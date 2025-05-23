@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import Home from './sections/Home';
-import Login from './sections/Login';
 import LoginAlt from './sections/LoginAlt';
 import Transaction from './sections/Transaction';
 import MyProfileCustomer from './sections/Customer_Tabs/MyProfileCustomer';
@@ -35,8 +34,7 @@ const App: React.FC = () => {
       <Routes>
 
         <Route path='/transaction' element={<Transaction />} />
-        <Route path='/login-alt' element={<LoginAlt />} />
-        <Route path='/login' element={<Login />} />
+        <Route path='/login' element={<LoginAlt />} />
 
         {/* Chat */}
         <Route path='/chat' element={<ChatRTC />} />

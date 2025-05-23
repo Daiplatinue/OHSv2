@@ -1,9 +1,8 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import { X, Check, Calendar, CreditCard, AlertTriangle, Info, CheckCircle } from "lucide-react"
+import { X, Check, Calendar, CreditCard, AlertTriangle, Info, CheckCircle, ChevronDown } from "lucide-react"
 import axios from "axios"
+import { motion, AnimatePresence } from "framer-motion"
 
 export interface NotificationItem {
   _id: string
@@ -25,7 +24,72 @@ interface NotificationProps {
 const NotificationPopup: React.FC<NotificationProps> = ({ userId, onClose, updateBadge }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [viewAll, setViewAll] = useState(false)
   const notificationRef = useRef<HTMLDivElement>(null)
+  // Add a new state to track expanded notification IDs
+  const [expandedNotifications, setExpandedNotifications] = useState<string[]>([])
+
+  // WebSocket connection
+  const [socket, setSocket] = useState<WebSocket | null>(null)
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    // Try to get userId from localStorage if not provided
+    let userIdToUse = userId
+    if (!userIdToUse) {
+      const userData = localStorage.getItem("user")
+      if (userData) {
+        try {
+          const parsedData = JSON.parse(userData)
+          userIdToUse = (parsedData.user && parsedData.user._id) || parsedData._id || parsedData.id
+        } catch (error) {
+          console.error("Error parsing user data:", error)
+        }
+      }
+    }
+
+    if (!userIdToUse) return
+
+    // Create WebSocket connection
+    const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3000"}/ws?userId=${userIdToUse}`
+    const newSocket = new WebSocket(wsUrl)
+
+    newSocket.onopen = () => {
+      console.log("WebSocket connection established")
+    }
+
+    newSocket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+
+        // Handle different message types
+        if (data.type === "notification") {
+          // Add new notification to the list
+          setNotifications((prev) => [data.notification, ...prev])
+        }
+      } catch (error) {
+        console.error("Error processing WebSocket message:", error)
+      }
+    }
+
+    newSocket.onerror = (error) => {
+      console.error("WebSocket error:", error)
+    }
+
+    newSocket.onclose = () => {
+      console.log("WebSocket connection closed")
+    }
+
+    setSocket(newSocket)
+
+    // Clean up WebSocket connection when component unmounts
+    return () => {
+      if (newSocket) {
+        newSocket.close()
+      }
+    }
+  }, [userId])
 
   // Fetch notifications when component mounts or userId changes
   useEffect(() => {
@@ -52,6 +116,11 @@ const NotificationPopup: React.FC<NotificationProps> = ({ userId, onClose, updat
       updateBadge(notifications)
     }
   }, [notifications, updateBadge])
+
+  // Animation effect when component mounts
+  useEffect(() => {
+    setIsExpanded(true)
+  }, [])
 
   // Fetch notifications from API
   const fetchNotifications = async () => {
@@ -100,7 +169,7 @@ const NotificationPopup: React.FC<NotificationProps> = ({ userId, onClose, updat
       // If we have a token, try to fetch from API
       if (token) {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL || "http://localhost:3000"}/notifications/user/${userIdToUse}`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/notifications/user/${userIdToUse}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -144,7 +213,7 @@ const NotificationPopup: React.FC<NotificationProps> = ({ userId, onClose, updat
       if (!token) return
 
       await axios.put(
-        `${process.env.REACT_APP_API_URL || "http://localhost:3000"}/notifications/${notificationId}/read`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/notifications/${notificationId}/read`,
         {},
         {
           headers: {
@@ -207,7 +276,7 @@ const NotificationPopup: React.FC<NotificationProps> = ({ userId, onClose, updat
       if (!token) return
 
       await axios.put(
-        `${process.env.REACT_APP_API_URL || "http://localhost:3000"}/notifications/user/${userIdToUse}/read-all`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/notifications/user/${userIdToUse}/read-all`,
         {},
         {
           headers: {
@@ -233,6 +302,60 @@ const NotificationPopup: React.FC<NotificationProps> = ({ userId, onClose, updat
           status: "read",
         })),
       )
+    }
+  }
+
+  // Clear all notifications (from database)
+  const clearAllNotifications = async () => {
+    try {
+      // Try to get userId from localStorage
+      let userIdToUse = userId
+      if (!userIdToUse) {
+        const userData = localStorage.getItem("user")
+        if (userData) {
+          try {
+            const parsedData = JSON.parse(userData)
+            userIdToUse = (parsedData.user && parsedData.user._id) || parsedData._id || parsedData.id
+          } catch (error) {
+            console.error("Error parsing user data:", error)
+            return
+          }
+        }
+      }
+
+      if (!userIdToUse) return
+
+      // Get user token from localStorage
+      const userData = localStorage.getItem("user")
+      if (!userData) return
+
+      let token = null
+      try {
+        const parsedData = JSON.parse(userData)
+        token = parsedData.token || (parsedData.user && parsedData.user.token)
+      } catch (error) {
+        console.error("Error parsing user data for token:", error)
+        return
+      }
+
+      if (!token) return
+
+      // Delete all notifications for the user
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/notifications/user/${userIdToUse}/clear-all`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      // Update local state
+      setNotifications([])
+    } catch (error) {
+      console.error("Error clearing all notifications:", error)
+      // Update local state even if API fails
+      setNotifications([])
     }
   }
 
@@ -396,85 +519,165 @@ const NotificationPopup: React.FC<NotificationProps> = ({ userId, onClose, updat
       markAsRead(notification._id)
     }
 
-    // Navigate to link if available
-    if (notification.link) {
-      window.location.href = notification.link
-    }
+    // Toggle expanded state for this notification
+    setExpandedNotifications((prev) =>
+      prev.includes(notification._id) ? prev.filter((id) => id !== notification._id) : [...prev, notification._id],
+    )
 
-    // Close notification panel
-    if (onClose) onClose()
+    // Don't navigate or close the panel
+    // if (notification.link) {
+    //   window.location.href = notification.link;
+    // }
+    // if (onClose) onClose();
+  }
+
+  // Toggle view all notifications
+  const toggleViewAll = () => {
+    setViewAll(!viewAll)
   }
 
   // Get unread count
   const unreadCount = notifications.filter((notification) => notification.status === "unread").length
 
+  // Determine which notifications to display
+  const displayedNotifications = viewAll ? notifications : notifications.slice(0, 3)
+
   return (
-    <div className="relative w-full" ref={notificationRef}>
-      {/* Notification Panel */}
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden z-50 border border-gray-200 w-full h-full max-h-[500px] flex flex-col">
-        {/* Header */}
-        <div className="flex justify-between items-center px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-800">Notifications</h3>
-          <div className="flex space-x-2">
-            {unreadCount > 0 && (
-              <button onClick={markAllAsRead} className="text-xs text-sky-600 hover:text-sky-800 flex items-center">
-                <Check className="h-3 w-3 mr-1" />
-                Mark all as read
-              </button>
-            )}
-            {onClose && (
-              <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-                <X className="h-5 w-5" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Notification List */}
-        <div className="overflow-y-auto flex-grow">
-          {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500"></div>
-            </div>
-          ) : notifications.length === 0 ? (
-            <div className="py-8 text-center text-gray-500">
-              <p>No notifications yet</p>
-            </div>
-          ) : (
-            notifications.map((notification) => (
-              <div
-                key={notification._id}
-                className={`px-4 py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${getBackgroundColor(
-                  notification,
-                )}`}
-                onClick={() => handleNotificationClick(notification)}
-              >
-                <div className="flex">
-                  <div className="flex-shrink-0 mr-3">{getIcon(notification)}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{notification.title}</p>
-                    <p className="text-sm text-gray-600 line-clamp-2">{notification.description}</p>
-                    <p className="text-xs text-gray-500 mt-1">{formatRelativeTime(notification.createdAt)}</p>
-                  </div>
-                  {notification.status === "unread" && (
-                    <div className="ml-2 flex-shrink-0">
-                      <span className="inline-block w-2 h-2 bg-sky-500 rounded-full"></span>
-                    </div>
-                  )}
-                </div>
+    <AnimatePresence>
+      {isExpanded && (
+        <motion.div
+          className="relative w-full"
+          ref={notificationRef}
+          initial={{ opacity: 0, y: -20, height: 0 }}
+          animate={{ opacity: 1, y: 0, height: "auto" }}
+          exit={{ opacity: 0, y: -20, height: 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+        >
+          {/* Notification Panel */}
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden z-50 border border-gray-200 w-full flex flex-col">
+            {/* Header */}
+            <div className="flex justify-between items-center px-4 py-3 bg-gray-50 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-800">Notifications</h3>
+              <div className="flex space-x-2">
+                {unreadCount > 0 && (
+                  <button onClick={markAllAsRead} className="text-xs text-sky-600 hover:text-sky-800 flex items-center">
+                    <Check className="h-3 w-3 mr-1" />
+                    Mark all as read
+                  </button>
+                )}
+                <button
+                  onClick={clearAllNotifications}
+                  className="text-xs text-red-600 hover:text-red-800 flex items-center"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Clear all
+                </button>
+                {onClose && (
+                  <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+                    <X className="h-5 w-5" />
+                  </button>
+                )}
               </div>
-            ))
-          )}
-        </div>
+            </div>
 
-        {/* Footer */}
-        <div className="px-4 py-2 bg-gray-50 border-t border-gray-200 text-center">
-          <a href="/notifications" className="text-sm text-sky-600 hover:text-sky-800">
-            View all notifications
-          </a>
-        </div>
-      </div>
-    </div>
+            {/* Notification List */}
+            <div className={`${viewAll ? "overflow-y-auto max-h-[300px]" : "overflow-hidden"}`}>
+              {loading ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500"></div>
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="py-8 text-center text-gray-500">
+                  <p>No notifications yet</p>
+                </div>
+              ) : (
+                <motion.div
+                  initial="hidden"
+                  animate="visible"
+                  variants={{
+                    visible: {
+                      transition: {
+                        staggerChildren: 0.1,
+                      },
+                    },
+                  }}
+                >
+                  {displayedNotifications.map((notification) => (
+                    <motion.div
+                      key={notification._id}
+                      variants={{
+                        hidden: { opacity: 0, y: 10 },
+                        visible: { opacity: 1, y: 0 },
+                      }}
+                      transition={{ duration: 0.3 }}
+                      className={`px-4 py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${getBackgroundColor(
+                        notification,
+                      )}`}
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <div className="flex">
+                        <div className="flex-shrink-0 mr-3">{getIcon(notification)}</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{notification.title}</p>
+                          <p className="text-sm text-gray-600 line-clamp-2">{notification.description}</p>
+                          <p className="text-xs text-gray-500 mt-1">{formatRelativeTime(notification.createdAt)}</p>
+                        </div>
+                        {notification.status === "unread" && (
+                          <div className="ml-2 flex-shrink-0">
+                            <span className="inline-block w-2 h-2 bg-sky-500 rounded-full"></span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Expanded content */}
+                      {expandedNotifications.includes(notification._id) && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mt-2 pt-2 border-t border-gray-100"
+                        >
+                          <p className="text-sm text-gray-700">{notification.description}</p>
+                          {notification.link && (
+                            <a
+                              href={notification.link}
+                              className="text-sm text-sky-600 hover:text-sky-800 mt-2 inline-block"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              View details
+                            </a>
+                          )}
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-4 py-2 bg-gray-50 border-t border-gray-200 text-center">
+              {notifications.length > 3 && (
+                <button
+                  onClick={toggleViewAll}
+                  className="text-sm text-sky-600 hover:text-sky-800 flex items-center justify-center w-full"
+                >
+                  {viewAll ? "Show less" : "View all notifications"}
+                  <ChevronDown
+                    className={`h-4 w-4 ml-1 transition-transform duration-300 ${viewAll ? "rotate-180" : ""}`}
+                  />
+                </button>
+              )}
+              {viewAll && (
+                <a href="/notifications" className="text-sm text-sky-600 hover:text-sky-800 block mt-1">
+                  Go to notifications page
+                </a>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 

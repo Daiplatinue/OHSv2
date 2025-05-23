@@ -282,7 +282,7 @@ const registerCustomer = async (req, res) => {
       bio: bio?.trim() || "",
       location: locationData,
       type: "customer", // Always set type to customer
-      status: "active", // Customers are active by default
+      status: "pending", // Changed from "active" to "pending" - all new accounts need approval
       verification: "unverified", // Set verification status to unverified by default
       // Initialize optional fields
       profilePicture: "",
@@ -319,7 +319,7 @@ const registerCustomer = async (req, res) => {
       newUser._id.toString(),
       "customer",
       firstname.trim(),
-      "active",
+      "pending",
     )
 
     // Process files if user creation was successful
@@ -805,12 +805,6 @@ const loginUser = async (req, res) => {
     delete userWithoutPassword.password
     delete userWithoutPassword.refreshTokens
 
-    // If user is a customer, update status to pending
-    if (user.type === "customer" && user.status === "active") {
-      await User.findByIdAndUpdate(user._id, { status: "pending" })
-      userWithoutPassword.status = "pending"
-    }
-
     // Return user without password
     return res.json({
       success: true,
@@ -892,6 +886,120 @@ const logoutUser = async (req, res) => {
   }
 }
 
+// Admin function to create a user with active status
+const createUserByAdmin = async (req, res) => {
+  try {
+    console.log("Admin user creation request received")
+
+    // Verify that the requester is an admin
+    if (req.user.type !== "admin") {
+      return res.status(403).json({ message: "Unauthorized. Only admins can perform this action." })
+    }
+
+    const {
+      firstname,
+      lastname,
+      middleName,
+      email,
+      contact,
+      password,
+      gender,
+      bio,
+      type, // "customer", "manager", or "admin"
+      location,
+    } = req.body
+
+    // Basic validation
+    if (!firstname || !lastname || !email || !contact || !password || !type) {
+      return res.status(400).json({
+        message: "Missing required fields",
+        details: "Please provide firstname, lastname, email, contact, password, and type",
+      })
+    }
+
+    // Check if user already exists
+    const exist = await User.findOne({ email: email.trim().toLowerCase() })
+    if (exist) {
+      return res.status(400).json({
+        message: "An account with this email already exists",
+        field: "email",
+      })
+    }
+
+    // Prepare location data
+    const locationData = location
+      ? {
+          name: location.name || "",
+          lat: location.lat || 0,
+          lng: location.lng || 0,
+          distance: location.distance || 0,
+          zipCode: location.zipCode || "",
+        }
+      : {
+          name: "",
+          lat: 0,
+          lng: 0,
+          distance: 0,
+          zipCode: "",
+        }
+
+    // Create new user with active status since it's created by admin
+    const user = new User({
+      firstname: firstname.trim(),
+      lastname: lastname.trim(),
+      middleName: middleName?.trim() || "",
+      email: email.trim().toLowerCase(),
+      contact: contact.trim(),
+      password: "", // Will be set below
+      gender: gender?.trim() || "",
+      bio: bio?.trim() || "",
+      location: locationData,
+      type: type.trim(), // Set type as provided
+      status: "active", // Admin-created accounts are active by default
+      verification: "verified", // Admin-created accounts are verified by default
+      profilePicture: "",
+      coverPhoto: "",
+      frontId: "",
+      backId: "",
+    })
+
+    // Hash the password
+    user.password = user.hashPassword(password)
+
+    // Save the user
+    const newUser = await user.save()
+    console.log(`User created by admin with ID: ${newUser._id}`)
+
+    // Generate tokens
+    const { accessToken, refreshToken } = generateTokens(newUser)
+
+    // Return user without sensitive data
+    const userResponse = {
+      _id: newUser._id,
+      firstname: newUser.firstname,
+      lastname: newUser.lastname,
+      email: newUser.email,
+      contact: newUser.contact,
+      type: newUser.type,
+      status: newUser.status,
+      verification: newUser.verification,
+      createdAt: newUser.createdAt,
+    }
+
+    return res.status(201).json({
+      success: true,
+      user: userResponse,
+      message: `${type.charAt(0).toUpperCase() + type.slice(1)} account created successfully by admin.`,
+    })
+  } catch (error) {
+    console.error("Admin user creation error:", error)
+    return res.status(500).json({
+      message: "Server error during user creation",
+      error: error.message,
+    })
+  }
+}
+
 export {
   registerUser,
   registerCustomer,
@@ -901,4 +1009,5 @@ export {
   updateUserProfile,
   refreshToken,
   logoutUser,
+  createUserByAdmin,
 }

@@ -6,6 +6,31 @@ import LocationSelectionModal from "./LocationSelectionModal"
 import CompanyModal from "./CompanyModal"
 import { getMockCompanyData } from "./company-data"
 
+// Add animation keyframes
+const animationStyles = `
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes bounceIn {
+    0% { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  
+  @keyframes slideInUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+`
+
 interface Seller {
   id: number
   name: string
@@ -58,6 +83,9 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState<boolean>(false)
   const [selectedCompany, setSelectedCompany] = useState<any>(null)
   const [selectedTime, setSelectedTime] = useState<string>("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
 
   const mapRef = useRef<L.Map | null>(null)
   const markerRef = useRef<L.Marker | null>(null)
@@ -310,21 +338,67 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
 
       const result = await response.json()
       console.log("Booking created successfully:", result)
+
+      // Create booking notification
+      try {
+        const notificationData = {
+          userId: userId,
+          bookingId: result._id,
+          status: "pending",
+          serviceName: productName,
+          providerName: selectedSeller.name,
+        }
+
+        console.log("Creating booking notification:", notificationData)
+
+        const notificationResponse = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/notifications/booking`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: token ? `Bearer ${token}` : "",
+            },
+            body: JSON.stringify(notificationData),
+          },
+        )
+
+        if (notificationResponse.ok) {
+          console.log("Booking notification created successfully")
+        } else {
+          console.error("Error creating booking notification:", await notificationResponse.json())
+        }
+      } catch (notificationError) {
+        console.error("Error creating booking notification:", notificationError)
+        // Continue with booking success even if notification fails
+      }
       return true
     } catch (error) {
       console.error("Error submitting booking:", error)
+      setErrorMessage("There was an error creating your booking. Please try again.")
+      setIsErrorModalOpen(true)
       return false
     }
   }
 
   const handleConfirmBooking = async () => {
-    const success = await submitBookingToDatabase()
-    if (success) {
-      setConfirmationStep(false)
-      setBookingSuccess(true)
-    } else {
-      // Handle error - you could show an error message to the user
-      alert("There was an error creating your booking. Please try again.")
+    setIsSubmitting(true)
+    setErrorMessage(null)
+
+    try {
+      const success = await submitBookingToDatabase()
+      if (success) {
+        setIsSubmitting(false)
+        setConfirmationStep(false)
+        setBookingSuccess(true)
+      } else {
+        setIsSubmitting(false)
+        setErrorMessage("There was an error creating your booking. Please try again.")
+      }
+    } catch (error) {
+      console.error("Error during booking confirmation:", error)
+      setIsSubmitting(false)
+      setErrorMessage("An unexpected error occurred. Please try again.")
     }
   }
 
@@ -370,8 +444,14 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
 
   const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 
+  const handleErrorModalClose = () => {
+    setIsErrorModalOpen(false)
+    setErrorMessage(null)
+  }
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">
+      <style>{animationStyles}</style>
       <div className="bg-white/95 backdrop-blur-sm rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white/40">
         {/* Header section - always visible */}
         <div className="p-6 flex justify-between items-center border-b border-gray-100/50 bg-white/80 backdrop-blur-sm">
@@ -756,130 +836,153 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
 
           {confirmationStep && (
             <div className="p-6">
-              <div className="flex flex-col md:flex-row gap-6">
-                {/* Left side - Booking information */}
-                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6 flex-1">
-                  <h3 className="text-lg font-medium mb-4">Booking Details</h3>
+              {isSubmitting ? (
+                <div className="flex flex-col items-center justify-center py-12 animate-fadeIn">
+                  <div className="w-16 h-16 border-4 border-gray-200 border-t-sky-600 rounded-full animate-spin mb-4"></div>
+                  <p className="text-gray-700 font-medium">Processing your booking...</p>
+                  <p className="text-gray-500 text-sm mt-2">Please wait while we confirm your request.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {/* Left side - Booking information */}
+                    <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6 flex-1">
+                      <h3 className="text-lg font-medium mb-4">Booking Details</h3>
 
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                      <span className="text-gray-600">Service:</span>
-                      <span className="font-medium">{productName}</span>
-                    </div>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                          <span className="text-gray-600">Service:</span>
+                          <span className="font-medium">{productName}</span>
+                        </div>
 
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                      <span className="text-gray-600">Provider:</span>
-                      <span className="font-medium">{selectedSeller?.name}</span>
-                    </div>
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                          <span className="text-gray-600">Provider:</span>
+                          <span className="font-medium">{selectedSeller?.name}</span>
+                        </div>
 
-                    {selectedSeller?.workerCount && (
-                      <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                        <span className="text-gray-600">Workers:</span>
-                        <span className="font-medium">
-                          {selectedSeller.workerCount} worker{selectedSeller.workerCount > 1 ? "s" : ""}
-                        </span>
+                        {selectedSeller?.workerCount && (
+                          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                            <span className="text-gray-600">Workers:</span>
+                            <span className="font-medium">
+                              {selectedSeller.workerCount} worker{selectedSeller.workerCount > 1 ? "s" : ""}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                          <span className="text-gray-600">Date:</span>
+                          <span className="font-medium">{formatDate(selectedDate)}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                          <span className="text-gray-600">Time:</span>
+                          <span className="font-medium">
+                            {selectedTime
+                              ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                })
+                              : "Not specified"}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                          <span className="text-gray-600">Service Location:</span>
+                          <span className="font-medium">{selectedLocation?.name}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                          <span className="text-gray-600">Distance:</span>
+                          <span className="font-medium">{selectedLocation?.distance.toFixed(1)} km</span>
+                        </div>
+
+                        <div className="space-y-1 pb-2 border-b border-gray-200">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">Estimated Travel Times:</span>
+                          </div>
+                          <div className="pl-4">
+                            <div className="flex justify-between text-sm">
+                              <span>Light Traffic:</span>
+                              <span className="text-green-600">{selectedLocation?.lightTrafficTime} min</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span>Medium Traffic:</span>
+                              <span className="text-yellow-600">{selectedLocation?.midTrafficTime} min</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span>Heavy Traffic:</span>
+                              <span className="text-orange-600">{selectedLocation?.heavyTrafficTime} min</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span>Weather Issues:</span>
+                              <span className="text-red-600">{selectedLocation?.weatherIssuesTime} min</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    )}
-
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                      <span className="text-gray-600">Date:</span>
-                      <span className="font-medium">{formatDate(selectedDate)}</span>
                     </div>
 
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                      <span className="text-gray-600">Time:</span>
-                      <span className="font-medium">
-                        {selectedTime
-                          ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
-                              hour: "numeric",
-                              minute: "2-digit",
-                            })
-                          : "Not specified"}
-                      </span>
-                    </div>
+                    {/* Right side - Price calculations */}
+                    <div className="bg-white p-6 rounded-lg border border-gray-200 mb-6 flex-1 shadow-sm">
+                      <h3 className="text-lg font-medium mb-4">Price Breakdown</h3>
 
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                      <span className="text-gray-600">Service Location:</span>
-                      <span className="font-medium">{selectedLocation?.name}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                      <span className="text-gray-600">Distance:</span>
-                      <span className="font-medium">{selectedLocation?.distance.toFixed(1)} km</span>
-                    </div>
-
-                    <div className="space-y-1 pb-2 border-b border-gray-200">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Estimated Travel Times:</span>
-                      </div>
-                      <div className="pl-4">
-                        <div className="flex justify-between text-sm">
-                          <span>Light Traffic:</span>
-                          <span className="text-green-600">{selectedLocation?.lightTrafficTime} min</span>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                          <span className="text-gray-600">Base rate:</span>
+                          <span className="font-medium">₱{selectedSeller?.startingRate.toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Medium Traffic:</span>
-                          <span className="text-yellow-600">{selectedLocation?.midTrafficTime} min</span>
+
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                          <span className="text-gray-600">Distance:</span>
+                          <span className="font-medium">{selectedLocation?.distance.toFixed(1)} km</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Heavy Traffic:</span>
-                          <span className="text-orange-600">{selectedLocation?.heavyTrafficTime} min</span>
+
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                          <span className="text-gray-600">Rate per km:</span>
+                          <span className="font-medium">₱{selectedSeller?.ratePerKm.toFixed(2)}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Weather Issues:</span>
-                          <span className="text-red-600">{selectedLocation?.weatherIssuesTime} min</span>
+
+                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                          <span className="text-gray-600">Distance charge:</span>
+                          <span className="font-medium">
+                            ₱
+                            {selectedLocation
+                              ? (selectedLocation.distance * (selectedSeller?.ratePerKm || 0)).toFixed(2)
+                              : 0}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-2 text-lg">
+                          <span className="font-medium">Total:</span>
+                          <span className="font-bold text-sky-700">
+                            ₱
+                            {totalRate.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Right side - Price calculations */}
-                <div className="bg-white p-6 rounded-lg border border-gray-200 mb-6 flex-1 shadow-sm">
-                  <h3 className="text-lg font-medium mb-4">Price Breakdown</h3>
-
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                      <span className="text-gray-600">Base rate:</span>
-                      <span className="font-medium">₱{selectedSeller?.startingRate.toLocaleString()}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                      <span className="text-gray-600">Distance:</span>
-                      <span className="font-medium">{selectedLocation?.distance.toFixed(1)} km</span>
-                    </div>
-
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                      <span className="text-gray-600">Rate per km:</span>
-                      <span className="font-medium">₱{selectedSeller?.ratePerKm.toFixed(2)}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                      <span className="text-gray-600">Distance charge:</span>
-                      <span className="font-medium">
-                        ₱
-                        {selectedLocation
-                          ? (selectedLocation.distance * (selectedSeller?.ratePerKm || 0)).toFixed(2)
-                          : 0}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between items-center pt-2 text-lg">
-                      <span className="font-medium">Total:</span>
-                      <span className="font-bold text-sky-700">
-                        ₱{totalRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                    </div>
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mb-6">
+                    <p className="text-sm text-yellow-800">
+                      By confirming this booking, you agree to the terms and conditions of service. The service provider
+                      will contact you shortly to confirm the details.
+                    </p>
                   </div>
-                </div>
-              </div>
+                </>
+              )}
 
-              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mb-6">
-                <p className="text-sm text-yellow-800">
-                  By confirming this booking, you agree to the terms and conditions of service. The service provider
-                  will contact you shortly to confirm the details.
-                </p>
-              </div>
+              {errorMessage && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 animate-fadeIn">
+                  <p className="text-red-700 flex items-center">
+                    <X className="h-5 w-5 mr-2" />
+                    {errorMessage}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -889,6 +992,11 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                 <Check className="h-8 w-8 text-green-500 animate-pulse" />
               </div>
               <h3 className="text-xl font-medium text-black mb-2">Booking Submitted!</h3>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                <p className="text-green-800 text-sm">
+                  <span className="font-medium">Notification sent!</span> Check your notifications for booking updates.
+                </p>
+              </div>
               <p className="text-gray-600 mb-6">
                 Stay tuned! {selectedSeller?.name} will review and accept your booking soon.
               </p>
@@ -1004,15 +1112,28 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
             <div className="flex justify-end space-x-4">
               <button
                 onClick={() => setConfirmationStep(false)}
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+                disabled={isSubmitting}
+                className={`px-6 py-2 border border-gray-300 text-gray-700 rounded-lg transition-colors ${
+                  isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100"
+                }`}
               >
                 Back
               </button>
               <button
                 onClick={handleConfirmBooking}
-                className="px-6 py-2 bg-sky-600 text-white rounded-full hover:bg-sky-700 transition-colors shadow-sm hover:shadow-md"
+                disabled={isSubmitting}
+                className={`px-6 py-2 bg-sky-600 text-white rounded-full transition-colors shadow-sm ${
+                  isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-sky-700 hover:shadow-md"
+                }`}
               >
-                Confirm Booking
+                {isSubmitting ? (
+                  <span className="flex items-center">
+                    <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                    Processing...
+                  </span>
+                ) : (
+                  "Confirm Booking"
+                )}
               </button>
             </div>
           )}
@@ -1040,6 +1161,28 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
       )}
       {isCompanyModalOpen && (
         <CompanyModal isOpen={isCompanyModalOpen} onClose={closeCompanyModal} company={selectedCompany} />
+      )}
+      {isErrorModalOpen && errorMessage && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">
+          <div className="mx-auto max-w-md w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20 p-6 animate-fadeIn">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mb-6 animate-pulse">
+                <X className="h-10 w-10 text-red-500 animate-bounceIn" />
+              </div>
+
+              <h3 className="text-xl font-medium text-gray-900 mb-2 animate-slideInUp">Booking Failed</h3>
+
+              <p className="text-gray-600 mb-6 animate-fadeIn">{errorMessage}</p>
+
+              <button
+                onClick={handleErrorModalClose}
+                className="px-8 py-3 bg-red-500 text-white rounded-full font-medium shadow-sm hover:bg-red-600 active:scale-95 transition-all duration-200 animate-fadeIn"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -36,9 +34,9 @@ import ProviderTrackingMap from "./ProviderTrackingMap"
 import NotificationPopup, { type NotificationItem } from "../Customer_Tabs/Notification"
 
 // Extend the NotificationItem type to include the read property
-declare module '../Customer_Tabs/Notification' {
+declare module "../Customer_Tabs/Notification" {
   interface NotificationItem {
-    read?: boolean;
+    read?: boolean
   }
 }
 
@@ -94,7 +92,7 @@ const DockItem: React.FC<DockItemProps> = ({ icon, to, isActive, onClick, badge 
     if (onClick) {
       onClick()
     } else if (to === "/logout") {
-      window.location.href = "/login-alt"
+      window.location.href = "/login"
     } else if (to === "/profile") {
       window.location.href = "/customer/profile"
     } else if (to === "/") {
@@ -112,8 +110,9 @@ const DockItem: React.FC<DockItemProps> = ({ icon, to, isActive, onClick, badge 
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`flex items-center justify-center transition-all duration-200 ${isActive ? "text-primary" : isHovered ? "text-primary/80" : "text-gray-400"
-          }`}
+        className={`flex items-center justify-center transition-all duration-200 ${
+          isActive ? "text-primary" : isHovered ? "text-primary/80" : "text-gray-400"
+        }`}
       >
         {to === "/notification" ? (
           <motion.div
@@ -138,8 +137,9 @@ const DockItem: React.FC<DockItemProps> = ({ icon, to, isActive, onClick, badge 
 
       {/* Label with animation */}
       <div
-        className={`absolute -top-8 bg-sky-400 text-white text-xs px-2 py-1 rounded-md opacity-0 transition-all duration-200 ${isHovered ? "opacity-100 transform translate-y-0" : "transform translate-y-2"
-          }`}
+        className={`absolute -top-8 bg-sky-400 text-white text-xs px-2 py-1 rounded-md opacity-0 transition-all duration-200 ${
+          isHovered ? "opacity-100 transform translate-y-0" : "transform translate-y-2"
+        }`}
       >
         {to === "/"
           ? "Home"
@@ -175,8 +175,9 @@ const StatCard: React.FC<StatCardProps> = ({ title, count, icon, trend, trendVal
       <div className="p-2 rounded-lg bg-primary/10 text-primary">{icon}</div>
       {trend && trendValue && (
         <div
-          className={`text-xs font-medium px-2 py-1 rounded-full flex items-center ${trend === "up" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-            }`}
+          className={`text-xs font-medium px-2 py-1 rounded-full flex items-center ${
+            trend === "up" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+          }`}
         >
           {trend === "up" ? "+" : "-"}
           {trendValue}%
@@ -477,12 +478,13 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
             {/* Only show timer when not in Track Service mode */}
             {!paymentComplete && !providerArrived && (
               <div
-                className={`flex items-center justify-between ${timeLeft > 20
-                  ? "bg-emerald-50 text-emerald-700"
-                  : timeLeft > 10
-                    ? "bg-amber-50 text-amber-700"
-                    : "bg-rose-50 text-rose-700"
-                  } rounded-lg px-3 py-1.5`}
+                className={`flex items-center justify-between ${
+                  timeLeft > 20
+                    ? "bg-emerald-50 text-emerald-700"
+                    : timeLeft > 10
+                      ? "bg-amber-50 text-amber-700"
+                      : "bg-rose-50 text-rose-700"
+                } rounded-lg px-3 py-1.5`}
               >
                 <Clock className="w-4 h-4" />
                 <span className="text-sm font-medium">{timeLeft}s</span>
@@ -708,14 +710,6 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                     </div>
                   )}
 
-                  {/* Additional Fees */}
-                  {displayBooking.additionalFees && displayBooking.additionalFees > 0 && (
-                    <div className="flex justify-between items-center border-b border-gray-300 pb-2 mb-2">
-                      <p className="text-gray-600">Additional Fees</p>
-                      <p className="text-gray-800 font-medium">₱{displayBooking.additionalFees.toLocaleString()}</p>
-                    </div>
-                  )}
-
                   {/* Total */}
                   <div className="flex justify-between items-center pt-2 mt-2">
                     <p className="text-gray-700 font-bold">Total Amount</p>
@@ -906,10 +900,11 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                       transition={{ duration: 0.2 }}
                     >
                       <Star
-                        className={`h-9 w-9 ${reviewRating !== null && rating <= reviewRating
-                          ? "text-amber-500 fill-amber-500"
-                          : "text-gray-300"
-                          }`}
+                        className={`h-9 w-9 ${
+                          reviewRating !== null && rating <= reviewRating
+                            ? "text-amber-500 fill-amber-500"
+                            : "text-gray-300"
+                        }`}
                       />
                     </motion.button>
                   ))}
@@ -940,8 +935,9 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                   Skip
                 </motion.button>
                 <motion.button
-                  className={`px-6 py-2.5 bg-sky-500 text-white rounded-full font-medium shadow-sm ${reviewRating === null ? "opacity-50 cursor-not-allowed" : "hover:bg-sky-600"
-                    }`}
+                  className={`px-6 py-2.5 bg-sky-500 text-white rounded-full font-medium shadow-sm ${
+                    reviewRating === null ? "opacity-50 cursor-not-allowed" : "hover:bg-sky-600"
+                  }`}
                   onClick={handleReviewSubmit}
                   disabled={reviewRating === null}
                   whileTap={reviewRating !== null ? { scale: 0.95 } : {}}
@@ -1016,16 +1012,16 @@ const FloatingDock: React.FC = () => {
   const [unreadNotifications, setUnreadNotifications] = useState(2) // Start with 2 unread notifications
 
   // Function to fetch user bookings from the backend
-  const fetchUserBookings = async () => {
+  const fetchUserBookings = async (silent = false) => {
     try {
-      setLoading(true)
+      if (!silent) setLoading(true)
       setError("")
 
       // Get user data from localStorage
       const userData = localStorage.getItem("user")
       if (!userData) {
         setError("User not logged in")
-        setLoading(false)
+        if (!silent) setLoading(false)
         return
       }
 
@@ -1038,31 +1034,31 @@ const FloatingDock: React.FC = () => {
       // Format 1: { user: { _id: "..." }, token: "..." }
       if (parsedData.user && parsedData.user._id) {
         userId = parsedData.user._id
-        console.log("Found user ID in format 1:", userId)
+        if (!silent) console.log("Found user ID in format 1:", userId)
       }
       // Format 2: { _id: "...", token: "..." }
       else if (parsedData._id) {
         userId = parsedData._id
-        console.log("Found user ID in format 2:", userId)
+        if (!silent) console.log("Found user ID in format 2:", userId)
       }
       // Format 3: { id: "...", token: "..." }
       else if (parsedData.id) {
         userId = parsedData.id
-        console.log("Found user ID in format 3:", userId)
+        if (!silent) console.log("Found user ID in format 3:", userId)
       }
       // No valid user ID found
       else {
         console.error("User data structure:", parsedData)
         setError("Could not find user ID in stored data")
-        setLoading(false)
+        if (!silent) setLoading(false)
         return
       }
 
-      console.log("Fetching bookings for user:", userId)
+      if (!silent) console.log("Fetching bookings for user:", userId)
 
       // Use the correct API URL
       const apiUrl = `${import.meta.env.VITE_API_URL || "http://localhost:3000"}/bookings/user/${userId}`
-      console.log("API URL:", apiUrl)
+      if (!silent) console.log("API URL:", apiUrl)
 
       const response = await fetch(apiUrl, {
         method: "GET",
@@ -1076,16 +1072,19 @@ const FloatingDock: React.FC = () => {
       }
 
       const userBookings = await response.json()
-      console.log("Fetched bookings:", userBookings)
+      if (!silent) console.log("Fetched bookings:", userBookings)
 
       // If no bookings found, use sample data for demonstration
       if (userBookings.length === 0) {
-        console.log("No bookings found, using sample data")
-        setBookings([
+        if (!silent) console.log("No bookings found, using sample data")
+
+        // Sample data for all booking statuses
+        const sampleBookings = [
+          // PENDING BOOKINGS
           {
             _id: "sample1",
             userId: userId,
-            firstname: "Sample",
+            firstname: "John",
             productName: "Plumbing Services",
             providerName: "PipeFix Pros",
             providerId: 1,
@@ -1107,7 +1106,217 @@ const FloatingDock: React.FC = () => {
             status: "pending",
             createdAt: new Date().toISOString(),
           },
-        ])
+          {
+            _id: "sample2",
+            userId: userId,
+            firstname: "Maria",
+            productName: "Electrical Repair",
+            providerName: "PowerFix Solutions",
+            providerId: 2,
+            workerCount: 2,
+            bookingDate: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+            bookingTime: "2:00 PM",
+            location: {
+              name: "456 Park Avenue, Makati City",
+              lat: 14.5547,
+              lng: 121.0244,
+              distance: 2.8,
+            },
+            estimatedTime: "3-4 hours",
+            pricing: {
+              baseRate: 1500,
+              distanceCharge: 70,
+              totalRate: 1570,
+            },
+            status: "pending",
+            createdAt: new Date().toISOString(),
+          },
+
+          // ONGOING BOOKINGS
+          {
+            _id: "sample3",
+            userId: userId,
+            firstname: "Carlos",
+            productName: "House Cleaning",
+            providerName: "CleanPro Services",
+            providerId: 3,
+            workerCount: 3,
+            bookingDate: new Date().toISOString(),
+            bookingTime: "9:30 AM",
+            location: {
+              name: "789 Seaside Blvd, Manila",
+              lat: 14.5995,
+              lng: 120.9842,
+              distance: 5.2,
+            },
+            estimatedTime: "4-5 hours",
+            pricing: {
+              baseRate: 2200,
+              distanceCharge: 130,
+              totalRate: 2330,
+            },
+            status: "ongoing",
+            paymentComplete: true,
+            createdAt: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+          },
+          {
+            _id: "sample4",
+            userId: userId,
+            firstname: "Elena",
+            productName: "Aircon Maintenance",
+            providerName: "CoolAir Technicians",
+            providerId: 4,
+            workerCount: 2,
+            bookingDate: new Date().toISOString(),
+            bookingTime: "11:00 AM",
+            location: {
+              name: "101 Green Hills, Pasig City",
+              lat: 14.5764,
+              lng: 121.0851,
+              distance: 4.1,
+            },
+            estimatedTime: "1-2 hours",
+            pricing: {
+              baseRate: 1800,
+              distanceCharge: 102.5,
+              totalRate: 1902.5,
+            },
+            status: "ongoing",
+            paymentComplete: false,
+            createdAt: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+          },
+
+          // CANCELLED BOOKINGS
+          {
+            _id: "sample5",
+            userId: userId,
+            firstname: "Miguel",
+            productName: "Furniture Assembly",
+            providerName: "BuildIt Experts",
+            providerId: 5,
+            workerCount: 2,
+            bookingDate: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+            bookingTime: "3:00 PM",
+            location: {
+              name: "222 Orchard Road, Quezon City",
+              lat: 14.676,
+              lng: 121.0437,
+              distance: 3.7,
+            },
+            estimatedTime: "2-3 hours",
+            pricing: {
+              baseRate: 1350,
+              distanceCharge: 92.5,
+              totalRate: 1442.5,
+            },
+            status: "cancelled",
+            createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+          },
+          {
+            _id: "sample6",
+            userId: userId,
+            firstname: "Isabella",
+            productName: "Pest Control",
+            providerName: "BugBusters",
+            providerId: 6,
+            workerCount: 1,
+            bookingDate: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
+            bookingTime: "10:00 AM",
+            location: {
+              name: "333 Coconut Avenue, Taguig",
+              lat: 14.5176,
+              lng: 121.0509,
+              distance: 6.3,
+            },
+            estimatedTime: "2-3 hours",
+            pricing: {
+              baseRate: 1700,
+              distanceCharge: 157.5,
+              totalRate: 1857.5,
+            },
+            status: "cancelled",
+            createdAt: new Date(Date.now() - 432000000).toISOString(), // 5 days ago
+          },
+
+          // COMPLETED BOOKINGS
+          {
+            _id: "sample7",
+            userId: userId,
+            firstname: "Rafael",
+            productName: "Lawn Mowing",
+            providerName: "GreenThumb Landscaping",
+            providerId: 7,
+            workerCount: 2,
+            bookingDate: new Date(Date.now() - 604800000).toISOString(), // 1 week ago
+            bookingTime: "8:00 AM",
+            location: {
+              name: "444 Hillside Drive, Antipolo",
+              lat: 14.5885,
+              lng: 121.1754,
+              distance: 8.2,
+            },
+            estimatedTime: "3-4 hours",
+            pricing: {
+              baseRate: 1600,
+              distanceCharge: 205,
+              totalRate: 1805,
+            },
+            status: "completed",
+            createdAt: new Date(Date.now() - 691200000).toISOString(), // 8 days ago
+          },
+          {
+            _id: "sample8",
+            userId: userId,
+            firstname: "Sofia",
+            productName: "Carpet Cleaning",
+            providerName: "FreshStart Cleaners",
+            providerId: 8,
+            workerCount: 2,
+            bookingDate: new Date(Date.now() - 1209600000).toISOString(), // 2 weeks ago
+            bookingTime: "1:00 PM",
+            location: {
+              name: "555 Beachfront Road, Parañaque",
+              lat: 14.4793,
+              lng: 120.9977,
+              distance: 4.8,
+            },
+            estimatedTime: "2-3 hours",
+            pricing: {
+              baseRate: 1900,
+              distanceCharge: 120,
+              totalRate: 2020,
+            },
+            status: "completed",
+            createdAt: new Date(Date.now() - 1296000000).toISOString(), // 15 days ago
+          },
+          {
+            _id: "sample9",
+            userId: userId,
+            firstname: "Diego",
+            productName: "Roof Repair",
+            providerName: "TopNotch Roofing",
+            providerId: 9,
+            workerCount: 3,
+            bookingDate: new Date(Date.now() - 1814400000).toISOString(), // 3 weeks ago
+            bookingTime: "9:00 AM",
+            location: {
+              name: "666 Mountain View, Tagaytay",
+              lat: 14.1153,
+              lng: 120.9621,
+              distance: 12.5,
+            },
+            estimatedTime: "5-6 hours",
+            pricing: {
+              baseRate: 3500,
+              distanceCharge: 312.5,
+              totalRate: 3812.5,
+            },
+            status: "completed",
+            createdAt: new Date(Date.now() - 1900800000).toISOString(), // 22 days ago
+          },
+        ]
+
+        setBookings(sampleBookings)
       } else {
         setBookings(userBookings)
       }
@@ -1117,11 +1326,14 @@ const FloatingDock: React.FC = () => {
 
       // Use sample data if fetch fails
       console.log("Using sample data due to fetch error")
-      setBookings([
+
+      // Sample data for all booking statuses
+      const sampleBookings = [
+        // PENDING BOOKINGS
         {
           _id: "sample1",
           userId: "sample_user_id",
-          firstname: "Sample",
+          firstname: "John",
           productName: "Plumbing Services",
           providerName: "PipeFix Pros",
           providerId: 1,
@@ -1143,9 +1355,219 @@ const FloatingDock: React.FC = () => {
           status: "pending",
           createdAt: new Date().toISOString(),
         },
-      ])
+        {
+          _id: "sample2",
+          userId: "sample_user_id",
+          firstname: "Maria",
+          productName: "Electrical Repair",
+          providerName: "PowerFix Solutions",
+          providerId: 2,
+          workerCount: 2,
+          bookingDate: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+          bookingTime: "2:00 PM",
+          location: {
+            name: "456 Park Avenue, Makati City",
+            lat: 14.5547,
+            lng: 121.0244,
+            distance: 2.8,
+          },
+          estimatedTime: "3-4 hours",
+          pricing: {
+            baseRate: 1500,
+            distanceCharge: 70,
+            totalRate: 1570,
+          },
+          status: "pending",
+          createdAt: new Date().toISOString(),
+        },
+
+        // ONGOING BOOKINGS
+        {
+          _id: "sample3",
+          userId: "sample_user_id",
+          firstname: "Carlos",
+          productName: "House Cleaning",
+          providerName: "CleanPro Services",
+          providerId: 3,
+          workerCount: 3,
+          bookingDate: new Date().toISOString(),
+          bookingTime: "9:30 AM",
+          location: {
+            name: "789 Seaside Blvd, Manila",
+            lat: 14.5995,
+            lng: 120.9842,
+            distance: 5.2,
+          },
+          estimatedTime: "4-5 hours",
+          pricing: {
+            baseRate: 2200,
+            distanceCharge: 130,
+            totalRate: 2330,
+          },
+          status: "ongoing",
+          paymentComplete: true,
+          createdAt: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+        },
+        {
+          _id: "sample4",
+          userId: "sample_user_id",
+          firstname: "Elena",
+          productName: "Aircon Maintenance",
+          providerName: "CoolAir Technicians",
+          providerId: 4,
+          workerCount: 2,
+          bookingDate: new Date().toISOString(),
+          bookingTime: "11:00 AM",
+          location: {
+            name: "101 Green Hills, Pasig City",
+            lat: 14.5764,
+            lng: 121.0851,
+            distance: 4.1,
+          },
+          estimatedTime: "1-2 hours",
+          pricing: {
+            baseRate: 1800,
+            distanceCharge: 102.5,
+            totalRate: 1902.5,
+          },
+          status: "ongoing",
+          paymentComplete: false,
+          createdAt: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+        },
+
+        // CANCELLED BOOKINGS
+        {
+          _id: "sample5",
+          userId: "sample_user_id",
+          firstname: "Miguel",
+          productName: "Furniture Assembly",
+          providerName: "BuildIt Experts",
+          providerId: 5,
+          workerCount: 2,
+          bookingDate: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+          bookingTime: "3:00 PM",
+          location: {
+            name: "222 Orchard Road, Quezon City",
+            lat: 14.676,
+            lng: 121.0437,
+            distance: 3.7,
+          },
+          estimatedTime: "2-3 hours",
+          pricing: {
+            baseRate: 1350,
+            distanceCharge: 92.5,
+            totalRate: 1442.5,
+          },
+          status: "cancelled",
+          createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+        },
+        {
+          _id: "sample6",
+          userId: "sample_user_id",
+          firstname: "Isabella",
+          productName: "Pest Control",
+          providerName: "BugBusters",
+          providerId: 6,
+          workerCount: 1,
+          bookingDate: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
+          bookingTime: "10:00 AM",
+          location: {
+            name: "333 Coconut Avenue, Taguig",
+            lat: 14.5176,
+            lng: 121.0509,
+            distance: 6.3,
+          },
+          estimatedTime: "2-3 hours",
+          pricing: {
+            baseRate: 1700,
+            distanceCharge: 157.5,
+            totalRate: 1857.5,
+          },
+          status: "cancelled",
+          createdAt: new Date(Date.now() - 432000000).toISOString(), // 5 days ago
+        },
+
+        // COMPLETED BOOKINGS
+        {
+          _id: "sample7",
+          userId: "sample_user_id",
+          firstname: "Rafael",
+          productName: "Lawn Mowing",
+          providerName: "GreenThumb Landscaping",
+          providerId: 7,
+          workerCount: 2,
+          bookingDate: new Date(Date.now() - 604800000).toISOString(), // 1 week ago
+          bookingTime: "8:00 AM",
+          location: {
+            name: "444 Hillside Drive, Antipolo",
+            lat: 14.5885,
+            lng: 121.1754,
+            distance: 8.2,
+          },
+          estimatedTime: "3-4 hours",
+          pricing: {
+            baseRate: 1600,
+            distanceCharge: 205,
+            totalRate: 1805,
+          },
+          status: "completed",
+          createdAt: new Date(Date.now() - 691200000).toISOString(), // 8 days ago
+        },
+        {
+          _id: "sample8",
+          userId: "sample_user_id",
+          firstname: "Sofia",
+          productName: "Carpet Cleaning",
+          providerName: "FreshStart Cleaners",
+          providerId: 8,
+          workerCount: 2,
+          bookingDate: new Date(Date.now() - 1209600000).toISOString(), // 2 weeks ago
+          bookingTime: "1:00 PM",
+          location: {
+            name: "555 Beachfront Road, Parañaque",
+            lat: 14.4793,
+            lng: 120.9977,
+            distance: 4.8,
+          },
+          estimatedTime: "2-3 hours",
+          pricing: {
+            baseRate: 1900,
+            distanceCharge: 120,
+            totalRate: 2020,
+          },
+          status: "completed",
+          createdAt: new Date(Date.now() - 1296000000).toISOString(), // 15 days ago
+        },
+        {
+          _id: "sample9",
+          userId: "sample_user_id",
+          firstname: "Diego",
+          productName: "Roof Repair",
+          providerName: "TopNotch Roofing",
+          providerId: 9,
+          workerCount: 3,
+          bookingDate: new Date(Date.now() - 1814400000).toISOString(), // 3 weeks ago
+          bookingTime: "9:00 AM",
+          location: {
+            name: "666 Mountain View, Tagaytay",
+            lat: 14.1153,
+            lng: 120.9621,
+            distance: 12.5,
+          },
+          estimatedTime: "5-6 hours",
+          pricing: {
+            baseRate: 3500,
+            distanceCharge: 312.5,
+            totalRate: 3812.5,
+          },
+          status: "completed",
+          createdAt: new Date(Date.now() - 1900800000).toISOString(), // 22 days ago
+        },
+      ]
+
+      setBookings(sampleBookings)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -1160,6 +1582,16 @@ const FloatingDock: React.FC = () => {
   // Fetch bookings when component mounts
   useEffect(() => {
     fetchUserBookings()
+  }, [])
+
+  // Set up polling to refresh bookings every 5 seconds
+  useEffect(() => {
+    const pollingInterval = setInterval(() => {
+      fetchUserBookings(true)
+    }, 5000)
+
+    // Clean up interval on component unmount
+    return () => clearInterval(pollingInterval)
   }, [])
 
   // Check localStorage for booking updates and drawer open state
@@ -1202,13 +1634,13 @@ const FloatingDock: React.FC = () => {
         setBookings((prevBookings) =>
           prevBookings.map((booking) =>
             booking.id === paymentData.id ||
-              booking._id === paymentData.id ||
-              Number.parseInt(booking._id.slice(-6), 16) === paymentData.id
+            booking._id === paymentData.id ||
+            Number.parseInt(booking._id.slice(-6), 16) === paymentData.id
               ? {
-                ...booking,
-                status: paymentData.status || booking.status,
-                paymentComplete: true,
-              }
+                  ...booking,
+                  status: paymentData.status || booking.status,
+                  paymentComplete: true,
+                }
               : booking,
           ),
         )
@@ -1235,12 +1667,12 @@ const FloatingDock: React.FC = () => {
         setBookings((prevBookings) =>
           prevBookings.map((booking) =>
             booking.id === data.bookingId ||
-              booking._id === data.bookingId ||
-              Number.parseInt(booking._id.slice(-6), 16) === data.bookingId
+            booking._id === data.bookingId ||
+            Number.parseInt(booking._id.slice(-6), 16) === data.bookingId
               ? {
-                ...booking,
-                providerArrived: true,
-              }
+                  ...booking,
+                  providerArrived: true,
+                }
               : booking,
           ),
         )
@@ -1264,10 +1696,10 @@ const FloatingDock: React.FC = () => {
           prevBookings.map((booking) =>
             booking.id === data.id || booking._id === data.id || Number.parseInt(booking._id.slice(-6), 16) === data.id
               ? {
-                ...booking,
-                status: "completed",
-                providerArrived: false,
-              }
+                  ...booking,
+                  status: "completed",
+                  providerArrived: false,
+                }
               : booking,
           ),
         )
@@ -1291,12 +1723,14 @@ const FloatingDock: React.FC = () => {
       // Update the booking with the given ID to the new status
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
-          String(booking.id) === bookingId || booking._id === bookingId || String(Number.parseInt(booking._id.slice(-6), 16)) === bookingId
+          String(booking.id) === bookingId ||
+          booking._id === bookingId ||
+          String(Number.parseInt(booking._id.slice(-6), 16)) === bookingId
             ? {
-              ...booking,
-              status: statusParam,
-              paymentComplete: paymentCompleteParam === "true",
-            }
+                ...booking,
+                status: statusParam,
+                paymentComplete: paymentCompleteParam === "true",
+              }
             : booking,
         ),
       )
@@ -1519,44 +1953,49 @@ const FloatingDock: React.FC = () => {
                 <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
                   <button
                     onClick={() => setActiveTab("all")}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${activeTab === "all" ? "bg-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                      activeTab === "all" ? "bg-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
                   >
                     All Bookings
                   </button>
                   <button
                     onClick={() => setActiveTab("pending")}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${activeTab === "pending"
-                      ? "bg-amber-500 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                      activeTab === "pending"
+                        ? "bg-amber-500 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
                   >
                     Pending
                   </button>
                   <button
                     onClick={() => setActiveTab("ongoing")}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${activeTab === "ongoing"
-                      ? "bg-emerald-500 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                      activeTab === "ongoing"
+                        ? "bg-emerald-500 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
                   >
                     Ongoing
                   </button>
                   <button
                     onClick={() => setActiveTab("cancelled")}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${activeTab === "cancelled"
-                      ? "bg-rose-500 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                      activeTab === "cancelled"
+                        ? "bg-rose-500 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
                   >
                     Cancelled
                   </button>
                   <button
                     onClick={() => setActiveTab("completed")}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${activeTab === "completed"
-                      ? "bg-sky-500 text-white"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                      activeTab === "completed"
+                        ? "bg-sky-500 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
                   >
                     Completed
                   </button>
@@ -1601,7 +2040,7 @@ const FloatingDock: React.FC = () => {
                     <p>Error loading bookings</p>
                     <p className="text-sm">{error}</p>
                     <button
-                      onClick={fetchUserBookings}
+                      onClick={() => fetchUserBookings()}
                       className="mt-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
                     >
                       Retry
