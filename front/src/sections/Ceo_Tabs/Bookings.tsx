@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useState, useEffect } from "react"
 import MyFloatingDockCeo from "../Styles/MyFloatingDock-Ceo"
@@ -14,7 +16,6 @@ import {
   DollarSign,
   Clipboard,
   FileText,
-  PenToolIcon as Tool,
   Lock,
   Trash2,
   User,
@@ -23,6 +24,7 @@ import {
   Calendar,
   Check,
   CheckCircle2,
+  ChevronLeft,
 } from "lucide-react"
 import image1 from "../../assets/No_Image_Available.jpg"
 import confetti from "canvas-confetti"
@@ -36,7 +38,6 @@ import {
   services as initialServices,
   bookings as initialBookings,
   personalInfo as initialPersonalInfo,
-  expenses,
   subscriptionPlans,
   companyDetails,
   userDetails,
@@ -70,6 +71,12 @@ const keyframes = `
     from { width: 100%; }
     to { width: 0%; }
   }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
 `
 
 function Bookings() {
@@ -87,7 +94,7 @@ function Bookings() {
   const [createServiceStep, setCreateServiceStep] = useState(1)
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
-  const [totalSteps] = useState(4)
+  const [totalSteps] = useState(3)
 
   const [subscription, setSubscription] = useState<SubscriptionInfo>({
     tier: "free",
@@ -120,7 +127,7 @@ function Bookings() {
     bankAccount: false,
   })
 
-  const [selectedInfo, setSelectedInfo] = useState<PersonalInfo | null>(null)
+  const [selectedInfo] = useState<PersonalInfo | null>(null)
   const [editedInfo, setEditedInfo] = useState<Partial<PersonalInfo>>({})
   const [isEditInfoModalOpen, setIsEditInfoModalOpen] = useState(false)
   const [isDeleteInfoConfirmOpen, setIsDeleteInfoConfirmOpen] = useState(false)
@@ -128,6 +135,13 @@ function Bookings() {
   const [services, setServices] = useState<Service[]>(initialServices)
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo[]>(initialPersonalInfo)
   const [bookings, setBookings] = useState<Booking[]>(initialBookings)
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(8)
+
+  // Service creation processing state
+  const [isProcessing, setIsProcessing] = useState(false)
 
   const triggerCelebration = () => {
     const duration = 3000
@@ -194,6 +208,45 @@ function Bookings() {
     }
   }, [])
 
+  // Get current items for pagination
+  const getCurrentItems = () => {
+    if (activeTab === "services") {
+      const indexOfLastItem = currentPage * itemsPerPage
+      const indexOfFirstItem = indexOfLastItem - itemsPerPage
+      return services.slice(indexOfFirstItem, indexOfLastItem)
+    } else {
+      const filteredBookingsForTab = bookings.filter((booking) => {
+        if (activeTab === "ongoing") return booking.status === "ongoing"
+        if (activeTab === "pending") return booking.status === "pending"
+        if (activeTab === "completed") return booking.status === "completed"
+        return true
+      })
+      const indexOfLastItem = currentPage * itemsPerPage
+      const indexOfFirstItem = indexOfLastItem - itemsPerPage
+      return filteredBookingsForTab.slice(indexOfFirstItem, indexOfLastItem)
+    }
+  }
+
+  // Get total pages
+  const getTotalPages = () => {
+    if (activeTab === "services") {
+      return Math.ceil(services.length / itemsPerPage)
+    } else {
+      const filteredBookingsForTab = bookings.filter((booking) => {
+        if (activeTab === "ongoing") return booking.status === "ongoing"
+        if (activeTab === "pending") return booking.status === "pending"
+        if (activeTab === "completed") return booking.status === "completed"
+        return true
+      })
+      return Math.ceil(filteredBookingsForTab.length / itemsPerPage)
+    }
+  }
+
+  // Reset pagination when tab changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeTab])
+
   const filteredBookings = bookings.filter((booking) => {
     if (activeTab === "ongoing") return booking.status === "ongoing"
     if (activeTab === "pending") return booking.status === "pending"
@@ -218,25 +271,9 @@ function Bookings() {
     setIsDeleteConfirmOpen(true)
   }
 
-  const handleSaveService = () => {
-    if (!selectedService) return
+  const handleSaveService = async () => {}
 
-    const updatedServices = services.map((service) =>
-      service.id === selectedService.id ? { ...service, ...editedService } : service,
-    )
-
-    setServices(updatedServices)
-    setIsEditModalOpen(false)
-  }
-
-  const handleConfirmDelete = () => {
-    if (!selectedService) return
-
-    const filteredServices = services.filter((service) => service.id !== selectedService.id)
-
-    setServices(filteredServices)
-    setIsDeleteConfirmOpen(false)
-  }
+  const handleConfirmDelete = async () => {}
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -298,6 +335,16 @@ function Bookings() {
       image: "",
       chargePerKm: 0,
     })
+    setRequirements({
+      businessPermit: false,
+      validID: false,
+      certification: false,
+      backgroundCheck: false,
+      insurance: false,
+      equipmentList: false,
+      serviceAgreement: false,
+      bankAccount: false,
+    })
   }
 
   const handleNextStep = () => {
@@ -312,71 +359,82 @@ function Bookings() {
     }
   }
 
-  const handleSubmitNewService = () => {
-    const newServiceEntry: Service = {
-      id: services.length > 0 ? Math.max(...services.map((s) => s.id)) + 1 : 1,
-      name: newService.name || "New Service",
-      price: newService.price || 0,
-      description: newService.description || "",
-      image: newService.image || image1,
-      chargePerKm: newService.chargePerKm || 0,
-      hasNotification: false,
+  const handleSubmitNewService = async () => {
+    if (!allRequirementsMet) return
+
+    setIsProcessing(true)
+
+    try {
+      // Check if we're in a development environment and use a mock token if needed
+      const token = localStorage.getItem("token")
+
+      // For development/testing purposes only - remove in production
+      if (!token) {
+        console.warn("No token found in localStorage, using mock authentication for development")
+        // This is a temporary solution for development/testing
+        const response = await fetch("http://localhost:3000/services", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: newService.name,
+            price: newService.price,
+            description: newService.description,
+            image: newService.image,
+            chargePerKm: newService.chargePerKm,
+            userId: "683037fa43a7823903641a6a",
+          }),
+          credentials: "include",
+        })
+
+        const data = await response.json()
+
+        // Handle the response as before
+        if (data.success) {
+          handleSuccessfulServiceCreation(data)
+        } else {
+          console.error("Error creating service:", data.message)
+        }
+      } else {
+        // Normal flow with authentication token
+        const response = await fetch("http://localhost:3000/services", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: newService.name,
+            price: newService.price,
+            description: newService.description,
+            image: newService.image,
+            chargePerKm: newService.chargePerKm,
+          }),
+          credentials: "include",
+        })
+
+        const data = await response.json()
+
+        if (data.success) {
+          handleSuccessfulServiceCreation(data)
+        } else {
+          console.error("Error creating service:", data.message)
+        }
+      }
+    } catch (error) {
+      console.error("Error creating service:", error)
+    } finally {
+      setIsProcessing(false)
     }
-
-    setServices([...services, newServiceEntry])
-    setIsCreateServiceModalOpen(false)
-    setCreateServiceStep(1)
-
-    // Show success message after service creation
-    setSuccessMessage(`Service "${newServiceEntry.name}" has been created successfully!`)
-    setIsSuccessModalOpen(true)
-
-    // Close success modal after 3 seconds
-    setTimeout(() => {
-      setIsSuccessModalOpen(false)
-    }, 3000)
   }
 
   const handleSelectPlan = (tier: SubscriptionTier) => {
     const selectedPlan = subscriptionPlans.find((plan) => plan.tier === tier)
 
     if (selectedPlan) {
-      // In a real app with React Router:
-      // navigate('/transaction', {
-      //   state: {
-      //     plan: selectedPlan,
-      //     seller: {
-      //       name: "Online Home Services",
-      //       rating: 5,
-      //       reviews: 823.2,
-      //       location: "Cebu City Branches",
-      //       price: selectedPlan.price
-      //     }
-      //   }
-      // });
-
-      // For this example, we'll simulate with URL parameters
       window.location.href = `/transaction?plan=${tier}&price=${selectedPlan.price}&redirect=/ceo/bookings`
     }
-  }
-
-  const handleEditInfo = (info: PersonalInfo) => {
-    setSelectedInfo(info)
-    setEditedInfo({
-      title: info.title,
-      description: info.description,
-      startDate: info.startDate,
-      endDate: info.endDate,
-      organization: info.organization,
-      location: info.location,
-      image: info.image,
-    })
-    setIsEditInfoModalOpen(true)
-  }
-
-  const handleDeleteInfo = (info: PersonalInfo) => {
-    setSelectedInfo(info)
-    setIsDeleteInfoConfirmOpen(true)
   }
 
   const handleSaveInfo = () => {
@@ -419,285 +477,176 @@ function Bookings() {
     switch (createServiceStep) {
       case 1:
         return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Service Information</h3>
-            <p className="text-sm text-gray-500">Enter the basic details about your service.</p>
-
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Service Name*
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={newService.name || ""}
-                onChange={handleNewServiceInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                required
-              />
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Service Information</h3>
+              <p className="text-gray-600">Enter the basic details about your service</p>
             </div>
 
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                Description*
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                value={newService.description || ""}
-                onChange={handleNewServiceInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 min-h-[120px]"
-                required
-              />
-            </div>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Service Name*
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={newService.name || ""}
+                  onChange={handleNewServiceInputChange}
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-gray-900"
+                  placeholder="Enter service name"
+                  required
+                />
+              </div>
 
-            <div>
-              <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
-                Image URL
-              </label>
-              <input
-                type="text"
-                id="image"
-                name="image"
-                value={newService.image || ""}
-                onChange={handleNewServiceInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                placeholder="Enter image URL or leave blank for default"
-              />
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                  Description*
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={newService.description || ""}
+                  onChange={handleNewServiceInputChange}
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 min-h-[120px] text-gray-900"
+                  placeholder="Describe your service"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
+                  Image URL
+                </label>
+                <input
+                  type="text"
+                  id="image"
+                  name="image"
+                  value={newService.image || ""}
+                  onChange={handleNewServiceInputChange}
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-gray-900"
+                  placeholder="Enter image URL or leave blank for default"
+                />
+              </div>
             </div>
           </div>
         )
 
       case 2:
         return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Pricing Information</h3>
-            <p className="text-sm text-gray-500">Set your service rates and charges.</p>
-
-            <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-                Base Service Rate (₱)*
-              </label>
-              <input
-                type="number"
-                id="price"
-                name="price"
-                value={newService.price || ""}
-                onChange={handleNewServiceInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                min="0"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">This is the starting price for your service</p>
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Pricing Information</h3>
+              <p className="text-gray-600">Set your service rates and charges</p>
             </div>
 
-            <div>
-              <label htmlFor="chargePerKm" className="block text-sm font-medium text-gray-700 mb-1">
-                Charge Per KM (₱)*
-              </label>
-              <input
-                type="number"
-                id="chargePerKm"
-                name="chargePerKm"
-                value={newService.chargePerKm || ""}
-                onChange={handleNewServiceInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                min="0"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">Additional charge per kilometer of travel distance</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
+                  Base Service Rate (₱)*
+                </label>
+                <input
+                  type="number"
+                  id="price"
+                  name="price"
+                  value={newService.price || ""}
+                  onChange={handleNewServiceInputChange}
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-gray-900"
+                  min="0"
+                  placeholder="0"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">This is the starting price for your service</p>
+              </div>
+
+              <div>
+                <label htmlFor="chargePerKm" className="block text-sm font-medium text-gray-700 mb-2">
+                  Charge Per KM (₱)*
+                </label>
+                <input
+                  type="number"
+                  id="chargePerKm"
+                  name="chargePerKm"
+                  value={newService.chargePerKm || ""}
+                  onChange={handleNewServiceInputChange}
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 text-gray-900"
+                  min="0"
+                  placeholder="0"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">Additional charge per kilometer of travel distance</p>
+              </div>
             </div>
 
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800 text-sm">
-              <p className="font-medium">Pricing Recommendations</p>
+              <p className="font-medium">💡 Pricing Recommendations</p>
               <p className="mt-1">Consider your expenses, market rates, and profit margin when setting prices.</p>
+            </div>
+
+            <div className="bg-gray-100 rounded-lg p-4">
+              <h4 className="font-medium text-gray-900 mb-2">Preview</h4>
+              <div className="text-sm text-gray-600">
+                <p>Base Rate: ₱{(newService.price || 0).toLocaleString()}</p>
+                <p>Per KM: ₱{(newService.chargePerKm || 0).toLocaleString()}</p>
+                <p className="mt-2 text-xs">
+                  Example: 5km service = ₱
+                  {((newService.price || 0) + (newService.chargePerKm || 0) * 5).toLocaleString()}
+                </p>
+              </div>
             </div>
           </div>
         )
 
       case 3:
         return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Required Expenses</h3>
-            <p className="text-sm text-gray-500">
-              These are the estimated expenses you'll need to cover for this service.
-            </p>
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Service Requirements</h3>
+              <p className="text-gray-600">Confirm you have all required documents and qualifications</p>
+            </div>
 
-            <div className="bg-gray-50 rounded-xl p-4">
+            <div className="bg-gray-50 rounded-xl p-6">
               <div className="space-y-4">
-                {expenses.map((expense, index) => (
-                  <div key={index} className="flex justify-between items-center">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-sky-100 rounded-full flex items-center justify-center text-sky-500 mr-3">
-                        <DollarSign className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-800">{expense.name}</p>
-                        <p className="text-xs text-gray-500">{expense.required ? "Required" : "Optional"}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">₱{expense.estimatedCost.toLocaleString()}</p>
-                    </div>
+                {[
+                  { key: "businessPermit", label: "Business Permit", desc: "Valid business registration or permit" },
+                  { key: "validID", label: "Valid ID", desc: "Government-issued identification" },
+                  {
+                    key: "certification",
+                    label: "Professional Certification",
+                    desc: "Relevant certifications for your service area",
+                  },
+                  { key: "backgroundCheck", label: "Background Check", desc: "Consent to background verification" },
+                  { key: "insurance", label: "Liability Insurance", desc: "Professional liability coverage" },
+                  { key: "equipmentList", label: "Equipment List", desc: "Inventory of tools and equipment" },
+                  {
+                    key: "serviceAgreement",
+                    label: "Service Agreement",
+                    desc: "Acceptance of platform terms and conditions",
+                  },
+                  { key: "bankAccount", label: "Bank Account", desc: "Valid bank account for payments" },
+                ].map((req) => (
+                  <div key={req.key} className="flex items-start">
+                    <input
+                      type="checkbox"
+                      id={req.key}
+                      name={req.key}
+                      checked={requirements[req.key as keyof typeof requirements]}
+                      onChange={handleRequirementChange}
+                      className="mt-1 h-4 w-4 text-sky-500 focus:ring-sky-500 rounded"
+                    />
+                    <label htmlFor={req.key} className="ml-3 block">
+                      <span className="text-sm font-medium text-gray-700">{req.label}</span>
+                      <span className="text-xs text-gray-500 block">{req.desc}</span>
+                    </label>
                   </div>
                 ))}
-
-                <div className="pt-4 border-t border-gray-200">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm font-medium">Total Estimated Expenses</p>
-                    <p className="text-lg font-medium">
-                      ₱{expenses.reduce((sum, expense) => sum + expense.estimatedCost, 0).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-800 text-sm">
-              <p className="font-medium">Important Note</p>
-              <p className="mt-1">
-                These are estimated expenses. Actual costs may vary based on specific job requirements and location.
-              </p>
-            </div>
-          </div>
-        )
-
-      case 4:
-        return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">Service Requirements</h3>
-            <p className="text-sm text-gray-500">
-              Please confirm you have all the required documents and qualifications.
-            </p>
-
-            <div className="bg-gray-50 rounded-xl p-4">
-              <div className="space-y-3">
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    id="businessPermit"
-                    name="businessPermit"
-                    checked={requirements.businessPermit}
-                    onChange={handleRequirementChange}
-                    className="mt-1 h-4 w-4 text-sky-500 focus:ring-sky-500 rounded"
-                  />
-                  <label htmlFor="businessPermit" className="ml-2 block">
-                    <span className="text-sm font-medium text-gray-700">Business Permit</span>
-                    <span className="text-xs text-gray-500 block">Valid business registration or permit</span>
-                  </label>
-                </div>
-
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    id="validID"
-                    name="validID"
-                    checked={requirements.validID}
-                    onChange={handleRequirementChange}
-                    className="mt-1 h-4 w-4 text-sky-500 focus:ring-sky-500 rounded"
-                  />
-                  <label htmlFor="validID" className="ml-2 block">
-                    <span className="text-sm font-medium text-gray-700">Valid ID</span>
-                    <span className="text-xs text-gray-500 block">Government-issued identification</span>
-                  </label>
-                </div>
-
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    id="certification"
-                    name="certification"
-                    checked={requirements.certification}
-                    onChange={handleRequirementChange}
-                    className="mt-1 h-4 w-4 text-sky-500 focus:ring-sky-500 rounded"
-                  />
-                  <label htmlFor="certification" className="ml-2 block">
-                    <span className="text-sm font-medium text-gray-700">Professional Certification</span>
-                    <span className="text-xs text-gray-500 block">Relevant certifications for your service area</span>
-                  </label>
-                </div>
-
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    id="backgroundCheck"
-                    name="backgroundCheck"
-                    checked={requirements.backgroundCheck}
-                    onChange={handleRequirementChange}
-                    className="mt-1 h-4 w-4 text-sky-500 focus:ring-sky-500 rounded"
-                  />
-                  <label htmlFor="backgroundCheck" className="ml-2 block">
-                    <span className="text-sm font-medium text-gray-700">Background Check</span>
-                    <span className="text-xs text-gray-500 block">Consent to background verification</span>
-                  </label>
-                </div>
-
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    id="insurance"
-                    name="insurance"
-                    checked={requirements.insurance}
-                    onChange={handleRequirementChange}
-                    className="mt-1 h-4 w-4 text-sky-500 focus:ring-sky-500 rounded"
-                  />
-                  <label htmlFor="insurance" className="ml-2 block">
-                    <span className="text-sm font-medium text-gray-700">Liability Insurance</span>
-                    <span className="text-xs text-gray-500 block">Professional liability coverage</span>
-                  </label>
-                </div>
-
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    id="equipmentList"
-                    name="equipmentList"
-                    checked={requirements.equipmentList}
-                    onChange={handleRequirementChange}
-                    className="mt-1 h-4 w-4 text-sky-500 focus:ring-sky-500 rounded"
-                  />
-                  <label htmlFor="equipmentList" className="ml-2 block">
-                    <span className="text-sm font-medium text-gray-700">Equipment List</span>
-                    <span className="text-xs text-gray-500 block">Inventory of tools and equipment</span>
-                  </label>
-                </div>
-
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    id="serviceAgreement"
-                    name="serviceAgreement"
-                    checked={requirements.serviceAgreement}
-                    onChange={handleRequirementChange}
-                    className="mt-1 h-4 w-4 text-sky-500 focus:ring-sky-500 rounded"
-                  />
-                  <label htmlFor="serviceAgreement" className="ml-2 block">
-                    <span className="text-sm font-medium text-gray-700">Service Agreement</span>
-                    <span className="text-xs text-gray-500 block">Acceptance of platform terms and conditions</span>
-                  </label>
-                </div>
-
-                <div className="flex items-start">
-                  <input
-                    type="checkbox"
-                    id="bankAccount"
-                    name="bankAccount"
-                    checked={requirements.bankAccount}
-                    onChange={handleRequirementChange}
-                    className="mt-1 h-4 w-4 text-sky-500 focus:ring-sky-500 rounded"
-                  />
-                  <label htmlFor="bankAccount" className="ml-2 block">
-                    <span className="text-sm font-medium text-gray-700">Bank Account</span>
-                    <span className="text-xs text-gray-500 block">Valid bank account for payments</span>
-                  </label>
-                </div>
               </div>
             </div>
 
             {!allRequirementsMet && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 text-sm">
-                <p className="font-medium">All requirements must be met</p>
+                <p className="font-medium">⚠️ All requirements must be met</p>
                 <p className="mt-1">Please check all boxes to confirm you meet the requirements.</p>
               </div>
             )}
@@ -711,6 +660,9 @@ function Bookings() {
 
   const renderTabContent = () => {
     if (activeTab === "services") {
+      const currentServices = getCurrentItems() as Service[]
+      const totalPages = getTotalPages()
+
       if (services.length === 0) {
         return (
           <div className="flex flex-col items-center justify-center py-16 px-4 bg-gray-100/50 rounded-2xl">
@@ -735,10 +687,11 @@ function Bookings() {
         <div className="flex flex-col">
           {/* Subscription info banner */}
           <div
-            className={`mb-6 p-4 rounded-lg flex items-center ${services.length >= subscription.maxServices
-              ? "bg-red-50 border border-red-200"
-              : "bg-gray-50 border border-gray-200"
-              }`}
+            className={`mb-6 p-4 rounded-lg flex items-center ${
+              services.length >= subscription.maxServices
+                ? "bg-red-50 border border-red-200"
+                : "bg-gray-50 border border-gray-200"
+            }`}
           >
             <div className="flex items-center">
               <Crown className={`h-5 w-5 mr-2 ${subscription.color}`} />
@@ -746,8 +699,9 @@ function Bookings() {
                 <h3 className="font-medium">
                   {subscription.name} Plan
                   <span
-                    className={`ml-2 text-sm ${services.length >= subscription.maxServices ? "text-red-600" : "text-gray-600"
-                      }`}
+                    className={`ml-2 text-sm ${
+                      services.length >= subscription.maxServices ? "text-red-600" : "text-gray-600"
+                    }`}
                   >
                     ({services.length}/
                     {subscription.maxServices === Number.POSITIVE_INFINITY ? "∞" : subscription.maxServices})
@@ -763,7 +717,7 @@ function Bookings() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {services.map((service) => (
+            {currentServices.map((service) => (
               <div key={service.id} className="bg-gray-200/70 rounded-3xl p-6 relative flex flex-col h-[450px]">
                 {service.hasNotification && showNotification && (
                   <div className="absolute -top-2 -right-2 z-10">
@@ -845,14 +799,52 @@ function Bookings() {
             ))}
           </div>
 
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center mt-8 space-x-2">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-lg ${
+                  currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-2 rounded-lg ${
+                    currentPage === page ? "bg-sky-500 text-white" : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-lg ${
+                  currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+
           {/* Create Service button moved to the bottom */}
           <div className="mt-10 flex justify-center">
             <button
               onClick={handleCreateService}
-              className={`px-6 py-3 rounded-full flex items-center gap-2 ${services.length >= subscription.maxServices
-                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                : "bg-sky-500 text-white hover:bg-sky-600"
-                } transition-all`}
+              className={`px-6 py-3 rounded-full flex items-center gap-2 ${
+                services.length >= subscription.maxServices
+                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                  : "bg-sky-500 text-white hover:bg-sky-600"
+              } transition-all`}
               disabled={services.length >= subscription.maxServices}
             >
               <Plus className="h-4 w-4" />
@@ -862,9 +854,10 @@ function Bookings() {
         </div>
       )
     } else if (activeTab === "ongoing" || activeTab === "pending" || activeTab === "completed") {
-      const filteredBookingsForTab = filteredBookings
+      const currentBookings = getCurrentItems() as Booking[]
+      const totalPages = getTotalPages()
 
-      if (filteredBookingsForTab.length === 0) {
+      if (filteredBookings.length === 0) {
         let emptyMessage = ""
         let emptyDescription = ""
 
@@ -897,37 +890,76 @@ function Bookings() {
       }
 
       return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {filteredBookingsForTab.map((booking) => (
-            <div key={booking.id} className="bg-gray-200/70 rounded-3xl p-6 flex flex-col h-[450px]">
-              <div className="relative overflow-hidden rounded-2xl mb-4">
-                <img src={booking.image || image1} alt={booking.serviceName} className="w-full h-48 object-cover" />
+        <div className="flex flex-col">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {currentBookings.map((booking) => (
+              <div key={booking.id} className="bg-gray-200/70 rounded-3xl p-6 flex flex-col h-[450px]">
+                <div className="relative overflow-hidden rounded-2xl mb-4">
+                  <img src={booking.image || image1} alt={booking.serviceName} className="w-full h-48 object-cover" />
+                </div>
+                <h3 className="text-xl font-light mb-2">{booking.serviceName}</h3>
+                <div className="space-y-2 flex-grow">
+                  <p className="text-gray-600 text-sm">
+                    <span className="font-medium">Customer:</span> {booking.customerName}
+                  </p>
+                  <p className="text-gray-600 text-sm">
+                    <span className="font-medium">Date:</span> {new Date(booking.date).toLocaleDateString()},{" "}
+                    {booking.time}
+                  </p>
+                  <p className="text-gray-600 text-sm">
+                    <span className="font-medium">Location:</span> {booking.location}
+                  </p>
+                </div>
+                <div className="flex justify-between items-center mt-auto pt-4 border-t border-gray-100">
+                  <div className="text-lg font-medium">₱{booking.total.toLocaleString()}</div>
+                  <button
+                    onClick={() => handleBookingClick(booking)}
+                    className="text-sky-500 hover:text-sky-600 flex items-center gap-1 group"
+                  >
+                    Details
+                    <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </button>
+                </div>
               </div>
-              <h3 className="text-xl font-light mb-2">{booking.serviceName}</h3>
-              <div className="space-y-2 flex-grow">
-                <p className="text-gray-600 text-sm">
-                  <span className="font-medium">Customer:</span> {booking.customerName}
-                </p>
-                <p className="text-gray-600 text-sm">
-                  <span className="font-medium">Date:</span> {new Date(booking.date).toLocaleDateString()},{" "}
-                  {booking.time}
-                </p>
-                <p className="text-gray-600 text-sm">
-                  <span className="font-medium">Location:</span> {booking.location}
-                </p>
-              </div>
-              <div className="flex justify-between items-center mt-auto pt-4 border-t border-gray-100">
-                <div className="text-lg font-medium">₱{booking.total.toLocaleString()}</div>
+            ))}
+          </div>
+
+          {/* Pagination for bookings */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center mt-8 space-x-2">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-lg ${
+                  currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <button
-                  onClick={() => handleBookingClick(booking)}
-                  className="text-sky-500 hover:text-sky-600 flex items-center gap-1 group"
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-2 rounded-lg ${
+                    currentPage === page ? "bg-sky-500 text-white" : "text-gray-600 hover:bg-gray-100"
+                  }`}
                 >
-                  Details
-                  <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  {page}
                 </button>
-              </div>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-lg ${
+                  currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
             </div>
-          ))}
+          )}
         </div>
       )
     } else if (activeTab === "personal") {
@@ -986,14 +1018,15 @@ function Bookings() {
             <div className="bg-gray-50 rounded-xl p-6">
               <div className="flex items-center mb-4">
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center mr-4 ${subscription.tier === "free"
-                    ? "bg-gray-200"
-                    : subscription.tier === "mid"
-                      ? "bg-blue-100"
-                      : subscription.tier === "premium"
-                        ? "bg-purple-100"
-                        : "bg-amber-100"
-                    }`}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center mr-4 ${
+                    subscription.tier === "free"
+                      ? "bg-gray-200"
+                      : subscription.tier === "mid"
+                        ? "bg-blue-100"
+                        : subscription.tier === "premium"
+                          ? "bg-purple-100"
+                          : "bg-amber-100"
+                  }`}
                 >
                   <Crown className={`h-6 w-6 ${subscription.color}`} />
                 </div>
@@ -1020,19 +1053,21 @@ function Bookings() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                     <div
-                      className={`h-2 rounded-full ${subscription.tier === "free"
-                        ? "bg-gray-500"
-                        : subscription.tier === "mid"
-                          ? "bg-blue-500"
-                          : subscription.tier === "premium"
-                            ? "bg-purple-500"
-                            : "bg-amber-500"
-                        }`}
+                      className={`h-2 rounded-full ${
+                        subscription.tier === "free"
+                          ? "bg-gray-500"
+                          : subscription.tier === "mid"
+                            ? "bg-blue-500"
+                            : subscription.tier === "premium"
+                              ? "bg-purple-500"
+                              : "bg-amber-500"
+                      }`}
                       style={{
-                        width: `${subscription.maxServices === Number.POSITIVE_INFINITY
-                          ? 10
-                          : Math.min(100, (services.length / subscription.maxServices) * 100)
-                          }%`,
+                        width: `${
+                          subscription.maxServices === Number.POSITIVE_INFINITY
+                            ? 10
+                            : Math.min(100, (services.length / subscription.maxServices) * 100)
+                        }%`,
                       }}
                     ></div>
                   </div>
@@ -1306,6 +1341,35 @@ function Bookings() {
     }, 5000)
   }
 
+  const handleSuccessfulServiceCreation = (data: { service: { _id: any; name: any; price: any; description: any; image: any; chargePerKm: any } }) => {
+    // Add the new service to the local state
+    const createdService = {
+      id: data.service._id || Date.now().toString(), // Fallback ID if _id is not available
+      name: data.service.name,
+      price: data.service.price,
+      description: data.service.description,
+      image: data.service.image || image1,
+      chargePerKm: data.service.chargePerKm,
+      hasNotification: false,
+      notificationCount: 0,
+    }
+
+    setServices([...services, createdService])
+    setIsCreateServiceModalOpen(false)
+    setSuccessMessage("Service created successfully!")
+    setIsSuccessModalOpen(true)
+
+    // Reset form
+    setNewService({
+      name: "",
+      price: 0,
+      description: "",
+      image: "",
+      chargePerKm: 0,
+    })
+    setCreateServiceStep(1)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
       <style>{keyframes}</style>
@@ -1381,66 +1445,73 @@ function Bookings() {
             <nav className="flex -mb-px overflow-x-auto">
               <button
                 onClick={() => setActiveTab("services")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "services"
-                  ? "border-sky-500 text-sky-500"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
+                  activeTab === "services"
+                    ? "border-sky-500 text-sky-500"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
                 Services
               </button>
               <button
                 onClick={() => setActiveTab("ongoing")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "ongoing"
-                  ? "border-sky-500 text-sky-500"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
+                  activeTab === "ongoing"
+                    ? "border-sky-500 text-sky-500"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
                 Ongoing Bookings
               </button>
               <button
                 onClick={() => setActiveTab("pending")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "pending"
-                  ? "border-sky-500 text-sky-500"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
+                  activeTab === "pending"
+                    ? "border-sky-500 text-sky-500"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
                 Pending Bookings
               </button>
               <button
                 onClick={() => setActiveTab("completed")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "completed"
-                  ? "border-sky-500 text-sky-500"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
+                  activeTab === "completed"
+                    ? "border-sky-500 text-sky-500"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
                 Completed Bookings
               </button>
               <button
                 onClick={() => setActiveTab("personal")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "personal"
-                  ? "border-sky-500 text-sky-500"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
+                  activeTab === "personal"
+                    ? "border-sky-500 text-sky-500"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
                 <User className="h-4 w-4" />
                 Personal Info
               </button>
               <button
                 onClick={() => setActiveTab("security")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "security"
-                  ? "border-sky-500 text-sky-500"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
+                  activeTab === "security"
+                    ? "border-sky-500 text-sky-500"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
                 <Lock className="h-4 w-4" />
                 Security
               </button>
               <button
                 onClick={() => setActiveTab("delete")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "delete"
-                  ? "border-sky-500 text-sky-500"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
+                  activeTab === "delete"
+                    ? "border-sky-500 text-sky-500"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
                 <Trash2 className="h-4 w-4" />
                 Delete Account
@@ -1500,12 +1571,13 @@ function Bookings() {
                     <h3 className="text-2xl font-light text-white tracking-tight">{selectedBooking.serviceName}</h3>
                     <div
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 
-                ${selectedBooking.status === "pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : selectedBooking.status === "ongoing"
-                            ? "bg-sky-100 text-sky-800"
-                            : "bg-green-100 text-green-800"
-                        }`}
+                ${
+                  selectedBooking.status === "pending"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : selectedBooking.status === "ongoing"
+                      ? "bg-sky-100 text-sky-800"
+                      : "bg-green-100 text-green-800"
+                }`}
                     >
                       {selectedBooking.status === "pending"
                         ? "Pending"
@@ -1613,12 +1685,13 @@ function Bookings() {
                       <button
                         onClick={() => handleMarkAsCompleted(selectedBooking.id)}
                         disabled={ceoMarkedCompleted.includes(selectedBooking.id) || isLoading || showSuccess}
-                        className={`w-full px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${ceoMarkedCompleted.includes(selectedBooking.id) || showSuccess
-                          ? "bg-gray-400 cursor-not-allowed"
-                          : isLoading && processingBookingId === selectedBooking.id
-                            ? "bg-sky-400 cursor-wait"
-                            : "bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-200"
-                          }`}
+                        className={`w-full px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${
+                          ceoMarkedCompleted.includes(selectedBooking.id) || showSuccess
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : isLoading && processingBookingId === selectedBooking.id
+                              ? "bg-sky-400 cursor-wait"
+                              : "bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-200"
+                        }`}
                       >
                         {isLoading && processingBookingId === selectedBooking.id ? (
                           <span className="flex items-center justify-center">
@@ -1671,10 +1744,11 @@ function Bookings() {
                         <button
                           onClick={() => handleAcceptBooking(selectedBooking.id)}
                           disabled={isLoading}
-                          className={`flex-1 px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${isLoading && processingBookingId === selectedBooking.id
-                            ? "bg-sky-400 cursor-wait"
-                            : "bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-200"
-                            }`}
+                          className={`flex-1 px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${
+                            isLoading && processingBookingId === selectedBooking.id
+                              ? "bg-sky-400 cursor-wait"
+                              : "bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-200"
+                          }`}
                         >
                           {isLoading && processingBookingId === selectedBooking.id ? (
                             <span className="flex items-center justify-center">
@@ -1722,6 +1796,181 @@ function Bookings() {
                 </div>
               </div>
             )}
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+
+      {/* Create Service Modal - Transaction Style */}
+      <Dialog
+        open={isCreateServiceModalOpen}
+        onClose={() => setIsCreateServiceModalOpen(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-md" aria-hidden="true" />
+
+        <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
+          <Dialog.Panel className="mx-auto max-w-4xl w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20">
+            <div className="flex flex-col md:flex-row">
+              {/* Preview Section - Left Side */}
+              <div className="md:w-2/5 bg-gray-100/50 p-8 flex flex-col">
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Service Preview</h3>
+                  <p className="text-sm text-gray-600">See how your service will appear</p>
+                </div>
+
+                <div className="flex-1 flex flex-col">
+                  <div className="relative w-full h-48 mb-6 rounded-2xl overflow-hidden bg-gray-200 border border-gray-300">
+                    <img
+                      src={newService.image || image1}
+                      alt="Service Preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = image1
+                      }}
+                    />
+                  </div>
+
+                  <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm flex-1">
+                    <h4 className="text-xl font-medium mb-3">{newService.name || "Service Name"}</h4>
+                    <p className="text-gray-600 text-sm mb-6 line-clamp-4">
+                      {newService.description || "Service description will appear here."}
+                    </p>
+
+                    <div className="mt-auto space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-500">Starting Rate:</span>
+                        <span className="text-lg font-medium">₱{(newService.price || 0).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-500">Per KM Charge:</span>
+                        <span className="text-base">₱{(newService.chargePerKm || 0).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Section - Right Side */}
+              <div className="md:w-3/5 p-8 border-t md:border-t-0 md:border-l border-gray-200/50">
+                <div className="flex justify-between items-start mb-8">
+                  <div>
+                    <Dialog.Title className="text-2xl font-bold text-gray-900">Create New Service</Dialog.Title>
+                    <p className="text-gray-600 mt-1">
+                      Step {createServiceStep} of {totalSteps}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsCreateServiceModalOpen(false)}
+                    className="text-gray-400 hover:text-gray-500 p-2 rounded-full hover:bg-gray-100 transition-all"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {/* Progress Indicator */}
+                <div className="mb-8">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div
+                        className={`flex items-center justify-center w-10 h-10 rounded-full ${createServiceStep >= 1 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"}`}
+                      >
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div className={`h-1 w-16 ${createServiceStep >= 2 ? "bg-sky-500" : "bg-gray-200"}`}></div>
+                    </div>
+                    <div className="flex items-center">
+                      <div
+                        className={`flex items-center justify-center w-10 h-10 rounded-full ${createServiceStep >= 2 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"}`}
+                      >
+                        <DollarSign className="h-5 w-5" />
+                      </div>
+                      <div className={`h-1 w-16 ${createServiceStep >= 3 ? "bg-sky-500" : "bg-gray-200"}`}></div>
+                    </div>
+                    <div className="flex items-center">
+                      <div
+                        className={`flex items-center justify-center w-10 h-10 rounded-full ${createServiceStep >= 3 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"}`}
+                      >
+                        <Clipboard className="h-5 w-5" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-between mt-3 text-xs text-gray-500">
+                    <span>Service Info</span>
+                    <span>Pricing</span>
+                    <span>Requirements</span>
+                  </div>
+                </div>
+
+                <div className="max-h-[50vh] overflow-y-auto pr-2">{renderCreateServiceStepContent()}</div>
+
+                <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+                  <button
+                    onClick={() => (createServiceStep > 1 ? handlePrevStep() : setIsCreateServiceModalOpen(false))}
+                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 transition-all flex items-center"
+                  >
+                    {createServiceStep > 1 ? (
+                      <>
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back
+                      </>
+                    ) : (
+                      "Cancel"
+                    )}
+                  </button>
+
+                  {createServiceStep < totalSteps ? (
+                    <button
+                      onClick={handleNextStep}
+                      className="px-6 py-3 bg-sky-500 text-white rounded-full hover:bg-sky-600 transition-all flex items-center"
+                    >
+                      Next
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleSubmitNewService}
+                      disabled={!allRequirementsMet || isProcessing}
+                      className={`px-6 py-3 text-white rounded-full transition-all flex items-center ${
+                        !allRequirementsMet || isProcessing
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-sky-500 hover:bg-sky-600"
+                      }`}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <svg
+                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Create Service
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </Dialog.Panel>
         </div>
       </Dialog>
@@ -2248,12 +2497,13 @@ function Bookings() {
                     <button
                       onClick={() => handleDeclineBooking(selectedBooking.id)}
                       disabled={!declineReason.trim() || isLoading}
-                      className={`flex-1 px-4 py-2.5 text-white rounded-lg transition-colors ${!declineReason.trim()
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : isLoading && processingBookingId === selectedBooking.id
-                          ? "bg-red-400 cursor-wait"
-                          : "bg-red-500 hover:bg-red-600"
-                        }`}
+                      className={`flex-1 px-4 py-2.5 text-white rounded-lg transition-colors ${
+                        !declineReason.trim()
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : isLoading && processingBookingId === selectedBooking.id
+                            ? "bg-red-400 cursor-wait"
+                            : "bg-red-500 hover:bg-red-600"
+                      }`}
                     >
                       {isLoading && processingBookingId === selectedBooking.id ? (
                         <span className="flex items-center justify-center">
@@ -2291,111 +2541,6 @@ function Bookings() {
         </div>
       </Dialog>
 
-      {/* Create Service Modal */}
-      <Dialog
-        open={isCreateServiceModalOpen}
-        onClose={() => setIsCreateServiceModalOpen(false)}
-        className="relative z-50"
-      >
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
-
-        <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
-          <Dialog.Panel className="mx-auto max-w-2xl w-full bg-white rounded-2xl overflow-hidden shadow-xl">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-6">
-                <Dialog.Title className="text-xl font-semibold text-gray-900">Create New Service</Dialog.Title>
-                <button
-                  onClick={() => setIsCreateServiceModalOpen(false)}
-                  className="text-gray-400 hover:text-gray-500"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Progress Indicator */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div
-                      className={`flex items-center justify-center w-8 h-8 rounded-full ${createServiceStep >= 1 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"}`}
-                    >
-                      <FileText className="h-4 w-4" />
-                    </div>
-                    <div className={`h-1 w-12 ${createServiceStep >= 2 ? "bg-sky-500" : "bg-gray-200"}`}></div>
-                  </div>
-                  <div className="flex items-center">
-                    <div
-                      className={`flex items-center justify-center w-8 h-8 rounded-full ${createServiceStep >= 2 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"}`}
-                    >
-                      <DollarSign className="h-4 w-4" />
-                    </div>
-                    <div className={`h-1 w-12 ${createServiceStep >= 3 ? "bg-sky-500" : "bg-gray-200"}`}></div>
-                  </div>
-                  <div className="flex items-center">
-                    <div
-                      className={`flex items-center justify-center w-8 h-8 rounded-full ${createServiceStep >= 3 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"}`}
-                    >
-                      <Tool className="h-4 w-4" />
-                    </div>
-                    <div className={`h-1 w-12 ${createServiceStep >= 4 ? "bg-sky-500" : "bg-gray-200"}`}></div>
-                  </div>
-                  <div className="flex items-center">
-                    <div
-                      className={`flex items-center justify-center w-8 h-8 rounded-full ${createServiceStep >= 4 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"}`}
-                    >
-                      <Clipboard className="h-4 w-4" />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-between mt-2 text-xs text-gray-500">
-                  <span>Basic Info</span>
-                  <span>Pricing</span>
-                  <span>Expenses</span>
-                  <span>Requirements</span>
-                </div>
-              </div>
-
-              <div className="max-h-[60vh] overflow-y-auto pr-2">{renderCreateServiceStepContent()}</div>
-
-              <div className="flex justify-between mt-8 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => (createServiceStep > 1 ? handlePrevStep() : setIsCreateServiceModalOpen(false))}
-                  className="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center"
-                >
-                  {createServiceStep > 1 ? (
-                    <>
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      Back
-                    </>
-                  ) : (
-                    "Cancel"
-                  )}
-                </button>
-
-                {createServiceStep < totalSteps ? (
-                  <button
-                    onClick={handleNextStep}
-                    className="px-4 py-2.5 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors flex items-center"
-                  >
-                    Next
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleSubmitNewService}
-                    disabled={!allRequirementsMet}
-                    className={`px-4 py-2.5 text-white rounded-lg transition-colors ${!allRequirementsMet ? "bg-gray-400 cursor-not-allowed" : "bg-sky-500 hover:bg-sky-600"
-                      }`}
-                  >
-                    Create Service
-                  </button>
-                )}
-              </div>
-            </div>
-          </Dialog.Panel>
-        </div>
-      </Dialog>
-
       {/* Subscription Plans Modal */}
       <Dialog open={isPlansModalOpen} onClose={() => setIsPlansModalOpen(false)} className="relative z-50">
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
@@ -2420,10 +2565,11 @@ function Bookings() {
                 {subscriptionPlans.map((plan) => (
                   <div
                     key={plan.tier}
-                    className={`border rounded-xl p-5 flex flex-col ${plan.tier === subscription.tier
-                      ? "border-sky-500 bg-sky-50"
-                      : "border-gray-200 hover:border-sky-300 hover:shadow-md"
-                      } transition-all cursor-pointer`}
+                    className={`border rounded-xl p-5 flex flex-col ${
+                      plan.tier === subscription.tier
+                        ? "border-sky-500 bg-sky-50"
+                        : "border-gray-200 hover:border-sky-300 hover:shadow-md"
+                    } transition-all cursor-pointer`}
                     onClick={() => handleSelectPlan(plan.tier as SubscriptionTier)}
                   >
                     <div
@@ -2455,10 +2601,11 @@ function Bookings() {
 
                     <button
                       onClick={() => handleSelectPlan(plan.tier as SubscriptionTier)}
-                      className={`w-full py-2 rounded-lg mt-auto ${plan.tier === subscription.tier
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : `${plan.textColor.replace("text", "bg")} text-white hover:opacity-90`
-                        }`}
+                      className={`w-full py-2 rounded-lg mt-auto ${
+                        plan.tier === subscription.tier
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : `${plan.textColor.replace("text", "bg")} text-white hover:opacity-90`
+                      }`}
                       disabled={plan.tier === subscription.tier}
                     >
                       {plan.tier === subscription.tier ? "Current Plan" : "Select Plan"}

@@ -36,6 +36,7 @@ import { createBookingNotification } from "./controller/notificationController.j
 import { initWebSocketServer } from "./websocket-server.js"
 
 import { User } from "./models/user.js"
+import { newService } from "./controller/serviceController.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -199,17 +200,12 @@ app.get("/bookings/user/:userId", getUserBookings)
 app.get("/bookings/:id", getBookingById)
 app.patch("/bookings/:id/status", updateBookingStatus)
 
+// Service routes - no authentication required, uses userId from request body
+app.post("/services", newService)
+
 // Replace the existing notification routes with the new router
 import notificationRoutes from "./routes/notification-route.js"
 app.use("/notifications", notificationRoutes)
-
-// Notification routes
-// app.post("/notifications", authenticateToken, createNotification)
-// app.get("/notifications/user/:userId", authenticateToken, getUserNotifications)
-// app.put("/notifications/:notificationId/read", authenticateToken, markNotificationAsRead)
-// app.put("/notifications/user/:userId/read-all", authenticateToken, markAllNotificationsAsRead)
-// app.delete("/notifications/:notificationId", authenticateToken, deleteNotification)
-// app.post("/notifications/booking", authenticateToken, createBookingNotification)
 
 // Create notification after booking status change
 import { sendNotificationToUser } from "./websocket-server.js"

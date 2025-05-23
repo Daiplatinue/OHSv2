@@ -846,7 +846,7 @@ function ProviderDashboard() {
             </div>
 
             <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col h-64 mt-50">
-              <div className="text-xs font-semibold mb-auto">TOTAL EQUIPMENT</div>
+              <div className="text-xs font-semibold mb-auto">TOTAL REVIEWS</div>
               <div className="flex flex-col items-center justify-end h-full pb-4">
                 <div className="relative w-28 h-28 flex items-center justify-center">
                   <svg className="w-full h-full" viewBox="0 0 100 100">
@@ -864,18 +864,18 @@ function ProviderDashboard() {
                     />
                   </svg>
                   <div className="absolute flex flex-col items-center">
-                    <span className="text-3xl font-bold">879</span>
-                    <span className="text-xs text-gray-500">EQUIPMENTS</span>
+                    <span className="text-3xl font-bold">1.2M</span>
+                    <span className="text-xs text-gray-500">REVIEWS</span>
                   </div>
                 </div>
                 <div className="flex gap-4 mt-2 text-xs">
                   <div className="flex items-center gap-1">
                     <CircleIcon className="w-2 h-2 text-green-600 fill-green-600" />
-                    <span>Good Condtition - 572</span>
+                    <span>Positive Review - 980K</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <CircleIcon className="w-2 h-2 text-red-600 fill-red-600" />
-                    <span>Bad Condtition - 307</span>
+                    <span>Negative Review - 40k</span>
                   </div>
                 </div>
               </div>
@@ -907,11 +907,11 @@ function ProviderDashboard() {
                 <div className="flex gap-4 mt-2 text-xs">
                   <div className="flex items-center gap-1">
                     <CircleIcon className="w-2 h-2 text-yellow-600 fill-yellow-600" />
-                    <span>POSITIVE REVIEW - 9024</span>
+                    <span>On Time - 9024</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <CircleIcon className="w-2 h-2 text-gray-500 fill-gray-500" />
-                    <span>NEGATIVE REVIEW - 801</span>
+                    <span>Late - 801</span>
                   </div>
                 </div>
               </div>

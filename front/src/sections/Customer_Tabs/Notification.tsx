@@ -668,11 +668,6 @@ const NotificationPopup: React.FC<NotificationProps> = ({ userId, onClose, updat
                   />
                 </button>
               )}
-              {viewAll && (
-                <a href="/notifications" className="text-sm text-sky-600 hover:text-sky-800 block mt-1">
-                  Go to notifications page
-                </a>
-              )}
             </div>
           </div>
         </motion.div>

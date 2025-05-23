@@ -151,22 +151,6 @@ function AccountsTab() {
             verification: string;
           }
 
-          interface FormattedUser {
-            id: string | number;
-            name: string;
-            email: string;
-            role: string;
-            status: string;
-            joinDate: string;
-            lastLogin: string;
-            avatar: string;
-            phone: string;
-            location: string;
-            rating: number;
-            paymentMethod: string;
-            verificationStatus: string;
-          }
-
           const formattedUsers: Account[] = response.data.map((user: User, index: number) => ({
             id: typeof user._id === 'string' ? parseInt(user._id, 16) % Number.MAX_SAFE_INTEGER : index + 1,
             name: `${user.firstname} ${user.lastname}`,

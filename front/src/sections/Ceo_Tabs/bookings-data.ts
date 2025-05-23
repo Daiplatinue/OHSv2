@@ -60,25 +60,6 @@ export interface Service {
   export const services: Service[] = [
     {
       id: 1,
-      name: "Plumbing Services",
-      price: 8000,
-      description: "Keep your water systems running smoothly with expert plumbing services.",
-      hasNotification: true,
-      notificationCount: 3,
-      image: "https://cdn.pixabay.com/photo/2024/07/23/09/14/ai-generated-8914595_1280.jpg",
-      chargePerKm: 50,
-    },
-    {
-      id: 2,
-      name: "Electrical Repairs",
-      price: 6500,
-      description: "Professional electrical services for your home or business.",
-      hasNotification: false,
-      image: "https://cdn.pixabay.com/photo/2017/01/24/03/53/plant-2004483_1280.jpg",
-      chargePerKm: 40,
-    },
-    {
-      id: 3,
       name: "Cleaning Services",
       price: 4000,
       description: "Comprehensive cleaning solutions for residential and commercial spaces.",
@@ -88,7 +69,7 @@ export interface Service {
       chargePerKm: 30,
     },
     {
-      id: 4,
+      id: 2,
       name: "Home Renovation",
       price: 15000,
       description: "Transform your living space with our expert renovation services.",

@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 
 import { useState, useEffect } from "react"
@@ -597,12 +599,12 @@ function Transaction() {
                 </div>
               </div>
               <div
-                className={`p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === "cash" ? "border-sky-300 bg-sky-500/10" : "border-gray-400 hover:border-gray-500"}`}
-                onClick={() => handlePaymentMethodChange("cash")}
+                className={`p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === "bank" ? "border-sky-300 bg-sky-500/10" : "border-gray-400 hover:border-gray-500"}`}
+                onClick={() => handlePaymentMethodChange("bank")}
               >
                 <div className="flex items-center">
                   <DollarSign className="h-6 w-6 mr-3 text-gray-400" />
-                  <span className="text-gray-700">Cash on Hand</span>
+                  <span className="text-gray-700">Bank Transfer</span>
                 </div>
               </div>
             </div>
@@ -746,10 +748,24 @@ function Transaction() {
               </div>
             )}
 
-            {paymentMethod === "cash" && (
+            {paymentMethod === "bank" && (
               <div className="bg-gray-300/60 p-6 rounded-lg mb-8 animate-fadeIn">
-                <h3 className="text-lg font-medium mb-4 text-gray-700">Cash on Hand</h3>
-                <p className="text-gray-600">Payment will be collected upon service completion.</p>
+                <h3 className="text-lg font-medium mb-4 text-gray-700">Bank Transfer</h3>
+                <p className="text-gray-600">Transfer the payment to our bank account.</p>
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Bank Name:</span>
+                    <span className="font-medium">Metro Bank</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Account Number:</span>
+                    <span className="font-medium">1234-5678-9012-3456</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Account Name:</span>
+                    <span className="font-medium">Online Home Services Inc.</span>
+                  </div>
+                </div>
               </div>
             )}
 
