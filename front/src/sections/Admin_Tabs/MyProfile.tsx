@@ -21,7 +21,6 @@ interface PersonalInfo {
 }
 
 function MyProfile() {
-  const [showNotification] = useState(true)
   const [activeTab, setActiveTab] = useState("personal")
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedInfo, setSelectedInfo] = useState<PersonalInfo | null>(null)
@@ -108,13 +107,6 @@ function MyProfile() {
       image: "https://cdn.pixabay.com/photo/2024/07/23/09/14/ai-generated-8914595_1280.jpg",
     },
   ])
-
-  const filteredInfo = personalInfo.filter((info) => {
-    if (activeTab === "education") return info.type === "education"
-    if (activeTab === "experience") return info.type === "experience"
-    if (activeTab === "skills") return info.type === "skills"
-    return true
-  })
 
   const handleEditInfo = (info: PersonalInfo) => {
     setSelectedInfo(info)
@@ -237,7 +229,7 @@ function MyProfile() {
             <div className="space-y-6">
               {personalInfo
                 .filter((info) => info.type === "education")
-                .map((edu, index) => (
+                .map((edu) => (
                   <div
                     key={edu.id}
                     className="flex flex-col md:flex-row gap-4 pb-4 border-b border-gray-100 last:border-0 last:pb-0"
@@ -335,7 +327,7 @@ function MyProfile() {
             <div className="space-y-6">
               {personalInfo
                 .filter((info) => info.type === "experience")
-                .map((exp, index) => (
+                .map((exp) => (
                   <div
                     key={exp.id}
                     className="flex flex-col md:flex-row gap-4 pb-4 border-b border-gray-100 last:border-0 last:pb-0"

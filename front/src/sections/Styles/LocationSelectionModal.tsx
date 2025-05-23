@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { X, Search, Home, Edit, Trash2, Check, MapPin } from "lucide-react"
+import { X, Search, Edit, Trash2, Check, MapPin } from "lucide-react"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import "leaflet-routing-machine"
@@ -9,8 +9,13 @@ interface Location {
   lat: number
   lng: number
   distance: number
-  price?: number
+  estimatedTime?: number
   id?: string
+  price?: number
+  lightTrafficTime?: number
+  midTrafficTime?: number
+  heavyTrafficTime?: number
+  weatherIssuesTime?: number
 }
 
 interface LocationSelectionModalProps {
@@ -45,6 +50,9 @@ const LocationSelectionModal = ({
   const [isEditingPosition, setIsEditingPosition] = useState<boolean>(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [isRouteLoading, setIsRouteLoading] = useState<boolean>(false)
+
+  // Add a new state to track the active tab
+  const [activeTab, setActiveTab] = useState<"locations" | "travelTimes">("locations")
 
   const mapRef = useRef<L.Map | null>(null)
   const mapContainerRef = useRef<HTMLDivElement>(null)
@@ -377,12 +385,24 @@ const LocationSelectionModal = ({
 
       const distance = calculateDistance(lat, lng, companyLocation.lat, companyLocation.lng)
       const name = await reverseGeocode(lat, lng)
+      const estimatedTimeInMinutes = Math.round(distance * 2) // 2 minutes per km
+
+      // Calculate different traffic condition times
+      const lightTrafficTime = Math.round(estimatedTimeInMinutes * 0.8) // 20% faster than normal
+      const midTrafficTime = estimatedTimeInMinutes // Normal traffic
+      const heavyTrafficTime = Math.round(estimatedTimeInMinutes * 1.5) // 50% slower than normal
+      const weatherIssuesTime = Math.round(estimatedTimeInMinutes * 1.8) // 80% slower than normal
 
       const newLocation = {
         name: name || "Selected Location",
         lat,
         lng,
         distance: Math.round(distance * 10) / 10,
+        estimatedTime: estimatedTimeInMinutes,
+        lightTrafficTime: lightTrafficTime,
+        midTrafficTime: midTrafficTime,
+        heavyTrafficTime: heavyTrafficTime,
+        weatherIssuesTime: weatherIssuesTime,
         price: calculatePrice(distance),
         id: `loc-${Math.random().toString(36).substr(2, 9)}`,
       }
@@ -439,12 +459,14 @@ const LocationSelectionModal = ({
           companyLocation.lat,
           companyLocation.lng,
         )
+        const estimatedTimeInMinutes = Math.round(distance * 2) // 2 minutes per km
 
         return {
           name: item.display_name,
           lat: Number.parseFloat(item.lat),
           lng: Number.parseFloat(item.lon),
           distance: distance,
+          estimatedTime: estimatedTimeInMinutes,
           price: calculatePrice(distance),
           id: `search-${Math.random().toString(36).substr(2, 9)}`,
         }
@@ -801,7 +823,7 @@ const LocationSelectionModal = ({
       const bounds = L.latLngBounds(routeCoords)
       mapRef.current.fitBounds(bounds, { padding: [50, 50] })
 
-      // Update distance based on actual route
+      // Update distance and time based on actual route
       if (routeCoords.length > 2) {
         let totalDistance = 0
         for (let i = 1; i < routeCoords.length; i++) {
@@ -813,12 +835,25 @@ const LocationSelectionModal = ({
           )
         }
 
-        // Update location with actual route distance
+        const estimatedTimeInMinutes = Math.round(totalDistance * 2)
+
+        // Calculate different traffic condition times
+        const lightTrafficTime = Math.round(estimatedTimeInMinutes * 0.8) // 20% faster than normal
+        const midTrafficTime = estimatedTimeInMinutes // Normal traffic
+        const heavyTrafficTime = Math.round(estimatedTimeInMinutes * 1.5) // 50% slower than normal
+        const weatherIssuesTime = Math.round(estimatedTimeInMinutes * 1.8) // 80% slower than normal
+
+        // Update location with actual route distance and time
         setSelectedMapLocation((prev) => {
           if (!prev) return null
           return {
             ...prev,
             distance: Math.round(totalDistance * 10) / 10,
+            estimatedTime: estimatedTimeInMinutes,
+            lightTrafficTime: lightTrafficTime,
+            midTrafficTime: midTrafficTime,
+            heavyTrafficTime: heavyTrafficTime,
+            weatherIssuesTime: weatherIssuesTime,
             price: calculatePrice(totalDistance),
           }
         })
@@ -897,12 +932,15 @@ const LocationSelectionModal = ({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-xl">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-50">
+      <div className="bg-white/95 backdrop-blur-sm rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white/40">
         {/* Header */}
-        <div className="p-4 flex justify-between items-center border-b border-gray-100">
+        <div className="p-5 flex justify-between items-center border-b border-gray-100/50">
           <h2 className="text-xl font-semibold text-gray-800">Select your service location</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors rounded-full p-1 hover:bg-gray-100"
+          >
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -910,35 +948,27 @@ const LocationSelectionModal = ({
         {/* Content */}
         <div className="flex flex-1 overflow-hidden">
           {/* Left sidebar */}
-          <div className="w-1/3 border-r border-gray-100 flex flex-col">
+          <div className="w-1/3 border-r border-gray-100/50 flex flex-col">
             {/* Search bar */}
-            <div className="p-3 border-b border-gray-100">
+            <div className="p-3 border-b border-gray-100/50">
               <div className="relative">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by address"
-                  className="w-full p-2 pl-8 bg-gray-50 border border-gray-200 rounded-md text-gray-800 placeholder-gray-400 text-sm"
+                  className="w-full p-3 pl-10 bg-gray-100/70 border-none rounded-xl text-gray-800 placeholder-gray-400 text-sm focus:ring-2 focus:ring-gray-200 focus:outline-none transition-all"
                   onKeyDown={(e) => e.key === "Enter" && searchLocation()}
                 />
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-3.5 h-4 w-4 text-gray-500" />
               </div>
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={searchLocation}
                   disabled={isSearching}
-                  className="flex-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors disabled:opacity-50 text-sm font-medium"
+                  className="flex-1 px-3 py-2 bg-gray-200/80 text-gray-800 rounded-xl hover:bg-gray-300/80 transition-all disabled:opacity-50 text-sm font-medium"
                 >
                   {isSearching ? "Searching..." : "Search"}
-                </button>
-                <button
-                  onClick={saveLocation}
-                  disabled={!selectedMapLocation || isEditingPosition}
-                  className="flex items-center justify-center gap-1 px-3 py-1.5 bg-sky-500 text-white rounded-md cursor-pointer transition-colors disabled:opacity-50"
-                >
-                  <Home className="h-4 w-4" />
-                  <span>Save Location</span>
                 </button>
               </div>
 
@@ -976,77 +1006,166 @@ const LocationSelectionModal = ({
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-gray-100">
-              <button className="flex-1 py-2 px-4 bg-blue-50 text-blue-600 font-medium border-b-2 border-blue-500">
+            <div className="flex border-b border-gray-100/50">
+              <button
+                className={`flex-1 py-2 px-4 font-medium rounded-t-lg ${
+                  activeTab === "locations"
+                    ? "bg-gray-50 text-gray-800"
+                    : "bg-transparent text-gray-500 hover:bg-gray-50/50"
+                }`}
+                onClick={() => setActiveTab("locations")}
+              >
                 Saved Locations
+              </button>
+              <button
+                className={`flex-1 py-2 px-4 font-medium rounded-t-lg flex items-center justify-center ${
+                  activeTab === "travelTimes"
+                    ? "bg-blue-50/70 text-blue-600"
+                    : "bg-transparent text-gray-500 hover:bg-blue-50/30"
+                }`}
+                onClick={() => {
+                  if (selectedMapLocation) {
+                    setActiveTab("travelTimes")
+                  }
+                }}
+                disabled={!selectedMapLocation}
+              >
+                <span className="text-sm">Travel Times</span>
               </button>
             </div>
 
-            {/* Saved Locations list */}
+            {/* Tab Content */}
             <div className="flex-1 overflow-y-auto">
-              {savedLocationsList.length === 0 ? (
-                <div className="p-4 text-center text-gray-500">
-                  <p>
-                    No saved locations yet. Search or click on the map to select a location, then click "Save Location".
-                  </p>
-                </div>
-              ) : (
-                savedLocationsList.map((location) => (
-                  <div
-                    key={`saved-${location.id}`}
-                    className={`p-3 border-b border-gray-100 ${
-                      selectedMapLocation && selectedMapLocation.id === location.id ? "bg-blue-50" : ""
-                    }`}
-                  >
-                    <div className="flex items-start">
-                      <div className="flex-1 cursor-pointer" onClick={() => selectLocationItem(location)}>
-                        <h3 className="font-medium text-gray-800">{location.name.split(",")[0]}</h3>
-                        <p className="text-gray-500 text-sm mt-1">
-                          {location.distance.toFixed(1)} km • ${location.price?.toFixed(2)}
-                        </p>
+              {activeTab === "locations" ? (
+                // Saved Locations Content
+                savedLocationsList.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500">
+                    <p>
+                      No saved locations yet. Search or click on the map to select a location, then click "Save
+                      Location".
+                    </p>
+                  </div>
+                ) : (
+                  savedLocationsList.map((location) => (
+                    <div
+                      key={`saved-${location.id}`}
+                      className={`p-3 border-b border-gray-100/50 ${
+                        selectedMapLocation && selectedMapLocation.id === location.id
+                          ? "bg-blue-50/70 rounded-lg my-1 mx-1"
+                          : "hover:bg-gray-50/70 rounded-lg my-1 mx-1"
+                      }`}
+                    >
+                      <div className="flex items-start">
+                        <div className="flex-1 cursor-pointer" onClick={() => selectLocationItem(location)}>
+                          <h3 className="font-medium text-gray-800">{location.name.split(",")[0]}</h3>
+                          <p className="text-gray-500 text-sm mt-1">
+                            {location.distance.toFixed(1)} km • ~
+                            {location.estimatedTime || Math.round(location.distance * 2)} min • $
+                            {location.price?.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="flex gap-1 ml-2">
+                          {showDeleteConfirm === location.id ? (
+                            <>
+                              <button
+                                onClick={() => deleteLocation(location.id || "")}
+                                className="p-1 bg-red-100 text-red-600 hover:bg-red-200 rounded transition-colors"
+                                title="Confirm Delete"
+                              >
+                                <Check className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => setShowDeleteConfirm(null)}
+                                className="p-1 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded transition-colors"
+                                title="Cancel"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => startEditLocation(location)}
+                                disabled={isEditingPosition}
+                                className={`p-1 ${isEditingPosition ? "text-gray-400" : "text-blue-600 hover:text-blue-800"} transition-colors`}
+                                title="Edit"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => setShowDeleteConfirm(location.id ?? null)}
+                                disabled={isEditingPosition}
+                                className={`p-1 ${isEditingPosition ? "text-gray-400" : "text-red-600 hover:text-red-800"} transition-colors`}
+                                title="Delete"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex gap-1 ml-2">
-                        {showDeleteConfirm === location.id ? (
-                          <>
-                            <button
-                              onClick={() => deleteLocation(location.id || "")}
-                              className="p-1 bg-red-100 text-red-600 hover:bg-red-200 rounded transition-colors"
-                              title="Confirm Delete"
-                            >
-                              <Check className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => setShowDeleteConfirm(null)}
-                              className="p-1 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded transition-colors"
-                              title="Cancel"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => startEditLocation(location)}
-                              disabled={isEditingPosition}
-                              className={`p-1 ${isEditingPosition ? "text-gray-400" : "text-blue-600 hover:text-blue-800"} transition-colors`}
-                              title="Edit"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => setShowDeleteConfirm(location.id ?? null)}
-                              disabled={isEditingPosition}
-                              className={`p-1 ${isEditingPosition ? "text-gray-400" : "text-red-600 hover:text-red-800"} transition-colors`}
-                              title="Delete"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </>
-                        )}
+                    </div>
+                  ))
+                )
+              ) : // Travel Times Content
+              selectedMapLocation ? (
+                <div className="p-4">
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                    <h5 className="text-sm font-medium mb-3 border-b pb-2">Estimated Travel Times</h5>
+
+                    <div className="space-y-3">
+                      <div className="bg-green-50 p-3 rounded-lg border border-green-100">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-700 flex items-center">
+                            <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                            Light Traffic
+                          </span>
+                          <span className="font-medium text-green-600">{selectedMapLocation.lightTrafficTime} min</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">20% faster than normal conditions</p>
+                      </div>
+
+                      <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-700 flex items-center">
+                            <div className="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
+                            Medium Traffic
+                          </span>
+                          <span className="font-medium text-yellow-600">{selectedMapLocation.midTrafficTime} min</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Normal traffic conditions</p>
+                      </div>
+
+                      <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-700 flex items-center">
+                            <div className="w-2 h-2 rounded-full bg-orange-500 mr-2"></div>
+                            Heavy Traffic
+                          </span>
+                          <span className="font-medium text-orange-600">
+                            {selectedMapLocation.heavyTrafficTime} min
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">50% slower than normal conditions</p>
+                      </div>
+
+                      <div className="bg-red-50 p-3 rounded-lg border border-red-100">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-700 flex items-center">
+                            <div className="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
+                            Weather Issues
+                          </span>
+                          <span className="font-medium text-red-600">{selectedMapLocation.weatherIssuesTime} min</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">80% slower due to adverse weather</p>
                       </div>
                     </div>
                   </div>
-                ))
+                </div>
+              ) : (
+                <div className="p-4 text-center text-gray-500">
+                  <p>Select a location on the map to view estimated travel times.</p>
+                </div>
               )}
             </div>
           </div>
@@ -1101,7 +1220,7 @@ const LocationSelectionModal = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50">
+        <div className="p-4 border-t border-gray-100/50 bg-gray-50">
           {isEditingPosition ? (
             <div className="flex gap-2">
               <button
@@ -1123,9 +1242,9 @@ const LocationSelectionModal = ({
             <button
               onClick={saveLocation}
               disabled={!selectedMapLocation}
-              className={`w-full py-2 rounded-md transition-colors font-medium ${
+              className={`w-full py-3 rounded-xl transition-all font-medium ${
                 selectedMapLocation
-                  ? "bg-blue-500 text-white hover:bg-blue-600"
+                  ? "bg-blue-500 text-white hover:bg-blue-600 shadow-sm hover:shadow-md"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
             >

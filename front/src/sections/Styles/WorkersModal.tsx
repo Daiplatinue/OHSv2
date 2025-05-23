@@ -31,6 +31,11 @@ interface Location {
   lat: number
   lng: number
   distance: number
+  estimatedTime?: number
+  lightTrafficTime?: number
+  midTrafficTime?: number
+  heavyTrafficTime?: number
+  weatherIssuesTime?: number
 }
 
 const COMPANY_LOCATION = {
@@ -52,6 +57,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false)
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState<boolean>(false)
   const [selectedCompany, setSelectedCompany] = useState<any>(null)
+  const [selectedTime, setSelectedTime] = useState<string>("")
 
   const mapRef = useRef<L.Map | null>(null)
   const markerRef = useRef<L.Marker | null>(null)
@@ -165,13 +171,21 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
   }
 
   const closeCompanyModal = () => {
-    setIsCompanyModalOpen(false)
+    setIsLocationModalOpen(false)
     setSelectedCompany(null)
   }
 
   // Add a function to select a location from the modal
   const selectLocation = (location: Location) => {
-    setSelectedLocation(location)
+    // Calculate estimated time (assuming average speed of 30 km/h)
+    const estimatedTimeInMinutes = Math.round(location.distance * 2) // 2 minutes per km
+
+    const locationWithTime = {
+      ...location,
+      estimatedTime: estimatedTimeInMinutes,
+    }
+
+    setSelectedLocation(locationWithTime)
     setIsLocationModalOpen(false)
 
     // Update total rate
@@ -186,16 +200,132 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
     // Fix: Use the exact date object without timezone issues
     const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
     setSelectedDate(formattedDate)
-    setBookingStep(2)
+
+    // Only proceed if time is selected
+    if (selectedTime) {
+      setBookingStep(2)
+    }
   }
 
   const handleBookNow = () => {
     setConfirmationStep(true)
   }
 
-  const handleConfirmBooking = () => {
-    setConfirmationStep(false)
-    setBookingSuccess(true)
+  // Add a function to submit booking to MongoDB
+  const submitBookingToDatabase = async () => {
+    if (!selectedSeller || !selectedLocation || !selectedDate || !selectedTime) {
+      console.error("Missing required booking information")
+      return false
+    }
+
+    try {
+      // Get the current user from localStorage
+      const userString = localStorage.getItem("user")
+      if (!userString) {
+        console.error("User not authenticated")
+        return false
+      }
+
+      // Parse user data and handle different possible formats
+      const userData = JSON.parse(userString)
+      console.log("User data from localStorage:", userData)
+
+      // Extract user ID and token - handle different possible formats
+      let userId = null
+      let token = null
+      let firstname = "User"
+
+      // Format 1: { user: { _id: "...", firstname: "..." }, token: "..." }
+      if (userData.user && userData.user._id) {
+        userId = userData.user._id
+        firstname = userData.user.firstname || firstname
+        token = userData.token
+        console.log("Found user ID in format 1:", userId)
+      }
+      // Format 2: { _id: "...", firstname: "...", token: "..." }
+      else if (userData._id) {
+        userId = userData._id
+        firstname = userData.firstname || firstname
+        token = userData.token
+        console.log("Found user ID in format 2:", userId)
+      }
+      // Format 3: { id: "...", firstname: "...", token: "..." }
+      else if (userData.id) {
+        userId = userData.id
+        firstname = userData.firstname || firstname
+        token = userData.token
+        console.log("Found user ID in format 3:", userId)
+      }
+
+      if (!userId) {
+        console.error("Could not find user ID in stored data:", userData)
+        return false
+      }
+
+      // Calculate distance charge
+      const distanceCharge = selectedLocation.distance * selectedSeller.ratePerKm
+
+      // Prepare booking data
+      const bookingData = {
+        userId: userId,
+        firstname: firstname,
+        productName,
+        providerName: selectedSeller.name,
+        providerId: selectedSeller.id,
+        workerCount: selectedSeller.workerCount || 1,
+        bookingDate: selectedDate,
+        bookingTime: selectedTime,
+        location: {
+          name: selectedLocation.name,
+          lat: selectedLocation.lat,
+          lng: selectedLocation.lng,
+          distance: selectedLocation.distance,
+        },
+        estimatedTime: selectedLocation?.midTrafficTime ? `${selectedLocation.midTrafficTime} min` : "",
+        pricing: {
+          baseRate: selectedSeller.startingRate,
+          distanceCharge: distanceCharge,
+          totalRate: totalRate,
+        },
+      }
+
+      console.log("Sending booking data:", bookingData)
+      console.log("API URL:", `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/bookings`)
+
+      // Send booking data to the server with authentication token
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/bookings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify(bookingData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error("Error creating booking:", errorData)
+        return false
+      }
+
+      const result = await response.json()
+      console.log("Booking created successfully:", result)
+      return true
+    } catch (error) {
+      console.error("Error submitting booking:", error)
+      return false
+    }
+  }
+
+  const handleConfirmBooking = async () => {
+    const success = await submitBookingToDatabase()
+    if (success) {
+      setConfirmationStep(false)
+      setBookingSuccess(true)
+    } else {
+      // Handle error - you could show an error message to the user
+      alert("There was an error creating your booking. Please try again.")
+    }
   }
 
   const resetBooking = () => {
@@ -241,10 +371,10 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
   const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50">
+      <div className="bg-white/95 backdrop-blur-sm rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white/40">
         {/* Header section - always visible */}
-        <div className="p-6 flex justify-between items-center border-b border-gray-200">
+        <div className="p-6 flex justify-between items-center border-b border-gray-100/50 bg-white/80 backdrop-blur-sm">
           {bookingStep === 0 && !selectedSeller && !bookingSuccess && !confirmationStep && (
             <>
               <h2 className="text-xl font-semibold text-black">Providers for {productName}</h2>
@@ -326,7 +456,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                   {sellers.map((seller) => (
                     <div
                       key={seller.id}
-                      className="bg-white rounded-lg p-5 hover:bg-gray-50 transition-colors cursor-pointer border border-gray-200 shadow-sm hover:shadow-md"
+                      className="bg-white/90 backdrop-blur-sm rounded-xl p-5 hover:bg-gray-50/90 transition-all cursor-pointer border border-gray-200/70 shadow-sm hover:shadow-md"
                       onClick={() => handleSellerSelect(seller)}
                     >
                       <div className="flex justify-between items-start mb-3">
@@ -393,7 +523,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                               e.stopPropagation()
                               handleBook(seller)
                             }}
-                            className="px-4 py-2 bg-sky-600 text-white rounded-full hover:bg-sky-700 transition-colors"
+                            className="px-6 py-2 bg-sky-600 text-white rounded-full hover:bg-sky-700 transition-colors shadow-sm hover:shadow-md"
                           >
                             Book
                           </button>
@@ -430,7 +560,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                 </h4>
 
                 {/* Compact Calendar */}
-                <div className="bg-white border border-gray-200 rounded-lg shadow-sm max-w-md mx-auto">
+                <div className="bg-white/90 backdrop-blur-sm border border-gray-200/70 rounded-xl shadow-sm max-w-md mx-auto">
                   {/* Calendar header */}
                   <div className="flex justify-between items-center p-3 border-b border-gray-200">
                     <button
@@ -489,10 +619,49 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
 
                 {/* Selected date display */}
                 {selectedDate && (
-                  <div className="mt-4 p-3 bg-sky-50 border border-sky-100 rounded-lg text-center">
-                    <p className="text-sky-800">
+                  <div className="mt-4 p-3 bg-sky-50 border border-sky-100 rounded-lg">
+                    <p className="text-sky-800 text-center">
                       <span className="font-medium">Selected date:</span> {formatDate(selectedDate)}
                     </p>
+
+                    {/* Add time selection */}
+                    <div className="mt-3">
+                      <label htmlFor="time-select" className="block text-sm font-medium text-sky-800 mb-1">
+                        Select a time:
+                      </label>
+                      <select
+                        id="time-select"
+                        value={selectedTime}
+                        onChange={(e) => setSelectedTime(e.target.value)}
+                        className="w-full p-2 border border-sky-200 rounded-md bg-white"
+                      >
+                        <option value="">Select a time</option>
+                        <option value="08:00">8:00 AM</option>
+                        <option value="09:00">9:00 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="12:00">12:00 PM</option>
+                        <option value="13:00">1:00 PM</option>
+                        <option value="14:00">2:00 PM</option>
+                        <option value="15:00">3:00 PM</option>
+                        <option value="16:00">4:00 PM</option>
+                        <option value="17:00">5:00 PM</option>
+                      </select>
+                    </div>
+
+                    <div className="mt-3 flex justify-center">
+                      <button
+                        onClick={() => selectedTime && handleDateSelect(new Date(selectedDate))}
+                        disabled={!selectedTime}
+                        className={`px-4 py-2 rounded-md transition-colors ${
+                          selectedTime
+                            ? "bg-sky-600 text-white hover:bg-sky-700"
+                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        }`}
+                      >
+                        Continue
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -528,8 +697,11 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                   <div className="mt-4 p-4 bg-sky-50 rounded-lg border border-sky-100 mb-4">
                     <h4 className="font-medium mb-2">Selected Location</h4>
                     <p className="text-gray-700 mb-1">{selectedLocation.name}</p>
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-gray-600 text-sm mb-1">
                       Distance from company: {selectedLocation.distance.toFixed(1)} km
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                      Estimated travel time: {selectedLocation.estimatedTime} minutes
                     </p>
 
                     <div className="mt-4 pt-4 border-t border-sky-200">
@@ -572,7 +744,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                     <p className="text-gray-600 mb-4">Please select a location to continue with your booking.</p>
                     <button
                       onClick={openLocationModal}
-                      className="px-6 py-3 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors"
+                      className="px-6 py-2 bg-sky-600 text-white rounded-full hover:bg-sky-700 transition-colors shadow-sm hover:shadow-md"
                     >
                       Select Location
                     </button>
@@ -584,62 +756,120 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
 
           {confirmationStep && (
             <div className="p-6">
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6">
-                <h3 className="text-lg font-medium mb-4">Booking Summary</h3>
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Left side - Booking information */}
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6 flex-1">
+                  <h3 className="text-lg font-medium mb-4">Booking Details</h3>
 
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                    <span className="text-gray-600">Service:</span>
-                    <span className="font-medium">{productName}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                    <span className="text-gray-600">Provider:</span>
-                    <span className="font-medium">{selectedSeller?.name}</span>
-                  </div>
-
-                  {selectedSeller?.workerCount && (
+                  <div className="space-y-4">
                     <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                      <span className="text-gray-600">Workers:</span>
+                      <span className="text-gray-600">Service:</span>
+                      <span className="font-medium">{productName}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                      <span className="text-gray-600">Provider:</span>
+                      <span className="font-medium">{selectedSeller?.name}</span>
+                    </div>
+
+                    {selectedSeller?.workerCount && (
+                      <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                        <span className="text-gray-600">Workers:</span>
+                        <span className="font-medium">
+                          {selectedSeller.workerCount} worker{selectedSeller.workerCount > 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                      <span className="text-gray-600">Date:</span>
+                      <span className="font-medium">{formatDate(selectedDate)}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                      <span className="text-gray-600">Time:</span>
                       <span className="font-medium">
-                        {selectedSeller.workerCount} worker{selectedSeller.workerCount > 1 ? "s" : ""}
+                        {selectedTime
+                          ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })
+                          : "Not specified"}
                       </span>
                     </div>
-                  )}
 
-                  <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                    <span className="text-gray-600">Date:</span>
-                    <span className="font-medium">{formatDate(selectedDate)}</span>
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                      <span className="text-gray-600">Service Location:</span>
+                      <span className="font-medium">{selectedLocation?.name}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                      <span className="text-gray-600">Distance:</span>
+                      <span className="font-medium">{selectedLocation?.distance.toFixed(1)} km</span>
+                    </div>
+
+                    <div className="space-y-1 pb-2 border-b border-gray-200">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Estimated Travel Times:</span>
+                      </div>
+                      <div className="pl-4">
+                        <div className="flex justify-between text-sm">
+                          <span>Light Traffic:</span>
+                          <span className="text-green-600">{selectedLocation?.lightTrafficTime} min</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Medium Traffic:</span>
+                          <span className="text-yellow-600">{selectedLocation?.midTrafficTime} min</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Heavy Traffic:</span>
+                          <span className="text-orange-600">{selectedLocation?.heavyTrafficTime} min</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Weather Issues:</span>
+                          <span className="text-red-600">{selectedLocation?.weatherIssuesTime} min</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                </div>
 
-                  <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                    <span className="text-gray-600">Service Location:</span>
-                    <span className="font-medium">{selectedLocation?.name}</span>
-                  </div>
+                {/* Right side - Price calculations */}
+                <div className="bg-white p-6 rounded-lg border border-gray-200 mb-6 flex-1 shadow-sm">
+                  <h3 className="text-lg font-medium mb-4">Price Breakdown</h3>
 
-                  <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                    <span className="text-gray-600">Distance:</span>
-                    <span className="font-medium">{selectedLocation?.distance.toFixed(1)} km</span>
-                  </div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                      <span className="text-gray-600">Base rate:</span>
+                      <span className="font-medium">₱{selectedSeller?.startingRate.toLocaleString()}</span>
+                    </div>
 
-                  <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                    <span className="text-gray-600">Base rate:</span>
-                    <span className="font-medium">₱{selectedSeller?.startingRate.toLocaleString()}</span>
-                  </div>
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                      <span className="text-gray-600">Distance:</span>
+                      <span className="font-medium">{selectedLocation?.distance.toFixed(1)} km</span>
+                    </div>
 
-                  <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                    <span className="text-gray-600">Distance charge:</span>
-                    <span className="font-medium">
-                      ₱
-                      {selectedLocation ? (selectedLocation.distance * (selectedSeller?.ratePerKm || 0)).toFixed(2) : 0}
-                    </span>
-                  </div>
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                      <span className="text-gray-600">Rate per km:</span>
+                      <span className="font-medium">₱{selectedSeller?.ratePerKm.toFixed(2)}</span>
+                    </div>
 
-                  <div className="flex justify-between items-center pt-2 text-lg">
-                    <span className="font-medium">Total:</span>
-                    <span className="font-bold text-sky-700">
-                      ₱{totalRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
+                    <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                      <span className="text-gray-600">Distance charge:</span>
+                      <span className="font-medium">
+                        ₱
+                        {selectedLocation
+                          ? (selectedLocation.distance * (selectedSeller?.ratePerKm || 0)).toFixed(2)
+                          : 0}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-2 text-lg">
+                      <span className="font-medium">Total:</span>
+                      <span className="font-bold text-sky-700">
+                        ₱{totalRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -662,31 +892,79 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
               <p className="text-gray-600 mb-6">
                 Stay tuned! {selectedSeller?.name} will review and accept your booking soon.
               </p>
-              <div className="bg-gray-50 p-4 rounded-lg text-left mb-6 border border-gray-200">
-                <div className="mb-2">
-                  <span className="font-medium">Service:</span> {productName}
-                </div>
-                <div className="mb-2">
-                  <span className="font-medium">Provider:</span> {selectedSeller?.name}
-                </div>
-                {selectedSeller?.workerCount && (
+
+              <div className="flex flex-col md:flex-row gap-6 text-left">
+                {/* Left side - Booking information */}
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 flex-1">
+                  <h4 className="font-medium mb-3">Booking Details</h4>
                   <div className="mb-2">
-                    <span className="font-medium">Workers:</span> {selectedSeller.workerCount} worker
-                    {selectedSeller.workerCount > 1 ? "s" : ""}
+                    <span className="font-medium">Service:</span> {productName}
                   </div>
-                )}
-                <div className="mb-2">
-                  <span className="font-medium">Date:</span> {formatDate(selectedDate)}
+                  <div className="mb-2">
+                    <span className="font-medium">Provider:</span> {selectedSeller?.name}
+                  </div>
+                  {selectedSeller?.workerCount && (
+                    <div className="mb-2">
+                      <span className="font-medium">Workers:</span> {selectedSeller.workerCount} worker
+                      {selectedSeller.workerCount > 1 ? "s" : ""}
+                    </div>
+                  )}
+                  <div className="mb-2">
+                    <span className="font-medium">Date:</span> {formatDate(selectedDate)}
+                  </div>
+                  <div className="mb-2">
+                    <span className="font-medium">Time:</span>{" "}
+                    {selectedTime
+                      ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })
+                      : "Not specified"}
+                  </div>
+                  <div className="mb-2">
+                    <span className="font-medium">Service Location:</span> {selectedLocation?.name}
+                  </div>
+                  <div className="mb-2">
+                    <span className="font-medium">Distance:</span> {selectedLocation?.distance.toFixed(1)} km
+                  </div>
+
+                  <div className="mb-2">
+                    <span className="font-medium">Estimated Travel Times:</span>
+                    <div className="pl-4 mt-1">
+                      <div className="text-sm">
+                        <span>Light Traffic:</span>{" "}
+                        <span className="text-green-600">{selectedLocation?.lightTrafficTime} min</span>
+                      </div>
+                      <div className="text-sm">
+                        <span>Medium Traffic:</span>{" "}
+                        <span className="text-yellow-600">{selectedLocation?.midTrafficTime} min</span>
+                      </div>
+                      <div className="text-sm">
+                        <span>Heavy Traffic:</span>{" "}
+                        <span className="text-orange-600">{selectedLocation?.heavyTrafficTime} min</span>
+                      </div>
+                      <div className="text-sm">
+                        <span>Weather Issues:</span>{" "}
+                        <span className="text-red-600">{selectedLocation?.weatherIssuesTime} min</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="mb-2">
-                  <span className="font-medium">Service Location:</span> {selectedLocation?.name}
-                </div>
-                <div className="mb-2">
-                  <span className="font-medium">Distance:</span> {selectedLocation?.distance.toFixed(1)} km
-                </div>
-                <div className="mb-2">
-                  <span className="font-medium">Total:</span> ₱
-                  {totalRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+
+                {/* Right side - Price information */}
+                <div className="bg-white p-4 rounded-lg border border-gray-200 mb-6 flex-1 shadow-sm">
+                  <h4 className="font-medium mb-3">Price Details</h4>
+                  <div className="mb-2">
+                    <span className="font-medium">Base Rate:</span> ₱{selectedSeller?.startingRate.toLocaleString()}
+                  </div>
+                  <div className="mb-2">
+                    <span className="font-medium">Distance Charge:</span> ₱
+                    {selectedLocation ? (selectedLocation.distance * (selectedSeller?.ratePerKm || 0)).toFixed(2) : 0}
+                  </div>
+                  <div className="mb-2 pt-2 border-t border-gray-200">
+                    <span className="font-medium">Total:</span> ₱
+                    {totalRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
                 </div>
               </div>
             </div>
@@ -694,12 +972,12 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
         </div>
 
         {/* Footer section with action buttons - fixed at bottom */}
-        <div className="p-6 border-t border-gray-200 mt-auto bg-gray-50">
+        <div className="p-6 border-t border-gray-100/50 mt-auto bg-gray-50/80 backdrop-blur-sm">
           {bookingStep === 0 && !selectedSeller && !bookingSuccess && !confirmationStep && (
             <div className="flex justify-end">
               <button
                 onClick={onClose}
-                className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors"
+                className="px-6 py-2 bg-sky-600 text-white rounded-full hover:bg-sky-700 transition-colors shadow-sm hover:shadow-md"
               >
                 Close
               </button>
@@ -711,9 +989,9 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
               <button
                 onClick={handleBookNow}
                 disabled={!selectedLocation}
-                className={`px-6 py-2 rounded-lg transition-colors ${
+                className={`px-6 py-2 rounded-full transition-colors ${
                   selectedLocation
-                    ? "bg-sky-600 text-white hover:bg-sky-700"
+                    ? "bg-sky-600 text-white hover:bg-sky-700 shadow-sm hover:shadow-md"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
               >
@@ -732,7 +1010,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
               </button>
               <button
                 onClick={handleConfirmBooking}
-                className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors"
+                className="px-6 py-2 bg-sky-600 text-white rounded-full hover:bg-sky-700 transition-colors shadow-sm hover:shadow-md"
               >
                 Confirm Booking
               </button>
@@ -743,7 +1021,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
             <div className="flex justify-end">
               <button
                 onClick={resetBooking}
-                className="px-6 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors"
+                className="px-6 py-2 bg-sky-600 text-white rounded-full hover:bg-sky-700 transition-colors shadow-sm hover:shadow-md"
               >
                 Go Back
               </button>

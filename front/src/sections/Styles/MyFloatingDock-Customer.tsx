@@ -1,10 +1,11 @@
+"use client"
+
 import type React from "react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Home,
   MessageCircleMore,
-  LogOut,
   Bell,
   User,
   Newspaper,
@@ -32,7 +33,14 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import ProviderTrackingMap from "./ProviderTrackingMap"
-import NotificationPopup from "../Customer_Tabs/Notification"
+import NotificationPopup, { type NotificationItem } from "../Customer_Tabs/Notification"
+
+// Extend the NotificationItem type to include the read property
+declare module '../Customer_Tabs/Notification' {
+  interface NotificationItem {
+    read?: boolean;
+  }
+}
 
 const WaitingForProviderState: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [isWaiting, setIsWaiting] = useState(true)
@@ -85,6 +93,12 @@ const DockItem: React.FC<DockItemProps> = ({ icon, to, isActive, onClick, badge 
   const handleClick = () => {
     if (onClick) {
       onClick()
+    } else if (to === "/logout") {
+      window.location.href = "/login-alt"
+    } else if (to === "/profile") {
+      window.location.href = "/customer/profile"
+    } else if (to === "/") {
+      window.location.href = "/"
     } else {
       console.log(`Navigate to: ${to}`)
     }
@@ -98,9 +112,8 @@ const DockItem: React.FC<DockItemProps> = ({ icon, to, isActive, onClick, badge 
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`flex items-center justify-center transition-all duration-200 ${
-          isActive ? "text-primary" : isHovered ? "text-primary/80" : "text-gray-400"
-        }`}
+        className={`flex items-center justify-center transition-all duration-200 ${isActive ? "text-primary" : isHovered ? "text-primary/80" : "text-gray-400"
+          }`}
       >
         {to === "/notification" ? (
           <motion.div
@@ -125,9 +138,8 @@ const DockItem: React.FC<DockItemProps> = ({ icon, to, isActive, onClick, badge 
 
       {/* Label with animation */}
       <div
-        className={`absolute -top-8 bg-sky-400 text-white text-xs px-2 py-1 rounded-md opacity-0 transition-all duration-200 ${
-          isHovered ? "opacity-100 transform translate-y-0" : "transform translate-y-2"
-        }`}
+        className={`absolute -top-8 bg-sky-400 text-white text-xs px-2 py-1 rounded-md opacity-0 transition-all duration-200 ${isHovered ? "opacity-100 transform translate-y-0" : "transform translate-y-2"
+          }`}
       >
         {to === "/"
           ? "Home"
@@ -163,9 +175,8 @@ const StatCard: React.FC<StatCardProps> = ({ title, count, icon, trend, trendVal
       <div className="p-2 rounded-lg bg-primary/10 text-primary">{icon}</div>
       {trend && trendValue && (
         <div
-          className={`text-xs font-medium px-2 py-1 rounded-full flex items-center ${
-            trend === "up" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-          }`}
+          className={`text-xs font-medium px-2 py-1 rounded-full flex items-center ${trend === "up" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+            }`}
         >
           {trend === "up" ? "+" : "-"}
           {trendValue}%
@@ -179,23 +190,42 @@ const StatCard: React.FC<StatCardProps> = ({ title, count, icon, trend, trendVal
 )
 
 interface Booking {
-  id: number
-  companyName: string
-  service: string
+  _id: string
+  id?: number
+  userId: string
+  firstname: string
+  productName: string
+  providerName: string
+  providerId: number
+  workerCount: number
+  bookingDate: string
+  bookingTime: string
+  location: {
+    name: string
+    lat: number
+    lng: number
+    distance: number
+  }
+  estimatedTime?: string
+  pricing: {
+    baseRate: number
+    distanceCharge: number
+    totalRate: number
+  }
   status: string
-  date: string
-  price: number
-  image: string
+  createdAt: string
+  // Legacy fields for compatibility
+  companyName?: string
+  service?: string
+  date?: string
+  price?: number
+  image?: string
   paymentComplete?: boolean
   providerArrived?: boolean
-  workerCount?: number
   serviceType?: string
-  location?: string
-  distance?: number
-  estimatedTime?: string
-  baseRate?: number
   ratePerKm?: number
   additionalFees?: number
+  baseRate?: number
 }
 
 const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
@@ -213,6 +243,27 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
   const [showDetailsModal, setShowDetailsModal] = useState(false)
 
   const customerLocation = { lat: 14.5995, lng: 120.9842 }
+
+  // Convert database booking to display format
+  const displayBooking = {
+    id: booking.id || Number.parseInt(booking._id.slice(-6), 16), // Use last 6 chars of _id as number
+    companyName: booking.companyName || booking.providerName,
+    service: booking.service || booking.productName,
+    serviceType: booking.serviceType || "",
+    status: booking.status,
+    date: booking.date || new Date(booking.bookingDate).toLocaleDateString(),
+    price: booking.price || booking.pricing.totalRate,
+    image: booking.image || "https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923_1280.jpg",
+    workerCount: booking.workerCount,
+    estimatedTime: booking.estimatedTime || "2-4 hours",
+    location: booking.location.name,
+    distance: booking.location.distance,
+    baseRate: booking.baseRate || booking.pricing.baseRate,
+    ratePerKm: booking.ratePerKm || booking.pricing.distanceCharge / booking.location.distance || 20,
+    additionalFees: booking.additionalFees || 0,
+    paymentComplete: booking.paymentComplete || false,
+    providerArrived: booking.providerArrived || false,
+  }
 
   useEffect(() => {
     let timer: NodeJS.Timeout
@@ -243,7 +294,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
       if (providerArrivedData) {
         try {
           const data = JSON.parse(providerArrivedData)
-          if (data.bookingId === booking.id) {
+          if (data.bookingId === displayBooking.id) {
             setProviderArrived(true)
           }
         } catch (e) {
@@ -259,24 +310,26 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
     const intervalId = setInterval(checkProviderArrival, 2000)
 
     return () => clearInterval(intervalId)
-  }, [booking.id])
+  }, [displayBooking.id])
 
   const handleCompletePayment = () => {
     // Store the current booking data in localStorage
-    localStorage.setItem("currentBookingDetails", JSON.stringify(booking))
+    localStorage.setItem("currentBookingDetails", JSON.stringify(displayBooking))
 
     // Create seller information from the booking data
     const sellerInfo = {
-      id: booking.id,
-      name: booking.companyName,
+      id: displayBooking.id,
+      name: displayBooking.companyName,
       rating: 4.5,
       reviews: 24,
-      location: booking.location || "Local Service Provider",
-      price: booking.price,
-      startingRate: booking.baseRate || booking.price - (booking.distance || 0) * (booking.ratePerKm || 0),
-      ratePerKm: booking.ratePerKm || 20,
-      description: `${booking.service} - ${booking.serviceType || ""}`.trim(),
-      workerCount: booking.workerCount || 1,
+      location: displayBooking.location || "Local Service Provider",
+      price: displayBooking.price,
+      startingRate:
+        displayBooking.baseRate ||
+        displayBooking.price - (displayBooking.distance || 0) * (displayBooking.ratePerKm || 0),
+      ratePerKm: displayBooking.ratePerKm || 20,
+      description: `${displayBooking.service} - ${displayBooking.serviceType || ""}`.trim(),
+      workerCount: displayBooking.workerCount || 1,
     }
 
     // Navigate to transaction page with seller info and booking details
@@ -284,18 +337,20 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
       state: {
         seller: sellerInfo,
         booking: {
-          id: booking.id,
-          service: booking.service,
-          serviceType: booking.serviceType,
-          date: booking.date,
-          location: booking.location,
-          distance: booking.distance,
-          baseRate: booking.baseRate || booking.price - (booking.distance || 0) * (booking.ratePerKm || 0),
-          distanceCharge: (booking.distance || 0) * (booking.ratePerKm || 0),
-          additionalFees: booking.additionalFees || 0,
-          price: booking.price,
-          workerCount: booking.workerCount,
-          estimatedTime: booking.estimatedTime,
+          id: displayBooking.id,
+          service: displayBooking.service,
+          serviceType: displayBooking.serviceType,
+          date: displayBooking.date,
+          location: displayBooking.location,
+          distance: displayBooking.distance,
+          baseRate:
+            displayBooking.baseRate ||
+            displayBooking.price - (displayBooking.distance || 0) * (displayBooking.ratePerKm || 0),
+          distanceCharge: (displayBooking.distance || 0) * (displayBooking.ratePerKm || 0),
+          additionalFees: displayBooking.additionalFees || 0,
+          price: displayBooking.price,
+          workerCount: displayBooking.workerCount,
+          estimatedTime: displayBooking.estimatedTime,
         },
       },
     })
@@ -326,7 +381,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
     localStorage.setItem(
       "serviceReview",
       JSON.stringify({
-        id: booking.id,
+        id: displayBooking.id,
         timestamp: new Date().getTime(),
         rating: reviewRating,
         text: reviewText,
@@ -345,7 +400,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
     localStorage.setItem(
       "serviceCompleted",
       JSON.stringify({
-        id: booking.id,
+        id: displayBooking.id,
         timestamp: new Date().getTime(),
       }),
     )
@@ -359,7 +414,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
 
   const handleViewDetails = () => {
     // Store the current booking data in localStorage for the Transaction component to access
-    localStorage.setItem("currentBookingDetails", JSON.stringify(booking))
+    localStorage.setItem("currentBookingDetails", JSON.stringify(displayBooking))
     setShowDetailsModal(true)
   }
 
@@ -422,13 +477,12 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
             {/* Only show timer when not in Track Service mode */}
             {!paymentComplete && !providerArrived && (
               <div
-                className={`flex items-center justify-between ${
-                  timeLeft > 20
-                    ? "bg-emerald-50 text-emerald-700"
-                    : timeLeft > 10
-                      ? "bg-amber-50 text-amber-700"
-                      : "bg-rose-50 text-rose-700"
-                } rounded-lg px-3 py-1.5`}
+                className={`flex items-center justify-between ${timeLeft > 20
+                  ? "bg-emerald-50 text-emerald-700"
+                  : timeLeft > 10
+                    ? "bg-amber-50 text-amber-700"
+                    : "bg-rose-50 text-rose-700"
+                  } rounded-lg px-3 py-1.5`}
               >
                 <Clock className="w-4 h-4" />
                 <span className="text-sm font-medium">{timeLeft}s</span>
@@ -486,20 +540,24 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
   return (
     <div className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
       <div className="w-1/3 relative h-[150px]">
-        <img src={booking.image || "/placeholder.svg"} alt={booking.service} className="w-full h-full object-cover" />
+        <img
+          src={displayBooking.image || "/placeholder.svg"}
+          alt={displayBooking.service}
+          className="w-full h-full object-cover"
+        />
       </div>
       <div className="w-2/3 p-4">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="font-semibold text-base">{booking.companyName}</h3>
-            <p className="text-gray-600 text-sm mt-1">{booking.service}</p>
+            <h3 className="font-semibold text-base">{displayBooking.companyName}</h3>
+            <p className="text-gray-600 text-sm mt-1">{displayBooking.service}</p>
 
             {/* Worker count information */}
-            {booking.workerCount && (
+            {displayBooking.workerCount && (
               <div className="flex items-center text-gray-500 text-xs mt-1">
                 <Users className="w-3 h-3 mr-1 text-sky-500" />
                 <span>
-                  {booking.workerCount} worker{booking.workerCount > 1 ? "s" : ""}
+                  {displayBooking.workerCount} worker{displayBooking.workerCount > 1 ? "s" : ""}
                 </span>
               </div>
             )}
@@ -510,9 +568,9 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
         <div className="flex items-center justify-between mt-3 text-sm">
           <div className="flex items-center text-gray-500">
             <Calendar className="w-3 h-3 mr-1" />
-            {booking.date}
+            {displayBooking.date}
           </div>
-          <p className="font-medium">₱{booking.price.toLocaleString()}</p>
+          <p className="font-medium">₱{displayBooking.price.toLocaleString()}</p>
         </div>
 
         {/* View Details Button */}
@@ -561,7 +619,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
               <div className="mb-6 p-5 bg-gray-200/70 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-lg">{booking.companyName}</p>
+                    <p className="font-medium text-lg">{displayBooking.companyName}</p>
                     <div className="flex items-center mt-1">
                       <div className="text-yellow-500 mr-2">{"★".repeat(4)}</div>
                       <span className="text-sm text-gray-600">24 reviews</span>
@@ -580,45 +638,45 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center pb-2 border-b border-gray-300">
                       <span className="text-gray-600">Service:</span>
-                      <span className="font-medium">{booking.service}</span>
+                      <span className="font-medium">{displayBooking.service}</span>
                     </div>
 
-                    {booking.serviceType && (
+                    {displayBooking.serviceType && (
                       <div className="flex justify-between items-center pb-2 border-b border-gray-300">
                         <span className="text-gray-600">Service Type:</span>
-                        <span className="font-medium">{booking.serviceType}</span>
+                        <span className="font-medium">{displayBooking.serviceType}</span>
                       </div>
                     )}
 
                     <div className="flex justify-between items-center pb-2 border-b border-gray-300">
                       <span className="text-gray-600">Date:</span>
-                      <span className="font-medium">{formatDate(booking.date)}</span>
+                      <span className="font-medium">{formatDate(displayBooking.date)}</span>
                     </div>
 
                     <div className="flex justify-between items-center pb-2 border-b border-gray-300">
                       <span className="text-gray-600">Location:</span>
-                      <span className="font-medium">{booking.location || "Not specified"}</span>
+                      <span className="font-medium">{displayBooking.location || "Not specified"}</span>
                     </div>
 
-                    {booking.workerCount && (
+                    {displayBooking.workerCount && (
                       <div className="flex justify-between items-center pb-2 border-b border-gray-300">
                         <div className="flex items-center text-gray-600">
                           <Users className="h-4 w-4 mr-1 text-sky-500" />
                           <span>Workers:</span>
                         </div>
                         <span className="font-medium">
-                          {booking.workerCount} worker{booking.workerCount > 1 ? "s" : ""}
+                          {displayBooking.workerCount} worker{displayBooking.workerCount > 1 ? "s" : ""}
                         </span>
                       </div>
                     )}
 
-                    {booking.estimatedTime && (
+                    {displayBooking.estimatedTime && (
                       <div className="flex justify-between items-center pb-2 border-b border-gray-300">
                         <div className="flex items-center text-gray-600">
                           <Clock className="h-4 w-4 mr-1 text-sky-500" />
                           <span>Estimated Time:</span>
                         </div>
-                        <span className="font-medium">{booking.estimatedTime}</span>
+                        <span className="font-medium">{displayBooking.estimatedTime}</span>
                       </div>
                     )}
                   </div>
@@ -631,18 +689,18 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                   {/* Base Rate */}
                   <div className="flex justify-between items-center border-b border-gray-300 pb-2 mb-2">
                     <p className="text-gray-600">Base Service Rate</p>
-                    <p className="text-gray-800 font-medium">₱{booking.baseRate?.toLocaleString() || "0"}</p>
+                    <p className="text-gray-800 font-medium">₱{displayBooking.baseRate?.toLocaleString() || "0"}</p>
                   </div>
 
                   {/* Distance Charge */}
-                  {booking.distance && booking.ratePerKm && (
+                  {displayBooking.distance && displayBooking.ratePerKm && (
                     <div className="flex justify-between items-center border-b border-gray-300 pb-2 mb-2">
                       <p className="text-gray-600">
-                        Distance Charge ({booking.distance.toFixed(1)} km × ₱{booking.ratePerKm})
+                        Distance Charge ({displayBooking.distance.toFixed(1)} km × ₱{displayBooking.ratePerKm})
                       </p>
                       <p className="text-gray-800 font-medium">
                         ₱
-                        {(booking.distance * booking.ratePerKm).toLocaleString(undefined, {
+                        {(displayBooking.distance * displayBooking.ratePerKm).toLocaleString(undefined, {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -651,17 +709,17 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                   )}
 
                   {/* Additional Fees */}
-                  {booking.additionalFees && booking.additionalFees > 0 && (
+                  {displayBooking.additionalFees && displayBooking.additionalFees > 0 && (
                     <div className="flex justify-between items-center border-b border-gray-300 pb-2 mb-2">
                       <p className="text-gray-600">Additional Fees</p>
-                      <p className="text-gray-800 font-medium">₱{booking.additionalFees.toLocaleString()}</p>
+                      <p className="text-gray-800 font-medium">₱{displayBooking.additionalFees.toLocaleString()}</p>
                     </div>
                   )}
 
                   {/* Total */}
                   <div className="flex justify-between items-center pt-2 mt-2">
                     <p className="text-gray-700 font-bold">Total Amount</p>
-                    <p className="text-xl text-gray-800 font-bold">₱{booking.price.toLocaleString()}</p>
+                    <p className="text-xl text-gray-800 font-bold">₱{displayBooking.price.toLocaleString()}</p>
                   </div>
                 </div>
               </div>
@@ -733,8 +791,8 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
               </div>
 
               <ProviderTrackingMap
-                providerName={booking.companyName}
-                bookingId={booking.id}
+                providerName={displayBooking.companyName}
+                bookingId={displayBooking.id}
                 customerLocation={customerLocation} // Manila coordinates as example
                 providerLocation={{ lat: 14.5547, lng: 121.0244 }} // Makati coordinates as example
                 onProviderArrived={() => {
@@ -757,7 +815,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                       onComplete={() => {
                         // Create a custom event that the ProviderTrackingMap component can listen for
                         const arrivalEvent = new CustomEvent("providerForceArrival", {
-                          detail: { bookingId: booking.id },
+                          detail: { bookingId: displayBooking.id },
                         })
                         window.dispatchEvent(arrivalEvent)
 
@@ -768,8 +826,8 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                         localStorage.setItem(
                           "providerArrived",
                           JSON.stringify({
-                            bookingId: booking.id,
-                            providerName: booking.companyName,
+                            bookingId: displayBooking.id,
+                            providerName: displayBooking.companyName,
                             timestamp: new Date().getTime(),
                           }),
                         )
@@ -781,7 +839,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                     onClick={() => {
                       // Create a custom event that the ProviderTrackingMap component can listen for
                       const arrivalEvent = new CustomEvent("providerForceArrival", {
-                        detail: { bookingId: booking.id },
+                        detail: { bookingId: displayBooking.id },
                       })
                       window.dispatchEvent(arrivalEvent)
 
@@ -792,8 +850,8 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                       localStorage.setItem(
                         "providerArrived",
                         JSON.stringify({
-                          bookingId: booking.id,
-                          providerName: booking.companyName,
+                          bookingId: displayBooking.id,
+                          providerName: displayBooking.companyName,
                           timestamp: new Date().getTime(),
                         }),
                       )
@@ -848,11 +906,10 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                       transition={{ duration: 0.2 }}
                     >
                       <Star
-                        className={`h-9 w-9 ${
-                          reviewRating !== null && rating <= reviewRating
-                            ? "text-amber-500 fill-amber-500"
-                            : "text-gray-300"
-                        }`}
+                        className={`h-9 w-9 ${reviewRating !== null && rating <= reviewRating
+                          ? "text-amber-500 fill-amber-500"
+                          : "text-gray-300"
+                          }`}
                       />
                     </motion.button>
                   ))}
@@ -883,9 +940,8 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                   Skip
                 </motion.button>
                 <motion.button
-                  className={`px-6 py-2.5 bg-sky-500 text-white rounded-full font-medium shadow-sm ${
-                    reviewRating === null ? "opacity-50 cursor-not-allowed" : "hover:bg-sky-600"
-                  }`}
+                  className={`px-6 py-2.5 bg-sky-500 text-white rounded-full font-medium shadow-sm ${reviewRating === null ? "opacity-50 cursor-not-allowed" : "hover:bg-sky-600"
+                    }`}
                   onClick={handleReviewSubmit}
                   disabled={reviewRating === null}
                   whileTap={reviewRating !== null ? { scale: 0.95 } : {}}
@@ -945,8 +1001,6 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
   )
 }
 
-import type { NotificationItem } from "../Customer_Tabs/Notification"
-
 const FloatingDock: React.FC = () => {
   const [showDrawer, setShowDrawer] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -955,112 +1009,145 @@ const FloatingDock: React.FC = () => {
   const [activeTab, setActiveTab] = useState("all")
   const [showDock, setShowDock] = useState(true)
   const [showNotificationPopup, setShowNotificationPopup] = useState(false)
-  const [bookings, setBookings] = useState<Booking[]>([
-    {
-      id: 1,
-      companyName: "PipeFix Pros",
-      service: "Plumbing Services",
-      serviceType: "Leak Repairs",
-      status: "pending",
-      date: "2024-03-20",
-      price: 1500,
-      image: "https://cdn.pixabay.com/photo/2016/07/11/18/11/plumbing-1510522_1280.jpg",
-      workerCount: 1,
-      estimatedTime: "1-2 hours",
-      location: "123 Main St, Cebu City",
-      distance: 3.5,
-      baseRate: 1200,
-      ratePerKm: 25,
-      additionalFees: 100,
-    },
-    {
-      id: 2,
-      companyName: "ColorMasters",
-      service: "Handyman Services",
-      serviceType: "Painting Services",
-      status: "ongoing",
-      date: "2024-03-19",
-      price: 1500,
-      image: "https://cdn.pixabay.com/photo/2016/11/18/17/20/house-1835979_1280.jpg",
-      workerCount: 2,
-      estimatedTime: "4-8 hours",
-      location: "456 Oak Ave, Cebu City",
-      distance: 5.2,
-      baseRate: 1000,
-      ratePerKm: 20,
-      additionalFees: 0,
-    },
-    {
-      id: 3,
-      companyName: "DeepClean Pros",
-      service: "Home Cleaning Services",
-      serviceType: "Deep Cleaning",
-      status: "cancelled",
-      date: "2024-03-18",
-      price: 4500,
-      image: "https://cdn.pixabay.com/photo/2018/07/15/13/04/woman-3539608_1280.jpg",
-      workerCount: 3,
-      estimatedTime: "4-6 hours",
-      location: "789 Pine St, Cebu City",
-      distance: 2.8,
-      baseRate: 4000,
-      ratePerKm: 15,
-      additionalFees: 200,
-    },
-    {
-      id: 4,
-      companyName: "TermiteTerminators",
-      service: "Pest Control Services",
-      serviceType: "Termite Treatment",
-      status: "pending",
-      date: "2024-03-17",
-      price: 6000,
-      image: "https://cdn.pixabay.com/photo/2017/08/30/07/56/money-2696229_1280.jpg",
-      workerCount: 2,
-      estimatedTime: "3-5 hours",
-      location: "321 Elm St, Cebu City",
-      distance: 4.1,
-      baseRate: 5500,
-      ratePerKm: 30,
-      additionalFees: 300,
-    },
-    {
-      id: 5,
-      companyName: "CarpetRevive",
-      service: "Home Cleaning Services",
-      serviceType: "Carpet Cleaning",
-      status: "ongoing",
-      date: "2024-03-16",
-      price: 3000,
-      image: "https://cdn.pixabay.com/photo/2020/08/25/18/28/workplace-5517744_1280.jpg",
-      workerCount: 2,
-      estimatedTime: "2-4 hours",
-      location: "654 Maple Ave, Cebu City",
-      distance: 3.7,
-      baseRate: 2500,
-      ratePerKm: 18,
-      additionalFees: 0,
-    },
-    {
-      id: 6,
-      companyName: "PestAway",
-      service: "Pest Control Services",
-      serviceType: "General Pest Control",
-      status: "completed",
-      date: "2024-03-15",
-      price: 3500,
-      image: "https://cdn.pixabay.com/photo/2014/04/05/11/39/bug-316325_1280.jpg",
-      workerCount: 1,
-      estimatedTime: "1-2 hours",
-      location: "987 Cedar St, Cebu City",
-      distance: 2.3,
-      baseRate: 3000,
-      ratePerKm: 22,
-      additionalFees: 0,
-    },
-  ])
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const [unreadNotifications, setUnreadNotifications] = useState(2) // Start with 2 unread notifications
+
+  // Function to fetch user bookings from the backend
+  const fetchUserBookings = async () => {
+    try {
+      setLoading(true)
+      setError("")
+
+      // Get user data from localStorage
+      const userData = localStorage.getItem("user")
+      if (!userData) {
+        setError("User not logged in")
+        setLoading(false)
+        return
+      }
+
+      // Parse the user data
+      const parsedData = JSON.parse(userData)
+
+      // Extract user ID - handle different possible formats
+      let userId
+
+      // Format 1: { user: { _id: "..." }, token: "..." }
+      if (parsedData.user && parsedData.user._id) {
+        userId = parsedData.user._id
+        console.log("Found user ID in format 1:", userId)
+      }
+      // Format 2: { _id: "...", token: "..." }
+      else if (parsedData._id) {
+        userId = parsedData._id
+        console.log("Found user ID in format 2:", userId)
+      }
+      // Format 3: { id: "...", token: "..." }
+      else if (parsedData.id) {
+        userId = parsedData.id
+        console.log("Found user ID in format 3:", userId)
+      }
+      // No valid user ID found
+      else {
+        console.error("User data structure:", parsedData)
+        setError("Could not find user ID in stored data")
+        setLoading(false)
+        return
+      }
+
+      console.log("Fetching bookings for user:", userId)
+
+      // Use the correct API URL
+      const apiUrl = `${import.meta.env.VITE_API_URL || "http://localhost:3000"}/bookings/user/${userId}`
+      console.log("API URL:", apiUrl)
+
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch bookings: ${response.statusText}`)
+      }
+
+      const userBookings = await response.json()
+      console.log("Fetched bookings:", userBookings)
+
+      // If no bookings found, use sample data for demonstration
+      if (userBookings.length === 0) {
+        console.log("No bookings found, using sample data")
+        setBookings([
+          {
+            _id: "sample1",
+            userId: userId,
+            firstname: "Sample",
+            productName: "Plumbing Services",
+            providerName: "PipeFix Pros",
+            providerId: 1,
+            workerCount: 1,
+            bookingDate: new Date().toISOString(),
+            bookingTime: "10:00 AM",
+            location: {
+              name: "123 Main St, Cebu City",
+              lat: 10.3157,
+              lng: 123.8854,
+              distance: 3.5,
+            },
+            estimatedTime: "1-2 hours",
+            pricing: {
+              baseRate: 1200,
+              distanceCharge: 87.5,
+              totalRate: 1287.5,
+            },
+            status: "pending",
+            createdAt: new Date().toISOString(),
+          },
+        ])
+      } else {
+        setBookings(userBookings)
+      }
+    } catch (err) {
+      console.error("Error fetching bookings:", err)
+      setError(err instanceof Error ? err.message : "Failed to fetch bookings")
+
+      // Use sample data if fetch fails
+      console.log("Using sample data due to fetch error")
+      setBookings([
+        {
+          _id: "sample1",
+          userId: "sample_user_id",
+          firstname: "Sample",
+          productName: "Plumbing Services",
+          providerName: "PipeFix Pros",
+          providerId: 1,
+          workerCount: 1,
+          bookingDate: new Date().toISOString(),
+          bookingTime: "10:00 AM",
+          location: {
+            name: "123 Main St, Cebu City",
+            lat: 10.3157,
+            lng: 123.8854,
+            distance: 3.5,
+          },
+          estimatedTime: "1-2 hours",
+          pricing: {
+            baseRate: 1200,
+            distanceCharge: 87.5,
+            totalRate: 1287.5,
+          },
+          status: "pending",
+          createdAt: new Date().toISOString(),
+        },
+      ])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -1068,6 +1155,11 @@ const FloatingDock: React.FC = () => {
     }, 1000)
 
     return () => clearInterval(timer)
+  }, [])
+
+  // Fetch bookings when component mounts
+  useEffect(() => {
+    fetchUserBookings()
   }, [])
 
   // Check localStorage for booking updates and drawer open state
@@ -1087,7 +1179,11 @@ const FloatingDock: React.FC = () => {
 
         // Update the booking with the given ID to the new status
         setBookings((prevBookings) =>
-          prevBookings.map((booking) => (booking.id === id ? { ...booking, status } : booking)),
+          prevBookings.map((booking) =>
+            booking.id === id || booking._id === id || Number.parseInt(booking._id.slice(-6), 16) === id
+              ? { ...booking, status }
+              : booking,
+          ),
         )
 
         localStorage.removeItem("updateBookingStatus") // Clear the flag
@@ -1105,12 +1201,14 @@ const FloatingDock: React.FC = () => {
         // Update the booking with payment completion and status
         setBookings((prevBookings) =>
           prevBookings.map((booking) =>
-            booking.id === paymentData.id
+            booking.id === paymentData.id ||
+              booking._id === paymentData.id ||
+              Number.parseInt(booking._id.slice(-6), 16) === paymentData.id
               ? {
-                  ...booking,
-                  status: paymentData.status || booking.status,
-                  paymentComplete: true,
-                }
+                ...booking,
+                status: paymentData.status || booking.status,
+                paymentComplete: true,
+              }
               : booking,
           ),
         )
@@ -1136,11 +1234,13 @@ const FloatingDock: React.FC = () => {
         // Update the booking with provider arrival
         setBookings((prevBookings) =>
           prevBookings.map((booking) =>
-            booking.id === data.bookingId
+            booking.id === data.bookingId ||
+              booking._id === data.bookingId ||
+              Number.parseInt(booking._id.slice(-6), 16) === data.bookingId
               ? {
-                  ...booking,
-                  providerArrived: true,
-                }
+                ...booking,
+                providerArrived: true,
+              }
               : booking,
           ),
         )
@@ -1162,12 +1262,12 @@ const FloatingDock: React.FC = () => {
         // Update the booking status to completed
         setBookings((prevBookings) =>
           prevBookings.map((booking) =>
-            booking.id === data.id
+            booking.id === data.id || booking._id === data.id || Number.parseInt(booking._id.slice(-6), 16) === data.id
               ? {
-                  ...booking,
-                  status: "completed",
-                  providerArrived: false,
-                }
+                ...booking,
+                status: "completed",
+                providerArrived: false,
+              }
               : booking,
           ),
         )
@@ -1186,17 +1286,17 @@ const FloatingDock: React.FC = () => {
     const openBookingsParam = urlParams.get("openBookings")
 
     if (bookingIdParam && statusParam) {
-      const bookingId = Number.parseInt(bookingIdParam, 10)
+      const bookingId = bookingIdParam
 
       // Update the booking with the given ID to the new status
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
-          booking.id === bookingId
+          String(booking.id) === bookingId || booking._id === bookingId || String(Number.parseInt(booking._id.slice(-6), 16)) === bookingId
             ? {
-                ...booking,
-                status: statusParam,
-                paymentComplete: paymentCompleteParam === "true",
-              }
+              ...booking,
+              status: statusParam,
+              paymentComplete: paymentCompleteParam === "true",
+            }
             : booking,
         ),
       )
@@ -1225,10 +1325,14 @@ const FloatingDock: React.FC = () => {
   const ongoingBookings = bookings.filter((b) => b.status === "ongoing").length
 
   const filteredBookings = bookings.filter((booking) => {
+    const companyName = booking.companyName || booking.providerName || ""
+    const service = booking.service || booking.productName || ""
+    const serviceType = booking.serviceType || ""
+
     const matchesSearch =
-      booking.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (booking.serviceType && booking.serviceType.toLowerCase().includes(searchQuery.toLowerCase()))
+      companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      service.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      serviceType.toLowerCase().includes(searchQuery.toLowerCase())
 
     if (activeTab === "all") return matchesSearch
     return matchesSearch && booking.status === activeTab
@@ -1415,49 +1519,44 @@ const FloatingDock: React.FC = () => {
                 <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
                   <button
                     onClick={() => setActiveTab("all")}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                      activeTab === "all" ? "bg-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${activeTab === "all" ? "bg-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
                   >
                     All Bookings
                   </button>
                   <button
                     onClick={() => setActiveTab("pending")}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                      activeTab === "pending"
-                        ? "bg-amber-500 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${activeTab === "pending"
+                      ? "bg-amber-500 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
                   >
                     Pending
                   </button>
                   <button
                     onClick={() => setActiveTab("ongoing")}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                      activeTab === "ongoing"
-                        ? "bg-emerald-500 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${activeTab === "ongoing"
+                      ? "bg-emerald-500 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
                   >
                     Ongoing
                   </button>
                   <button
                     onClick={() => setActiveTab("cancelled")}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                      activeTab === "cancelled"
-                        ? "bg-rose-500 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${activeTab === "cancelled"
+                      ? "bg-rose-500 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
                   >
                     Cancelled
                   </button>
                   <button
                     onClick={() => setActiveTab("completed")}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                      activeTab === "completed"
-                        ? "bg-sky-500 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${activeTab === "completed"
+                      ? "bg-sky-500 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
                   >
                     Completed
                   </button>
@@ -1491,8 +1590,27 @@ const FloatingDock: React.FC = () => {
 
               {/* Bookings List */}
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {displayedBookings.length > 0 ? (
-                  displayedBookings.map((booking) => <BookingCard key={`booking-${booking.id}`} booking={booking} />)
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center h-40 text-gray-500">
+                    <div className="w-8 h-8 border-2 border-gray-300 border-t-primary rounded-full animate-spin mb-2"></div>
+                    <p>Loading bookings...</p>
+                  </div>
+                ) : error ? (
+                  <div className="flex flex-col items-center justify-center h-40 text-gray-500">
+                    <AlertCircle className="w-10 h-10 mb-2 opacity-50" />
+                    <p>Error loading bookings</p>
+                    <p className="text-sm">{error}</p>
+                    <button
+                      onClick={fetchUserBookings}
+                      className="mt-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : displayedBookings.length > 0 ? (
+                  displayedBookings.map((booking) => (
+                    <BookingCard key={`booking-${booking._id || booking.id}`} booking={booking} />
+                  ))
                 ) : (
                   <div className="flex flex-col items-center justify-center h-40 text-gray-500">
                     <Filter className="w-10 h-10 mb-2 opacity-50" />
