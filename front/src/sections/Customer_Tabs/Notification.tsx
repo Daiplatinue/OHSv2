@@ -31,7 +31,7 @@ const NotificationPopup: React.FC<NotificationProps> = ({ userId, onClose, updat
   const [expandedNotifications, setExpandedNotifications] = useState<string[]>([])
 
   // WebSocket connection
-  const [socket, setSocket] = useState<WebSocket | null>(null)
+  const [, setSocket] = useState<WebSocket | null>(null)
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -169,7 +169,7 @@ const NotificationPopup: React.FC<NotificationProps> = ({ userId, onClose, updat
       // If we have a token, try to fetch from API
       if (token) {
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/notifications/user/${userIdToUse}`,
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/notifications/${userIdToUse}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

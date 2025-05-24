@@ -199,7 +199,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
   }
 
   const closeCompanyModal = () => {
-    setIsLocationModalOpen(false)
+    setIsCompanyModalOpen(false)
     setSelectedCompany(null)
   }
 
@@ -239,26 +239,20 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
     setConfirmationStep(true)
   }
 
-  // Add a function to submit booking to MongoDB
-  const submitBookingToDatabase = async () => {
-    if (!selectedSeller || !selectedLocation || !selectedDate || !selectedTime) {
-      console.error("Missing required booking information")
-      return false
-    }
-
+  // Helper function to safely get user auth data
+  const getUserAuthData = () => {
     try {
-      // Get the current user from localStorage
+      // Get the user data from localStorage
       const userString = localStorage.getItem("user")
       if (!userString) {
-        console.error("User not authenticated")
-        return false
+        console.error("No user data found in localStorage")
+        return { userId: null, token: null, firstname: "User" }
       }
 
-      // Parse user data and handle different possible formats
+      // Parse user data
       const userData = JSON.parse(userString)
       console.log("User data from localStorage:", userData)
 
-      // Extract user ID and token - handle different possible formats
       let userId = null
       let token = null
       let firstname = "User"
@@ -268,26 +262,45 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
         userId = userData.user._id
         firstname = userData.user.firstname || firstname
         token = userData.token
-        console.log("Found user ID in format 1:", userId)
       }
       // Format 2: { _id: "...", firstname: "...", token: "..." }
       else if (userData._id) {
         userId = userData._id
         firstname = userData.firstname || firstname
         token = userData.token
-        console.log("Found user ID in format 2:", userId)
       }
       // Format 3: { id: "...", firstname: "...", token: "..." }
       else if (userData.id) {
         userId = userData.id
         firstname = userData.firstname || firstname
         token = userData.token
-        console.log("Found user ID in format 3:", userId)
       }
 
-      if (!userId) {
-        console.error("Could not find user ID in stored data:", userData)
-        return false
+      return { userId, token, firstname }
+    } catch (error) {
+      console.error("Error parsing user data:", error)
+      return { userId: null, token: null, firstname: "User" }
+    }
+  }
+
+  // Add a function to submit booking to MongoDB
+  const submitBookingToDatabase = async () => {
+    if (!selectedSeller || !selectedLocation || !selectedDate || !selectedTime) {
+      console.error("Missing required booking information")
+      return { success: false, error: "Missing required booking information" }
+    }
+
+    try {
+      // Get user auth data using our helper function
+      const { userId, token, firstname } = getUserAuthData()
+      
+      if (!userId || !token) {
+        console.error("Authentication data missing, userId:", userId, "token:", token ? "exists" : "missing")
+        return { 
+          success: false, 
+          error: "Authentication required. Please log in again.",
+          authError: true
+        }
       }
 
       // Calculate distance charge
@@ -295,8 +308,8 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
 
       // Prepare booking data
       const bookingData = {
-        userId: userId,
-        firstname: firstname,
+        userId,
+        firstname,
         productName,
         providerName: selectedSeller.name,
         providerId: selectedSeller.id,
@@ -318,22 +331,36 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
       }
 
       console.log("Sending booking data:", bookingData)
-      console.log("API URL:", `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/bookings`)
+      
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/bookings`
+      console.log("API URL:", apiUrl)
 
       // Send booking data to the server with authentication token
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/bookings`, {
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(bookingData),
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
+        const errorData = await response.json().catch(() => ({ message: "Unknown error" }))
         console.error("Error creating booking:", errorData)
-        return false
+        
+        if (response.status === 401) {
+          return { 
+            success: false, 
+            error: "Your session has expired. Please log in again.",
+            authError: true
+          }
+        }
+        
+        return { 
+          success: false, 
+          error: errorData.message || `Server error (${response.status})`
+        }
       }
 
       const result = await response.json()
@@ -342,7 +369,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
       // Create booking notification
       try {
         const notificationData = {
-          userId: userId,
+          userId,
           bookingId: result._id,
           status: "pending",
           serviceName: productName,
@@ -351,33 +378,32 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
 
         console.log("Creating booking notification:", notificationData)
 
-        const notificationResponse = await fetch(
+        await fetch(
           `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/notifications/booking`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: token ? `Bearer ${token}` : "",
+              "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(notificationData),
           },
-        )
-
-        if (notificationResponse.ok) {
-          console.log("Booking notification created successfully")
-        } else {
-          console.error("Error creating booking notification:", await notificationResponse.json())
-        }
+        ).catch(err => {
+          // Log but don't fail if notification creation fails
+          console.error("Error creating notification:", err)
+        })
       } catch (notificationError) {
         console.error("Error creating booking notification:", notificationError)
         // Continue with booking success even if notification fails
       }
-      return true
+      
+      return { success: true, result }
     } catch (error) {
       console.error("Error submitting booking:", error)
-      setErrorMessage("There was an error creating your booking. Please try again.")
-      setIsErrorModalOpen(true)
-      return false
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : "Unknown error occurred"
+      }
     }
   }
 
@@ -386,19 +412,29 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
     setErrorMessage(null)
 
     try {
-      const success = await submitBookingToDatabase()
+      const { success, error, authError, result } = await submitBookingToDatabase()
+      
       if (success) {
         setIsSubmitting(false)
         setConfirmationStep(false)
         setBookingSuccess(true)
       } else {
         setIsSubmitting(false)
-        setErrorMessage("There was an error creating your booking. Please try again.")
+        setErrorMessage(error || "There was an error creating your booking. Please try again.")
+        setIsErrorModalOpen(true)
+        
+        // If it's an auth error, you might want to redirect to login or handle differently
+        if (authError) {
+          console.error("Authentication error during booking")
+          // You could redirect to login here if needed
+          // window.location.href = "/login"
+        }
       }
     } catch (error) {
       console.error("Error during booking confirmation:", error)
       setIsSubmitting(false)
       setErrorMessage("An unexpected error occurred. Please try again.")
+      setIsErrorModalOpen(true)
     }
   }
 
@@ -1173,7 +1209,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
               <h3 className="text-xl font-medium text-gray-900 mb-2 animate-slideInUp">Booking Failed</h3>
 
               <p className="text-gray-600 mb-6 animate-fadeIn">{errorMessage}</p>
-
+        
               <button
                 onClick={handleErrorModalClose}
                 className="px-8 py-3 bg-red-500 text-white rounded-full font-medium shadow-sm hover:bg-red-600 active:scale-95 transition-all duration-200 animate-fadeIn"
