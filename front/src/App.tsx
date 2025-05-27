@@ -17,12 +17,12 @@ import MyEmailsAdmin from './sections/Admin_Tabs/MyEmailsAdmin';
 import MyNotificationsAdmin from './sections/Admin_Tabs/MyNotificationsAdmin';
 
 import Ceo from './sections/Ceo';
-import MyBalance from './sections/Ceo_Tabs/MyBalance';
-import Bookings from './sections/Ceo_Tabs/Bookings';
-import EmailCeo from './sections/Ceo_Tabs/MyEmailsCeo';
-import NotificationCeo from './sections/Ceo_Tabs/MyNotificationsCeo';
-import NewsCeo from './sections/Ceo_Tabs/NewsCeo';
-import Employee from './sections/Ceo_Tabs/ProvidersManagement';
+import MyBalance from './sections/Manager-tabs/MyBalance';
+import Bookings from './sections/Manager-tabs/Bookings';
+import EmailCeo from './sections/Manager-tabs/MyEmailsCeo';
+import NotificationCeo from './sections/Manager-tabs/MyNotificationsCeo';
+import NewsCeo from './sections/Manager-tabs/NewsCeo';
+import Employee from './sections/Manager-tabs/ProvidersManagement';
 
 import Provider from './sections/Provider';
 

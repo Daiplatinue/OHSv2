@@ -5,7 +5,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Upload,
-  Clock,
   Building,
   Mail,
   Calendar,
@@ -21,10 +20,11 @@ import {
   Home,
   PauseCircle,
   CheckSquare,
+  CheckCircle2,
 } from "lucide-react"
 import LocationSelector from "./LocationSelectorAuth"
-import axios from "axios"
 import ImagePopup from "../Styles/ImagePopup"
+import ConfirmationModal from "./ConfirmationModal"
 
 interface Location {
   name: string
@@ -33,13 +33,6 @@ interface Location {
   distance: number
   price?: number
   id?: string
-}
-
-interface OperatingHours {
-  day: string
-  open: string
-  close: string
-  closed: boolean
 }
 
 interface InsuranceDocument {
@@ -55,15 +48,6 @@ export default function ManagerRequirements() {
   const [businessName, setBusinessName] = useState("")
   const [businessEmail, setBusinessEmail] = useState("")
   const [foundedDate, setFoundedDate] = useState("")
-  const [operatingHours, setOperatingHours] = useState<OperatingHours[]>([
-    { day: "Monday", open: "09:00", close: "17:00", closed: false },
-    { day: "Tuesday", open: "09:00", close: "17:00", closed: false },
-    { day: "Wednesday", open: "09:00", close: "17:00", closed: false },
-    { day: "Thursday", open: "09:00", close: "17:00", closed: false },
-    { day: "Friday", open: "09:00", close: "17:00", closed: false },
-    { day: "Saturday", open: "09:00", close: "17:00", closed: false },
-    { day: "Sunday", open: "09:00", close: "17:00", closed: true },
-  ])
   const [aboutCompany, setAboutCompany] = useState("")
   const [teamSize, setTeamSize] = useState("")
   const [companyNumber, setCompanyNumber] = useState("")
@@ -122,6 +106,9 @@ export default function ManagerRequirements() {
   const [, setSuccess] = useState(false)
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
   const [, setUserData] = useState<any>(null)
+  
+  // Confirmation modal state
+  const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false)
 
   // Refs for profile pictures
   const profilePictureRef = useRef<HTMLInputElement>(null)
@@ -173,6 +160,18 @@ export default function ManagerRequirements() {
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
+  
+  @keyframes bounceIn {
+    0% { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
 `
 
   // Prevent scrolling when modal is open and handle modal visibility
@@ -183,7 +182,7 @@ export default function ManagerRequirements() {
     document.head.appendChild(styleElement)
 
     // Handle body scroll
-    if (showWarningModal || showLocationModal) {
+    if (showWarningModal || showLocationModal || isConfirmationModalOpen) {
       document.body.style.overflow = "hidden"
     } else {
       document.body.style.overflow = "auto"
@@ -198,7 +197,7 @@ export default function ManagerRequirements() {
       document.body.style.overflow = "auto"
       styleElement.remove()
     }
-  }, [showWarningModal, showLocationModal, keyframes])
+  }, [showWarningModal, showLocationModal, isConfirmationModalOpen, keyframes])
 
   // Handle file selection and preview
   const handleFileChange = (
@@ -239,13 +238,6 @@ export default function ManagerRequirements() {
       }
       reader.readAsDataURL(file)
     }
-  }
-
-  // Handle operating hours change
-  const handleOperatingHoursChange = (index: number, field: keyof OperatingHours, value: string | boolean) => {
-    const updatedHours = [...operatingHours]
-    updatedHours[index] = { ...updatedHours[index], [field]: value }
-    setOperatingHours(updatedHours)
   }
 
   // Handle city coverage
@@ -366,7 +358,11 @@ export default function ManagerRequirements() {
     if (currentStep === 1 && isStep1Valid()) {
       animateStepChange("next", 2)
     } else if (currentStep === 2 && isStep2Valid()) {
-      animateStepChange("next", 3)
+      // Before going to step 3, show the confirmation modal
+      // Using a timeout to ensure it doesn't trigger twice due to React's batching
+      if (!isConfirmationModalOpen) {
+        setIsConfirmationModalOpen(true)
+      }
     } else if (currentStep === 3 && isStep3Valid()) {
       animateStepChange("next", 4)
     } else if (currentStep === 4 && isStep4Valid()) {
@@ -405,14 +401,13 @@ export default function ManagerRequirements() {
     setError("")
 
     try {
-      // Create form data object with all business information
+      // Create user data object (without API call)
       const userData = {
-        firstname: businessName.split(" ")[0] || businessName, // Use first part of business name as firstname
-        lastname: businessName.split(" ").slice(1).join(" ") || "Company", // Use rest of business name as lastname
+        firstname: businessName.split(" ")[0] || businessName,
+        lastname: businessName.split(" ").slice(1).join(" ") || "Company",
         middleName: "",
         email: businessEmail,
         contact: companyNumber,
-        password: "DefaultPassword123!", // You should implement a password field in the form
         gender: "",
         bio: aboutCompany,
         location: companyLocation,
@@ -420,19 +415,15 @@ export default function ManagerRequirements() {
         backId: businessPermitPreview,
         profilePicture: profilePicturePreview,
         coverPhoto: coverPhotoPreview,
-        // Business specific fields
         businessName: businessName,
         foundedDate: foundedDate,
         teamSize: teamSize,
         tinNumber: tinNumber,
         cityCoverage: cityCoverage,
-        operatingHours: operatingHours,
-        // Business permits and registrations
         secRegistrationPreview: secRegistrationPreview,
         birRegistrationPreview: birRegistrationPreview,
         businessPermitPreview: businessPermitPreview,
         eccCertificatePreview: eccCertificatePreview,
-        // Insurance and liability coverage
         generalLiability: {
           preview: generalLiability.preview,
         },
@@ -451,26 +442,15 @@ export default function ManagerRequirements() {
         bondingInsurance: {
           preview: bondingInsurance.preview,
         },
-        // Add type and status as requested
         type: businessName ? "ceo" : "manager",
         status: "pending",
       }
 
-      // Fixed API URL - using the actual backend URL instead of environment variable
-      const response = await axios.post("http://localhost:3000/register-manager", userData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-
-      const data = response.data
-
-      // You may want to check for a success property or status in your API response
-      // For now, we assume success if no error is thrown
-      setUserData(data)
+      // Store user data in state (no API call)
+      setUserData(userData)
       setSuccess(true)
 
-      // Show success modal instead of just setting success flag
+      // Show success modal
       setIsSuccessModalOpen(true)
     } catch (error) {
       setError(error instanceof Error ? error.message : "An error occurred during registration")
@@ -490,6 +470,18 @@ export default function ManagerRequirements() {
       setIsImagePopupOpen(true)
     }
   }
+  
+  // Handle confirmation modal actions
+  const handleContinueRegistration = () => {
+    setIsConfirmationModalOpen(false)
+    animateStepChange("next", 3)
+  }
+  
+ const handleSkipVerification = () => {
+    setIsConfirmationModalOpen(false);
+    // Skip to profile setup instead of review
+    animateStepChange("next", 5);
+  };
 
   return (
     <div className="py-4 px-2">
@@ -560,9 +552,10 @@ export default function ManagerRequirements() {
                   <div>
                     <h3 className="text-xl font-semibold mb-6">Business Information</h3>
 
-                    <div className="grid md:grid-cols-2 gap-8">
-                      {/* Left side - Basic business info */}
-                      <div className="space-y-6">
+                    {/* New layout for Step 1 */}
+                    <div className="space-y-6">
+                      {/* Business Name & Email - Top row */}
+                      <div className="grid md:grid-cols-2 gap-6">
                         <div>
                           <label htmlFor="business-name" className="block text-sm font-medium text-gray-700 mb-1">
                             <span className="flex items-center">
@@ -580,7 +573,7 @@ export default function ManagerRequirements() {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                           />
                         </div>
-
+                        
                         <div>
                           <label htmlFor="business-email" className="block text-sm font-medium text-gray-700 mb-1">
                             <span className="flex items-center">
@@ -598,87 +591,10 @@ export default function ManagerRequirements() {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                           />
                         </div>
-
-                        <div>
-                          <label htmlFor="founded-date" className="block text-sm font-medium text-gray-700 mb-1">
-                            <span className="flex items-center">
-                              <Calendar className="h-4 w-4 mr-1 text-gray-500" />
-                              Founded Date
-                            </span>
-                          </label>
-                          <input
-                            id="founded-date"
-                            type="date"
-                            value={foundedDate}
-                            onChange={(e) => setFoundedDate(e.target.value)}
-                            required
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            <span className="flex items-center">
-                              <Clock className="h-4 w-4 mr-1 text-gray-500" />
-                              Operating Hours
-                            </span>
-                          </label>
-                          <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                            {operatingHours.map((hours, index) => (
-                              <div key={hours.day} className="flex items-center space-x-2">
-                                <div className="w-24 text-sm">{hours.day}</div>
-                                <div className="flex-1 flex items-center space-x-2">
-                                  <input
-                                    type="checkbox"
-                                    id={`closed-${hours.day}`}
-                                    checked={hours.closed}
-                                    onChange={(e) => handleOperatingHoursChange(index, "closed", e.target.checked)}
-                                    className="mr-1"
-                                  />
-                                  <label htmlFor={`closed-${hours.day}`} className="text-sm">
-                                    Closed
-                                  </label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <input
-                                    type="time"
-                                    value={hours.open}
-                                    onChange={(e) => handleOperatingHoursChange(index, "open", e.target.value)}
-                                    disabled={hours.closed}
-                                    className="w-24 px-2 py-1 border border-gray-300 rounded-md text-sm"
-                                  />
-                                  <span className="text-gray-500">to</span>
-                                  <input
-                                    type="time"
-                                    value={hours.close}
-                                    onChange={(e) => handleOperatingHoursChange(index, "close", e.target.value)}
-                                    disabled={hours.closed}
-                                    className="w-24 px-2 py-1 border border-gray-300 rounded-md text-sm"
-                                  />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
                       </div>
-
-                      {/* Right side - Company details */}
-                      <div className="space-y-6">
-                        <div>
-                          <label htmlFor="about-company" className="block text-sm font-medium text-gray-700 mb-1">
-                            About the Company
-                          </label>
-                          <textarea
-                            id="about-company"
-                            value={aboutCompany}
-                            onChange={(e) => setAboutCompany(e.target.value)}
-                            placeholder="Tell us about your company, services, and mission..."
-                            rows={5}
-                            required
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                          />
-                        </div>
-
+                      
+                      {/* Team Size & Contact - Second row */}
+                      <div className="grid md:grid-cols-2 gap-6">
                         <div>
                           <label htmlFor="team-size" className="block text-sm font-medium text-gray-700 mb-1">
                             <span className="flex items-center">
@@ -703,7 +619,7 @@ export default function ManagerRequirements() {
                             <option value="500+">500+ employees</option>
                           </select>
                         </div>
-
+                        
                         <div>
                           <label htmlFor="company-number" className="block text-sm font-medium text-gray-700 mb-1">
                             <span className="flex items-center">
@@ -721,6 +637,40 @@ export default function ManagerRequirements() {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                           />
                         </div>
+                      </div>
+                      
+                      {/* Founded Date - Third row */}
+                      <div>
+                        <label htmlFor="founded-date" className="block text-sm font-medium text-gray-700 mb-1">
+                          <span className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-1 text-gray-500" />
+                            Founded Date
+                          </span>
+                        </label>
+                        <input
+                          id="founded-date"
+                          type="date"
+                          value={foundedDate}
+                          onChange={(e) => setFoundedDate(e.target.value)}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        />
+                      </div>
+                      
+                      {/* About Company - Full width at bottom */}
+                      <div>
+                        <label htmlFor="about-company" className="block text-sm font-medium text-gray-700 mb-1">
+                          About the Company
+                        </label>
+                        <textarea
+                          id="about-company"
+                          value={aboutCompany}
+                          onChange={(e) => setAboutCompany(e.target.value)}
+                          placeholder="Tell us about your company, services, and mission..."
+                          rows={5}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        />
                       </div>
                     </div>
                   </div>
@@ -1685,25 +1635,6 @@ export default function ManagerRequirements() {
                         </div>
                       </div>
 
-                      {/* Operating Hours */}
-                      <div className="bg-white rounded-xl p-6 border">
-                        <h4 className="text-lg font-semibold mb-4">Operating Hours</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {operatingHours.map((hours) => (
-                            <div key={hours.day} className="flex justify-between items-center py-2 border-b">
-                              <span className="font-medium">{hours.day}</span>
-                              <span>
-                                {hours.closed ? (
-                                  <span className="text-red-500">Closed</span>
-                                ) : (
-                                  `${hours.open} - ${hours.close}`
-                                )}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
                       {/* Location Information */}
                       <div className="bg-white rounded-xl p-6 border">
                         <h4 className="text-lg font-semibold mb-4">Location Information</h4>
@@ -2058,7 +1989,7 @@ export default function ManagerRequirements() {
                 className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6"
                 style={{ animation: "pulse 2s ease-in-out infinite" }}
               >
-                <CheckSquare className="h-10 w-10 text-green-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
+                <CheckCircle2 className="h-10 w-10 text-green-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
               </div>
 
               <h3 className="text-xl font-medium text-gray-900 mb-2" style={{ animation: "slideInUp 0.4s ease-out" }}>
@@ -2095,6 +2026,14 @@ export default function ManagerRequirements() {
           previousLocation={companyLocation}
         />
       )}
+      
+      {/* Confirmation Modal (now imported from separate file) */}
+      <ConfirmationModal 
+        isOpen={isConfirmationModalOpen}
+        onContinue={handleContinueRegistration}
+        onSkip={handleSkipVerification}
+      />
+      
       {/* Image Popup */}
       <ImagePopup imageUrl={popupImage} isOpen={isImagePopupOpen} onClose={() => setIsImagePopupOpen(false)} />
     </div>

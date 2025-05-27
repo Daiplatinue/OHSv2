@@ -1,12 +1,8 @@
-"use client"
-
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { Eye, EyeOff, X, AlertTriangle, XCircle, Clock } from "lucide-react"
-import { useNavigate } from "react-router-dom" // Replace next/router with react-router-dom
+import React, { useState, useEffect } from "react"
+import { X, AlertTriangle, XCircle, Clock } from "lucide-react"
 import CustomerRequirements from "./Styles/CustomerRequirements"
 import ManagerRequirements from "./Styles/ManagerRequirements"
+import OTP from "../sections/Styles/OTP"
 
 const slideshowImages = [
   {
@@ -109,16 +105,15 @@ const documentCategories = [
   },
 ]
 
-function App() {
+function LoginAlt() {
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
   const [activeSlide, setActiveSlide] = useState(0)
   const [showModal, setShowModal] = useState(false)
   const [accountType, setAccountType] = useState<string | null>(null)
   const [registrationStep, setRegistrationStep] = useState<"type" | "requirements">("type")
   const [showPendingWarning, setShowPendingWarning] = useState(false)
   const [modalVisible, setModalVisible] = useState(false) // For animation
+  const [showOtpModal, setShowOtpModal] = useState(false) // New state for OTP modal
 
   const [, setValidId] = useState<File | null>(null)
   const [, setSalaryCertificate] = useState<File | null>(null)
@@ -126,18 +121,8 @@ function App() {
   const [, setActiveCategoryIndex] = useState(0)
 
   // Replace router with navigate
-  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-
-  interface LoginResponse {
-    type: "customer" | "manager" | "admin" | "provider" | string
-    [key: string]: any
-  }
-
-  interface LoginError extends Error {
-    message: string
-  }
 
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
@@ -145,67 +130,37 @@ function App() {
     setLoading(true)
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3000"}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      })
-
-      const data: LoginResponse = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed")
-      }
-
-      // Verify data structure
-      if (!data.user) {
-        console.error("Missing user data in response:", data)
-        throw new Error("Invalid response format")
-      }
-
-      // Store user data in localStorage - make sure we're storing the user object
-      localStorage.setItem("user", JSON.stringify(data.user))
-
-      // Add console logs for debugging
-      console.log("Login successful, user data:", data.user)
-      console.log("User type:", data.user.type || "undefined")
-      console.log("User status:", data.user.status || "undefined")
-
-      // Check user status before allowing navigation
-      if (data.user.status !== "active") {
-        // Show warning modal based on status
-        setShowPendingWarning(true)
-        setTimeout(() => setModalVisible(true), 10) // Slight delay for animation
-        // Don't navigate - user must resolve account status first
-        return
-      }
-
-      // Only proceed with navigation if account is active
-      if (data.user.type === "customer") {
-        console.log("Redirecting to customer page: /")
-        navigate("/")
-      } else if (data.user.type === "manager") {
-        console.log("Redirecting to manager page: /ceo")
-        navigate("/ceo")
-      } else if (data.user.type === "admin") {
-        console.log("Redirecting to admin page: /admin")
-        navigate("/admin")
-      } else if (data.user.type === "provider") {
-        console.log("Redirecting to provider page: /provider")
-        navigate("/provider")
-      } else {
-        console.log("Unknown user type, redirecting to home: /")
-        navigate("/")
-      }
+      // Simulate sending a magic link
+      console.log("Magic link requested for:", email)
+      
+      // Show OTP modal instead of success message
+      setTimeout(() => {
+        setLoading(false)
+        setShowOtpModal(true)
+      }, 1000)
+      
     } catch (err) {
-      const error = err as LoginError
-      console.error("Login error:", error)
-      setError(error.message || "Failed to login. Please try again.")
-    } finally {
+      console.error("Login error:", err)
+      setError("Failed to send magic link. Please try again.")
       setLoading(false)
     }
+  }
+
+  const handleOtpVerification = () => {
+    // Handle successful OTP verification
+    console.log("OTP verified successfully for:", email)
+    
+    // Close OTP modal
+    setShowOtpModal(false)
+    
+    // Show success message or redirect to dashboard
+    setError("Successfully authenticated! Redirecting to dashboard...")
+    
+    // Simulate redirect after login
+    setTimeout(() => {
+      // In a real app, you would redirect to the dashboard
+      console.log("Redirecting to dashboard...")
+    }, 2000)
   }
 
   const closeStatusModal = () => {
@@ -361,44 +316,20 @@ function App() {
             />
           </div>
 
-          <div className="space-y-1.5">
-            <div className="flex justify-between">
-              <label htmlFor="password" className="text-sm font-medium">
-                Password
-              </label>
-              <a href="#" className="text-xs text-gray-500 hover:underline">
-                Forgot Password?
-              </a>
-            </div>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-
           <button
             onClick={handleLogin}
             className={`w-full bg-gray-200 text-gray-500 hover:bg-gray-300 rounded-full h-12 font-medium transition-colors
-    ${!email || !password || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
-            disabled={!email || !password || loading}
+              ${!email || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
+            disabled={!email || loading}
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? "Sending Link..." : "Login Using Magic Link"}
           </button>
 
-          {error && <div className="mt-2 text-red-500 text-sm text-center">{error}</div>}
+          {error && (
+            <div className={`mt-2 text-sm text-center ${error.includes("Success") ? "text-green-500" : "text-red-500"}`}>
+              {error}
+            </div>
+          )}
 
           <div className="relative flex items-center justify-center text-xs text-gray-500 my-4 mt-[-15px]">
             <span className="bg-white px-2 mt-10">or sign in with</span>
@@ -452,6 +383,14 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* OTP Verification Modal */}
+      <OTP 
+        email={email}
+        onClose={() => setShowOtpModal(false)}
+        onVerify={handleOtpVerification}
+        visible={showOtpModal}
+      />
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -605,4 +544,4 @@ function App() {
   )
 }
 
-export default App
+export default LoginAlt

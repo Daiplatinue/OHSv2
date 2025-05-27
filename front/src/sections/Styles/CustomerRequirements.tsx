@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react"
-import { Eye, EyeOff, Upload, ChevronLeft, ChevronRight, Camera, ImageIcon, Check, CheckCircle2 } from "lucide-react"
+import { Upload, ChevronLeft, ChevronRight, Camera, ImageIcon, Check, CheckCircle2 } from "lucide-react"
 import LocationSelector from "./LocationSelectorAuth"
-import axios from "axios"
 
 interface Location {
   name: string
@@ -26,10 +25,6 @@ export default function CustomerRequirements({ onClose, parentModal = false }: C
   const [middleName, setMiddleName] = useState("")
   const [email, setEmail] = useState("")
   const [mobileNumber, setMobileNumber] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [gender, setGender] = useState("")
   const [bio, setBio] = useState("")
   const [isAnimating, setIsAnimating] = useState(false)
@@ -38,7 +33,6 @@ export default function CustomerRequirements({ onClose, parentModal = false }: C
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
-  const [, setUserData] = useState<any>(null)
 
   // ID document state
   const [frontId, setFrontId] = useState<File | null>(null)
@@ -68,102 +62,6 @@ export default function CustomerRequirements({ onClose, parentModal = false }: C
     lng: 123.796293,
   }
 
-  const passwordRequirements = [
-    {
-      label: 'At least 8 characters',
-      validator: (password: string) => password.length >= 8,
-    },
-    {
-      label: 'Contains uppercase letter',
-      validator: (password: string) => /[A-Z]/.test(password),
-    },
-    {
-      label: 'Contains lowercase letter',
-      validator: (password: string) => /[a-z]/.test(password),
-    },
-    {
-      label: 'Contains a number',
-      validator: (password: string) => /[0-9]/.test(password),
-    },
-    {
-      label: 'Contains special character',
-      validator: (password: string) => /[^A-Za-z0-9]/.test(password),
-    }
-  ];
-
-  // Animation keyframes for success modal
-  const keyframes = `
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    @keyframes bounceIn {
-      0% { transform: scale(0); opacity: 0; }
-      60% { transform: scale(1.2); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    
-    @keyframes slideInUp {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-  `
-
-  const calculatePasswordStrength = () => {
-    const metRequirements = passwordRequirements.filter(req => req.validator(password)).length;
-    return Math.min(100, (metRequirements / passwordRequirements.length) * 100);
-  };
-
-  const getPasswordStrengthLevel = () => {
-    const percentage = calculatePasswordStrength();
-
-    if (password.length === 0) return 'empty';
-    if (percentage >= 80) return 'strong';
-    if (percentage >= 60) return 'good';
-    if (percentage >= 40) return 'fair';
-    return 'weak';
-  };
-
-  const getPasswordStrengthColor = () => {
-    const level = getPasswordStrengthLevel();
-    switch (level) {
-      case 'strong': return 'text-green-500';
-      case 'good': return 'text-blue-500';
-      case 'fair': return 'text-orange-500';
-      case 'weak': return 'text-red-500';
-      default: return 'text-gray-300';
-    }
-  };
-
-  const getPasswordStrengthBgColor = () => {
-    const level = getPasswordStrengthLevel();
-    switch (level) {
-      case 'strong': return 'bg-green-500';
-      case 'good': return 'bg-blue-500';
-      case 'fair': return 'bg-orange-500';
-      case 'weak': return 'bg-red-500';
-      default: return 'bg-gray-300';
-    }
-  };
-
-  const getPasswordStrengthText = () => {
-    const level = getPasswordStrengthLevel();
-    switch (level) {
-      case 'strong': return 'Strong';
-      case 'good': return 'Good';
-      case 'fair': return 'Fair';
-      case 'weak': return 'Weak';
-      default: return 'Empty';
-    }
-  };
-
   // Reset form after successful submission
   useEffect(() => {
     if (success) {
@@ -173,8 +71,6 @@ export default function CustomerRequirements({ onClose, parentModal = false }: C
       setMiddleName("")
       setEmail("")
       setMobileNumber("")
-      setPassword("")
-      setConfirmPassword("")
       setGender("")
       setBio("")
       setFrontId(null)
@@ -229,7 +125,7 @@ export default function CustomerRequirements({ onClose, parentModal = false }: C
   }
 
   const isStep3Valid = () => {
-    return password !== "" && confirmPassword !== "" && password === confirmPassword && profilePicture !== null
+    return profilePicture !== null
   }
 
   // Navigation between steps with animation
@@ -267,59 +163,28 @@ export default function CustomerRequirements({ onClose, parentModal = false }: C
 
   const handleSuccessModalClose = () => {
     setIsSuccessModalOpen(false)
-    
+
     // Call onClose if provided (to close the parent modal)
     if (onClose) {
       onClose()
     }
   }
 
-  // Handle form submission
+  // Handle form submission (mock implementation without API)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
 
     try {
-      // Create form data object with all user information
-      const userData = {
-        firstname: firstName,
-        lastname: lastName,
-        middleName: middleName,
-        email: email,
-        contact: mobileNumber,
-        password: password,
-        gender: gender,
-        bio: bio,
-        location: selectedLocation,
-        frontId: frontIdPreview,
-        backId: backIdPreview,
-        profilePicture: profilePicturePreview,
-        coverPhoto: coverPhotoPreview,
-        // Add type and status as requested
-        type: 'customer',
-        status: 'pending'
-      }
-
-      // Fixed API URL - using the actual backend URL instead of environment variable
-      const response = await axios.post("http://localhost:3000/register-customer", userData, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-
-      const data = response.data
-
-      // You may want to check for a success property or status in your API response
-      // For now, we assume success if no error is thrown
-      setUserData(data)
-      setSuccess(true)
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
       
-      // Show success modal instead of just setting success flag
+      // Mock successful form submission
+      setSuccess(true)
       setIsSuccessModalOpen(true)
-
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred during registration')
+      setError("An error occurred during registration. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -336,7 +201,26 @@ export default function CustomerRequirements({ onClose, parentModal = false }: C
   return (
     <div className="py-4 px-2">
       {/* Include animation keyframes */}
-      <style>{keyframes}</style>
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideInUp {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes bounceIn {
+          0% { transform: scale(0); }
+          50% { transform: scale(1.2); }
+          100% { transform: scale(1); }
+        }
+        @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(1); }
+        }
+      `}</style>
 
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -712,10 +596,24 @@ export default function CustomerRequirements({ onClose, parentModal = false }: C
                 {currentStep === 3 && (
                   <div>
                     <h3 className="text-lg font-medium mb-4">Account Profile Setup</h3>
-
                     <div className="grid md:grid-cols-2 gap-6">
-                      {/* Left side - Profile pictures */}
+                      {/* Left side - Bio and Profile Pictures */}
                       <div>
+                        {/* Bio */}
+                        <div className="mb-6">
+                          <label htmlFor="bio" className="mb-2 block text-sm font-medium">
+                            Bio
+                          </label>
+                          <textarea
+                            id="bio"
+                            value={bio}
+                            onChange={(e) => setBio(e.target.value)}
+                            placeholder="Tell us about yourself"
+                            rows={4}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          />
+                        </div>
+
                         {/* Cover Photo */}
                         <div className="mb-4">
                           <label htmlFor="cover-photo" className="mb-2 block text-sm font-medium">
@@ -785,184 +683,56 @@ export default function CustomerRequirements({ onClose, parentModal = false }: C
                             />
                           </div>
                         </div>
-
-                        {/* Profile Preview */}
-                        {(profilePicturePreview || coverPhotoPreview) && (
-                          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                            <h4 className="text-sm font-medium mb-2">Profile Overview</h4>
-                            <div className="relative">
-                              <div className="h-20 rounded-t-lg overflow-hidden bg-gray-200">
-                                {coverPhotoPreview && (
-                                  <img
-                                    src={coverPhotoPreview || "/placeholder.svg"}
-                                    alt="Cover"
-                                    className="object-cover w-full h-full"
-                                  />
-                                )}
-                              </div>
-                              <div className="absolute -bottom-4 left-4">
-                                <div className="w-16 h-16 rounded-full border-4 border-white overflow-hidden bg-gray-300">
-                                  {profilePicturePreview && (
-                                    <img
-                                      src={profilePicturePreview || "/placeholder.svg"}
-                                      alt="Profile"
-                                      className="object-cover w-full h-full"
-                                    />
-                                  )}
-                                </div>
-                              </div>
-                              <div className="h-10"></div>
-                            </div>
-                          </div>
-                        )}
                       </div>
+
+                      {/* Right side - Profile Preview */}
                       <div>
-                        {/* Password with strength meter */}
-                        <div className="mb-4">
-                          <label htmlFor="password" className="mb-1 block text-sm font-medium">
-                            Password
-                          </label>
-                          <div className="relative">
-                            <input
-                              id="password"
-                              type={showPassword ? "text" : "password"}
-                              value={password}
-                              onChange={(e) => setPassword(e.target.value)}
-                              placeholder="Create a password"
-                              required
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 pr-10"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                            >
-                              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                          </div>
-
-                          {/* Password strength meter - always visible */}
-                          <div className="mt-3 bg-gray-50/80 backdrop-blur-md rounded-lg border border-gray-200/60 p-4 transition-opacity duration-500 opacity-100 transform translate-y-0">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-gray-700">Password Strength</span>
-                              <span className={`text-sm font-semibold ${getPasswordStrengthColor()}`}>
-                                {getPasswordStrengthText()}
-                              </span>
-                            </div>
-
-                            <div className="mb-3">
-                              <div className="flex gap-1 h-1.5">
-                                {[...Array(4)].map((_, index) => (
-                                  <div
-                                    key={index}
-                                    className={`flex-1 rounded-sm transition-all duration-500 ${calculatePasswordStrength() > index * 25
-                                      ? `${getPasswordStrengthBgColor()} scale-y-100 opacity-100`
-                                      : 'bg-gray-200 scale-y-75 opacity-70'
-                                      }`}
-                                    style={{ transitionDelay: `${index * 0.1}s` }}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col gap-2 mt-3">
-                              {passwordRequirements.map((requirement, index) => {
-                                const isMet = requirement.validator(password);
-                                return (
-                                  <div
-                                    key={index}
-                                    className={`flex items-center gap-2 transition-all duration-300 ${isMet
-                                      ? 'opacity-100 translate-x-0'
-                                      : 'opacity-65 -translate-x-1'
-                                      }`}
-                                    style={{ transitionDelay: `${index * 0.05}s` }}
-                                  >
-                                    <div className={`w-4.5 h-4.5 rounded-full flex items-center justify-center transition-all duration-300 ${isMet
-                                      ? 'bg-green-500 scale-110'
-                                      : 'bg-gray-200'
-                                      }`}>
-                                      <Check
-                                        size={10}
-                                        className={`text-white transition-all duration-200 ${isMet
-                                          ? 'opacity-100 scale-100'
-                                          : 'opacity-0 scale-50'
-                                          }`}
-                                        strokeWidth={3}
-                                      />
-                                    </div>
-                                    <span className={`text-xs ${isMet
-                                      ? 'text-gray-900 font-medium'
-                                      : 'text-gray-500'
-                                      }`}>
-                                      {requirement.label}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Confirm Password */}
-                        <div className="mb-4">
-                          <label htmlFor="confirm-password" className="mb-1 block text-sm font-medium">
-                            Confirm Password
-                          </label>
-                          <div className="relative">
-                            <input
-                              id="confirm-password"
-                              type={showConfirmPassword ? "text" : "password"}
-                              value={confirmPassword}
-                              onChange={(e) => setConfirmPassword(e.target.value)}
-                              placeholder="Confirm your password"
-                              required
-                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 pr-10 ${confirmPassword && password !== confirmPassword
-                                ? "border-red-300 focus:ring-red-500"
-                                : confirmPassword && password === confirmPassword
-                                  ? "border-green-300 focus:ring-green-500"
-                                  : "border-gray-300 focus:ring-sky-500"
-                                }`}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                            >
-                              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-
-                            {confirmPassword && (
-                              <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                                {password === confirmPassword ? (
-                                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                  </svg>
-                                ) : (
-                                  <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                )}
-                              </div>
+                        <h4 className="text-lg font-medium mb-4">Profile Preview</h4>
+                        <div className="bg-white border rounded-lg overflow-hidden">
+                          {/* Cover Photo Preview */}
+                          <div className="h-48 bg-gray-100 relative">
+                            {coverPhotoPreview ? (
+                              <img
+                                src={coverPhotoPreview}
+                                alt="Cover"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-r from-sky-400 to-blue-500" />
                             )}
                           </div>
-                          {password !== confirmPassword && confirmPassword !== "" && (
-                            <p className="text-red-500 text-sm mt-1">Passwords do not match</p>
-                          )}
-                        </div>
 
-                        {/* Bio */}
-                        <div className="mb-4">
-                          <label htmlFor="bio" className="mb-1 block text-sm font-medium">
-                            Bio
-                          </label>
-                          <textarea
-                            id="bio"
-                            value={bio}
-                            onChange={(e) => setBio(e.target.value)}
-                            placeholder="Tell us about yourself"
-                            rows={4}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                          />
+                          {/* Profile Info */}
+                          <div className="relative px-6 pb-6">
+                            {/* Profile Picture */}
+                            <div className="absolute -top-16 left-6">
+                              <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-white shadow-lg">
+                                {profilePicturePreview ? (
+                                  <img
+                                    src={profilePicturePreview}
+                                    alt="Profile"
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                    <Camera className="h-8 w-8 text-gray-400" />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Name and Bio */}
+                            <div className="pt-20">
+                              <h2 className="text-2xl font-bold text-gray-900">
+                                {firstName} {middleName} {lastName}
+                              </h2>
+                              {bio && (
+                                <p className="mt-2 text-gray-600">
+                                  {bio}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
