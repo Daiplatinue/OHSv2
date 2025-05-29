@@ -458,15 +458,41 @@ html, body {
 
 /* Loading Screen */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-@keyframes windShake {
-  0% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
-  25% { transform: translate(-60%, -40%) rotate(15deg) scale(1.2); }
-  50% { transform: translate(-30%, -60%) rotate(-10deg) scale(0.9); }
-  75% { transform: translate(-70%, -30%) rotate(5deg) scale(1.1); }
-  100% { transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+.contact-text {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: -0.02em;
 }
 
-.animate-wind-shake {
-  animation: windShake 0.8s ease-in-out infinite;
+.contact-heading {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: -0.03em;
+  font-weight: 700;
 }
+
+.contact-details {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-slide-up {
+  animation: fadeSlideUp 0.6s ease-out forwards;
+}
+
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+.delay-5 { animation-delay: 0.5s; }
