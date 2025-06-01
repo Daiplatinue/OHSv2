@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { ChevronRight, X } from "lucide-react";
+import { X } from "lucide-react";
+import { Star, Shield, Zap, Heart, Users, DollarSign, BarChart, Briefcase } from 'lucide-react';
 
 function Proposition() {
   const [loading, setLoading] = useState(true);
@@ -10,11 +11,64 @@ function Proposition() {
   const [showContact, setShowContact] = useState(false);
   const [hoveredContactHeader, setHoveredContactHeader] = useState(false);
   const [hoveredContactPhone, setHoveredContactPhone] = useState(false);
+  const [hoveredService, setHoveredService] = useState("");
+  const [indicatorPosition, setIndicatorPosition] = useState(0);
 
-  const [hoveredService, setHoveredService] = useState<number | null>(null);
   const heroRef = useRef<HTMLDivElement | null>(null);
   const servicesRef = useRef<HTMLDivElement | null>(null);
   const [heroAnimationComplete, setHeroAnimationComplete] = useState(false);
+
+  const services = [
+    { title: "PLUMBLING", section: "01", action: "DISCOVER" },
+    { title: "HANDYMAN", section: "02", action: "EXPLORE" },
+    { title: "LANDSCAPING", section: "03", action: "EXPERIENCE" },
+    { title: "ROOFING", section: "04", action: "LEARN" },
+    { title: "PEST CONTROL", section: "05", action: "JOIN" },
+    { title: "CLEANING", section: "06", action: "VISIT" }
+  ];
+
+  const benefits = [
+    {
+      icon: Star,
+      title: "Premium Quality",
+      description: "Experience excellence with our top-tier service quality and attention to detail."
+    },
+    {
+      icon: Shield,
+      title: "Fully Insured",
+      description: "Rest easy knowing all our services are backed by comprehensive insurance coverage."
+    },
+    {
+      icon: Zap,
+      title: "Fast Response",
+      description: "Get quick assistance with our 24/7 rapid response team ready to help."
+    },
+    {
+      icon: Heart,
+      title: "Eco-Friendly",
+      description: "Our sustainable practices and materials minimize environmental impact without compromising quality."
+    },
+    {
+      icon: Users,
+      title: "Expert Team",
+      description: "Work with skilled professionals who bring years of specialized experience to every project."
+    },
+    {
+      icon: DollarSign,
+      title: "Cost Effective",
+      description: "Get exceptional value with competitive pricing and transparent, no-surprise billing."
+    },
+    {
+      icon: BarChart,
+      title: "Data-Driven Results",
+      description: "Benefit from our analytics-backed methodologies that deliver measurable improvements."
+    },
+    {
+      icon: Briefcase,
+      title: "Industry Compliance",
+      description: "All services adhere to the latest industry standards and regulatory requirements for your peace of mind."
+    }
+  ];
 
   useEffect(() => {
     const loadingSteps = [
@@ -72,32 +126,12 @@ function Proposition() {
     window.location.href = '/login';
   };
 
-  const services = [
-    {
-      name: "PLUMBING",
-      related: ["Pipe Installation", "Leak Repair", "Drain Cleaning", "More"]
-    },
-    {
-      name: "HANDYMAN",
-      related: ["Furniture Assembly", "Door Repair", "General Maintenance", "More"]
-    },
-    {
-      name: "CLEANING",
-      related: ["Deep Cleaning", "Window Washing", "Carpet Cleaning", "More"]
-    },
-    {
-      name: "REPAIR",
-      related: ["Appliance Repair", "Electronics Fix", "Furniture Repair", "More"]
-    },
-    {
-      name: "RENOVATION",
-      related: ["Kitchen Remodel", "Bathroom Update", "Room Addition", "More"]
-    },
-    {
-      name: "PEST CONTROL",
-      related: ["Termite Treatment", "Rodent Control", "Insect Removal", "More"]
-    }
-  ];
+  const handleServiceHover = (title: string, event: React.MouseEvent<HTMLDivElement>) => {
+    const element = event.currentTarget;
+    const rect = element.getBoundingClientRect();
+    setHoveredService(title);
+    setIndicatorPosition(rect.top - 90);
+  };
 
   return (
     <>
@@ -129,11 +163,11 @@ function Proposition() {
             </div>
 
             <div className="relative mb-20">
-              <div 
+              <div
                 className={`absolute inset-0 bg-sky-400 transition-transform duration-300 ease-in-out rounded-2xl ${hoveredContactHeader ? 'scale-x-100' : 'scale-x-0'}`}
                 style={{ transformOrigin: 'left' }}
               />
-              <h2 
+              <h2
                 className={`relative text-5xl md:text-6xl lg:text-7xl text-center contact-heading mb-4 transition-colors duration-300 cursor-pointer opacity-0 fade-slide-up delay-2`}
                 onMouseEnter={() => setHoveredContactHeader(true)}
                 onMouseLeave={() => setHoveredContactHeader(false)}
@@ -142,12 +176,12 @@ function Proposition() {
                   CONTACT @ <span className={hoveredContactHeader ? 'text-white' : 'text-sky-400'}>HANDYGO</span>
                 </span>
               </h2>
-              
-              <div 
+
+              <div
                 className={`absolute inset-0 top-[4.5rem] bg-sky-400 transition-transform duration-300 ease-in-out rounded-2xl ${hoveredContactPhone ? 'scale-x-100' : 'scale-x-0'}`}
                 style={{ transformOrigin: 'left' }}
               />
-              <h2 
+              <h2
                 className={`relative text-4xl md:text-5xl lg:text-6xl text-center contact-heading mb-16 transition-colors duration-300 cursor-pointer opacity-0 fade-slide-up delay-3`}
                 onMouseEnter={() => setHoveredContactPhone(true)}
                 onMouseLeave={() => setHoveredContactPhone(false)}
@@ -221,23 +255,25 @@ function Proposition() {
 
       {/* Main Content */}
       <div className={`fixed inset-0 z-50 bg-black text-white transition-all duration-1000 overflow-y-auto ${heroAnimationComplete ? 'opacity-100 scale-100' : 'opacity-0 scale-150'}`}>
+
+
         {/* First Section - Hero */}
         <section
           ref={heroRef}
-          className="relative min-h-screen bg-white bg-opacity-90 bg-[url('https://cdn.pixabay.com/photo/2021/02/03/00/10/receptionists-5975962_1280.jpg')] bg-fixed bg-cover bg-center bg-no-repeat overflow-hidden"
+          className="relative min-h-screen bg-white bg-opacity-90 bg-[url('https://cdn.pixabay.com/photo/2023/05/15/22/09/city-7996136_1280.jpg')] bg-fixed bg-cover bg-center bg-no-repeat overflow-hidden"
         >
-          <div className="absolute inset-0 bg-black/50 bg-opacity-70 mix-blend-multiply"></div>
+          <div className="absolute inset-0 bg-black/60 bg-opacity-70 mix-blend-multiply"></div>
 
-          <div className={`absolute top-100 left-4 text-[10px] font-mono text-sky-400 opacity-60 md:text-xs transition-all duration-1000 delay-300 ${heroAnimationComplete ? 'opacity-60 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
+          <div className={`absolute top-100 left-4 text-[10px] font-mono text-yellow-500 opacity-60 md:text-xs transition-all duration-1000 delay-300 ${heroAnimationComplete ? 'opacity-60 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
             48°51'10.9"N
           </div>
-          <div className={`absolute top-100 right-4 text-[10px] font-mono text-sky-400 opacity-60 md:text-xs transition-all duration-1000 delay-300 ${heroAnimationComplete ? 'opacity-60 translate-x-0' : 'opacity-0 translate-x-10'}`}>
+          <div className={`absolute top-100 right-4 text-[10px] font-mono text-yellow-500 opacity-60 md:text-xs transition-all duration-1000 delay-300 ${heroAnimationComplete ? 'opacity-60 translate-x-0' : 'opacity-0 translate-x-10'}`}>
             2°23'25.2"E
           </div>
 
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 md:px-12">
             <div className={`max-w-7xl mx-auto text-center transition-all duration-1000 ease-out ${heroAnimationComplete ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl leading-none">
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl leading-none text-gray-300">
                 <div className={`transition-transform duration-1000 delay-100 ${heroAnimationComplete ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
                   <span className="block">FULL PRODUCTION</span>
                 </div>
@@ -254,7 +290,7 @@ function Proposition() {
                   onClick={navigateToLogin}
                   className="group flex items-center space-x-3 mx-auto transition-all duration-300 hover:opacity-80"
                 >
-                  <span className="uppercase tracking-widest text-sm font-medium text-sky-400">Book now</span>
+                  <span className="uppercase tracking-widest text-sm font-medium text-yellow-500">Book now</span>
                 </button>
               </div>
             </div>
@@ -292,71 +328,149 @@ function Proposition() {
           </div>
         </section>
 
-        {/* Second Section - Services */}
-        <section
-          ref={servicesRef}
-          className="relative min-h-screen bg-white py-16"
-        >
-          <div className="container mx-auto px-8 flex justify-between items-center mb-12">
-            <div className="relative">
-              <h3 className="uppercase text-sm tracking-widest text-sky-500 font-bold">OUR SERVICES</h3>
-            </div>
-          </div>
 
-          <div className="container mx-auto px-8">
-            <div className="flex flex-col space-y-6">
-              {services.map((service, index) => (
-                <div
-                  key={index}
-                  className="group cursor-pointer relative overflow-hidden"
-                  onMouseEnter={() => setHoveredService(index)}
-                  onMouseLeave={() => setHoveredService(null)}
-                >
-                  <div className="flex items-center justify-between py-3 px-4 rounded-md relative z-10">
-                    <div className="flex items-center">
-                      <h2 className={`text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight transition-all duration-300 ${hoveredService === index ? 'text-white' : 'text-gray-700 opacity-60'}`}>
-                        {service.name}
-                      </h2>
-                      <div className={`ml-4 transform transition-all duration-300 ${hoveredService === index ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}>
-                        <ChevronRight className={`w-6 h-6 ${hoveredService === index ? 'text-white' : 'text-gray-700'}`} />
-                      </div>
+        {/* Second Section - Who We Are */}
+        <section className="relative min-h-screen bg-white text-gray-600 py-16 px-8 md:px-16 lg:px-20">
+          <div className="max-w-7xl mx-auto mt-15">
+            <div className="pb-8">
+              <h2 className="text-[12px] font-medium tracking-[0.2em] uppercase">WHO WE ARE</h2>
+            </div>
+
+            <div className="">
+              <div className="pr-0 md:pr-8">
+                <div className="space-y-6">
+                  <h1 className="text-[42px] sm:text-[52px] md:text-[62px] lg:text-[72px] font-bold tracking-[-0.02em] leading-[0.95] uppercase">
+                    WELCOME TO THE
+                    GREATEST CITY
+                    IN THE WORLD
+                    FEEL AT HOME
+                    IN PARIS
+                  </h1>
+
+                  <div className="space-y-6 mt-16 ml-40 flex">
+                    <div>
+                      <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase">
+                        NESTLED IN THE HEART OF PARIS, WE ARE A DEDICATED<br />
+                        PRODUCTION SERVICES COMPANY COMMITTED TO<br />
+                        CRAFTING STUNNING VISUAL EXPERIENCES FOR CLIENTS<br />
+                        FROM AROUND THE GLOBE.
+                      </p>
+
+                      <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase mt-6">
+                        REGARDLESS THE SCALE OF YOUR PROJECT, FROM AN<br />
+                        AGILE SHOOT IN THE STREETS OF PARIS TO COMPLEX<br />
+                        CAMPAIGNS MIXING REAL LOCATIONS AND STUDIO WORK,<br />
+                        WE'RE HERE TO MAKE THINGS EASY FOR YOU.<br />
+                        WE'LL GET IT DONE SMOOTHLY AND COST-EFFECTIVELY.
+                      </p>
+
+                      <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase mt-6">
+                        KIMBERLY BARON CAÑON AS PROJECT MANAGER<br />
+                        KATHLEEN REPUNTE AS DOCUMTENTOR<br />
+                        VINCE EDWARD CAÑEDO MAÑACAP AS DEVELOPER<br />
+                        KYLE SELLOTE AS DEVELOPER<br />
+                        BART JUAREZ AS SYSTEM ANALYST
+                      </p>
                     </div>
-                    <div className="relative overflow-hidden h-[120px] w-[200px]">
-                      {hoveredService === index && (
-                        <div className="absolute right-0 w-full">
-                          {service.related.map((relatedService, idx) => (
-                            <div
-                              key={idx}
-                              className="text-white text-base opacity-0 animate-slide-up"
-                              style={{
-                                animationDelay: `${idx * 0.1}s`,
-                                animationFillMode: 'forwards'
-                              }}
-                            >
-                              {relatedService}
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                    <div className="flex bg-amber-300 ml-60">
+                      <img
+                        src="https://images.pexels.com/photos/3214995/pexels-photo-3214995.jpeg"
+                        alt="Grand Palais interior in Paris"
+                        className="w-[400px] h-[400px] object-cover"
+                      />
                     </div>
                   </div>
-                  <div
-                    className={`absolute inset-0 bg-gray-700 transition-transform duration-300 ease-in-out ${hoveredService === index ? 'translate-x-0' : '-translate-x-full'}`}
-                  ></div>
+
+                  <div className="mt-16 flex items-center">
+                    <button className="flex items-center text-[12px] font-medium tracking-[0.2em] uppercase hover:text-sky-500 transition-colors duration-300">
+                      SEE MORE
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        {/* Third Section - Benefits */}
+        <section>
+          <div className="w-full py-24 px-8 bg-white">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center mb-16">
+                <span className="text-sky-500 text-sm font-semibold tracking-wide">BENEFITS</span>
+                <h2 className="mt-4 text-4xl font-semibold text-gray-700">
+                  Why Choose Our Services
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {benefits.map((benefit, index) => (
+                  <div key={index} className="group p-6 rounded-3xl bg-[#FBFBFD] hover:bg-sky-50 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-2xl bg-sky-100 flex items-center justify-center mb-6 group-hover:bg-sky-200 transition-colors duration-300">
+                      <benefit.icon className="w-6 h-6 text-sky-600" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                      {benefit.title}
+                    </h3>
+                    <p className="text-gray-500 text-sm leading-relaxed">
+                      {benefit.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        {/* Fourth Section - Services */}
+        <section
+          ref={servicesRef}
+          className="relative min-h-screen bg-white flex flex-col p-8 lg:p-16"
+        >
+          <div className="text-gray-700 font-medium tracking-wider text-sm md:text-base">
+            OUR <span className="text-sky-400 text-2xl">SERVICES</span>
+          </div>
+
+          <div className="flex-grow relative justify-center items-center flex ml-[-30rem]">
+            <div className="flex flex-col max-w-7xl space-y-6">
+              {services.map((service) => (
+                <div
+                  key={service.title}
+                  className="group relative"
+                  onMouseEnter={(e) => handleServiceHover(service.title, e)}
+                  onMouseLeave={() => setHoveredService("")}
+                >
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-8xl font-bold leading-12 cursor-pointer tracking-tight text-gray-500/70 transition-all duration-300 ease-in-out transform group-hover:text-sky-400 group-hover:translate-x-4">
+                    {service.title}
+                  </h2>
                 </div>
               ))}
             </div>
+
+            <div
+              className={`absolute right-0 transition-all duration-300 ease-in-out transform ${hoveredService ? 'opacity-100' : 'opacity-0'}`}
+              style={{ top: `${indicatorPosition}px` }}
+            >
+              <div className="text-right">
+                <div className="text-gray-700 text-lg md:text-xl font-bold tracking-tight">
+                  {hoveredService ? services.find(s => s.title === hoveredService)?.section : "01"}
+                </div>
+                <div className="text-sky-400 text-sm md:text-base font-bold tracking-wide">
+                  {hoveredService ? services.find(s => s.title === hoveredService)?.action : "DISCOVER"}
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="container mx-auto px-5 mt-16">
-            <a
-              href="#"
-              className="inline-flex items-center group"
-            >
-              <span className="ml-4 uppercase text-sky-500 font-bold tracking-widest text-xs group-hover:underline">KNOW MORE</span>
-            </a>
+          <div className="flex justify-between items-end mt-8">
+            <div className="flex items-center">
+              <span className="text-gray-700 text-sm font-medium tracking-wide mr-2">SEE MORE</span>
+            </div>
           </div>
         </section>
+
       </div>
     </>
   );
