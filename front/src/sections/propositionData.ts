@@ -18,6 +18,11 @@ import customerbg5 from '../assets/proposition/Majestic Forest Canopy.jpeg';
 import customer6 from '../assets/proposition/Elegant Man in Nature.jpeg';
 import customerbg6 from '../assets/proposition/Close-up Portrait with Black Turtleneck.jpeg';
 
+import about1 from '../assets/proposition/Man Working in Cozy Van.jpeg';
+import about2 from '../assets/proposition/Hand in Spotlight.jpeg';
+import about3 from '../assets/proposition/Outdoor Service Counter Interaction.jpeg';
+import about4 from '../assets/proposition/Aerial View of Lush Green Waterways.jpeg';
+
 export const benefits = [
     {
         icon: Star,
@@ -163,7 +168,7 @@ export const aboutHandyGo = [
     title: "CONVENIENCE AT YOUR FINGERTIPS",
     subtitle: "INSTANT ACCESS",
     description: "The name 'HandyGo' embodies our core mission: to provide production services that are both accessible and mobile. We're always ready to spring into action, bringing convenience to your fingertips.",
-    image: "https://images.pexels.com/photos/7148384/pexels-photo-7148384.jpeg",
+    image: about1,
     bgColor: "bg-amber-50",
     accentColor: "text-amber-600"
   },
@@ -172,8 +177,8 @@ export const aboutHandyGo = [
     title: "EFFICIENCY IN MOTION",
     subtitle: "SWIFT SERVICE",
     description: "HandyGo represents our commitment to efficiency. Just like our name suggests, we're quick, agile, and always on the move to ensure your production runs smoothly from start to finish.",
-    image: "https://images.pexels.com/photos/2608519/pexels-photo-2608519.jpeg",
-    bgColor: "bg-emerald-50",
+    image: about2,
+    bgColor: "bg-gray-200",
     accentColor: "text-emerald-600"
   },
   {
@@ -181,7 +186,7 @@ export const aboutHandyGo = [
     title: "READY WHEN YOU ARE",
     subtitle: "24/7 AVAILABILITY",
     description: "The 'Go' in HandyGo signifies our readiness. We're prepared to mobilize at a moment's notice, adapting to your production needs regardless of timeline or complexity.",
-    image: "https://images.pexels.com/photos/3062541/pexels-photo-3062541.jpeg",
+    image: about3,
     bgColor: "bg-sky-50",
     accentColor: "text-sky-600"
   },
@@ -190,7 +195,7 @@ export const aboutHandyGo = [
     title: "SIMPLICITY IN COMPLEXITY",
     subtitle: "SEAMLESS SOLUTIONS",
     description: "Our name reflects our approach to production challenges. We take complex production requirements and make them handy – simple, manageable, and achievable.",
-    image: "https://images.pexels.com/photos/2873486/pexels-photo-2873486.jpeg",
+    image: about4,
     bgColor: "bg-purple-50",
     accentColor: "text-purple-600"
   }

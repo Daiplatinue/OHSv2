@@ -55,6 +55,8 @@ function Proposition() {
     simulateLoading();
   }, []);
 
+  const [textAnimating, setTextAnimating] = useState(false);
+
   useEffect(() => {
     const handleScroll = () => {
       if (heroRef.current) {
@@ -63,21 +65,52 @@ function Proposition() {
         heroRef.current.style.backgroundPosition = `center ${rate}px`;
       }
 
-      // Check which about section is in view
-      aboutSectionRefs.current.forEach((ref, index) => {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const index = aboutSectionRefs.current.findIndex(
+                (ref) => ref === entry.target
+              );
+              if (index !== -1 && currentAboutSection !== index) {
+                setTextAnimating(true);
+                setTimeout(() => {
+                  setCurrentAboutSection(index);
+                  setTimeout(() => {
+                    setTextAnimating(false);
+                  }, 300);
+                }, 300);
+              }
+            }
+          });
+        },
+        {
+          root: null,
+          rootMargin: '-20% 0px -20% 0px',
+          threshold: [0.2, 0.5, 0.8]
+        }
+      );
+
+      aboutSectionRefs.current.forEach((ref) => {
         if (ref) {
-          const rect = ref.getBoundingClientRect();
-          const isInView = rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2;
-          if (isInView) {
-            setCurrentAboutSection(index);
-          }
+          observer.observe(ref);
         }
       });
+
+      return () => {
+        aboutSectionRefs.current.forEach((ref) => {
+          if (ref) {
+            observer.unobserve(ref);
+          }
+        });
+      };
     };
 
     window.addEventListener('scroll', handleScroll);
+    handleScroll();
+
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [currentAboutSection]);
 
   const scrollToServices = () => {
     servicesRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -735,7 +768,68 @@ function Proposition() {
           </div>
         </section>
 
-        {/* Fifth Section - Services */}
+        {/* Fifth Section - About HandyGo */}
+        <section className={`relative min-h-screen transition-colors duration-500 ${aboutHandyGo[currentAboutSection].bgColor}`}>
+          <div className="max-w-7xl mx-auto px-6 py-24">
+            <div className="grid grid-cols-12 gap-8">
+              {/* Left Side - Dynamic Typography */}
+              <div className="col-span-5 sticky top-60 h-fit mr-10 ml-[-2rem]">
+                <div className="space-y-5 overflow-hidden">
+                  <span
+                    className={`text-sm font-semibold tracking-wide uppercase transition-all duration-500 block transform ${textAnimating ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'
+                      } ${aboutHandyGo[currentAboutSection].accentColor}`}
+                  >
+                    About HandyGo
+                  </span>
+                  <h2
+                    className={`text-4xl font-bold text-gray-900 leading-tight transition-all duration-500 block transform ${textAnimating ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'
+                      }`}
+                  >
+                    {aboutHandyGo[currentAboutSection].title}
+                  </h2>
+                  <div
+                    className={`text-xl font-medium transition-all duration-500 block transform ${textAnimating ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
+                      } ${aboutHandyGo[currentAboutSection].accentColor}`}
+                  >
+                    {aboutHandyGo[currentAboutSection].subtitle}
+                  </div>
+                  <p
+                    className={`text-lg text-gray-600 transition-all duration-500 block transform ${textAnimating ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'
+                      }`}
+                  >
+                    {aboutHandyGo[currentAboutSection].description}
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Side - Scrolling Images */}
+              <div className="col-span-7 space-y-[20vh]">
+                {aboutHandyGo.map((item, index) => (
+                  <div
+                    key={item.id}
+                    ref={el => { aboutSectionRefs.current[index] = el; }}
+                    className="relative h-screen flex items-center"
+                  >
+                    <div
+                      className={`w-full bg-white rounded-2xl shadow-lg transition-all duration-500 hover:shadow-xl overflow-hidden transform ${index === currentAboutSection
+                        ? 'scale-100 opacity-100'
+                        : 'scale-95 opacity-50'
+                        }`}
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-full h-[600px] object-cover transition-transform duration-500 hover:scale-105"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Sixth Section - Services */}
         <section
           ref={servicesRef}
           className="relative min-h-screen bg-white flex flex-col p-8 lg:p-16"
@@ -778,70 +872,6 @@ function Proposition() {
           <div className="flex justify-between items-end mt-8">
             <div className="flex items-center">
               <span className="text-gray-700 text-sm font-medium tracking-wide mr-2">SEE MORE</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Sixth Section - About HandyGo */}
-        <section className={`relative min-h-screen transition-colors duration-500 ${aboutHandyGo[currentAboutSection].bgColor}`}>
-          <div className="max-w-7xl mx-auto px-6 py-24">
-            <div className="grid grid-cols-12 gap-8">
-              {/* Left Side - Fixed Typography */}
-              <div className="col-span-5 sticky top-24 h-fit">
-                <div className="space-y-6">
-                  <span className={`text-sm font-semibold tracking-wide uppercase ${aboutHandyGo[currentAboutSection].accentColor}`}>
-                    About HandyGo
-                  </span>
-                  <h2 className="text-4xl font-bold text-gray-900 leading-tight">
-                    {aboutHandyGo[currentAboutSection].title}
-                  </h2>
-                  <div className={`text-xl font-medium ${aboutHandyGo[currentAboutSection].accentColor}`}>
-                    {aboutHandyGo[currentAboutSection].subtitle}
-                  </div>
-                  <p className="text-lg text-gray-600">
-                    {aboutHandyGo[currentAboutSection].description}
-                  </p>
-                  <div className="pt-8">
-                    <div className="flex items-center space-x-2">
-                      <div className="flex space-x-1">
-                        {aboutHandyGo.map((_, index) => (
-                          <div
-                            key={index}
-                            className={`w-2 h-2 rounded-full transition-colors duration-300 ${
-                              index === currentAboutSection 
-                                ? aboutHandyGo[currentAboutSection].accentColor.replace('text', 'bg')
-                                : 'bg-gray-200'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm text-gray-400">
-                        {String(currentAboutSection + 1).padStart(2, '0')}/
-                        {String(aboutHandyGo.length).padStart(2, '0')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Side - Scrolling Images */}
-              <div className="col-span-7 space-y-32">
-                {aboutHandyGo.map((item, index) => (
-                  <div
-                    key={item.id}
-                    ref={el => { aboutSectionRefs.current[index] = el; }}
-                    className="relative"
-                  >
-                    <div className="sticky top-24 bg-white rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl overflow-hidden">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-[600px] object-cover"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </section>
