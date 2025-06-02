@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef } from "react";
-import { X } from "lucide-react";
-import { Star, Shield, Zap, Heart, Users, DollarSign, BarChart, Briefcase } from 'lucide-react';
+import React, { useEffect, useState, useRef } from "react";
+import { X, Twitter, MessageCircle, Repeat, Share, Heart } from 'lucide-react';
+import { benefits, tweets, services, aboutHandyGo } from './propositionData';
 
 function Proposition() {
   const [loading, setLoading] = useState(true);
@@ -13,62 +13,12 @@ function Proposition() {
   const [hoveredContactPhone, setHoveredContactPhone] = useState(false);
   const [hoveredService, setHoveredService] = useState("");
   const [indicatorPosition, setIndicatorPosition] = useState(0);
+  const [currentAboutSection, setCurrentAboutSection] = useState(0);
 
   const heroRef = useRef<HTMLDivElement | null>(null);
   const servicesRef = useRef<HTMLDivElement | null>(null);
+  const aboutSectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [heroAnimationComplete, setHeroAnimationComplete] = useState(false);
-
-  const services = [
-    { title: "PLUMBLING", section: "01", action: "DISCOVER" },
-    { title: "HANDYMAN", section: "02", action: "EXPLORE" },
-    { title: "LANDSCAPING", section: "03", action: "EXPERIENCE" },
-    { title: "ROOFING", section: "04", action: "LEARN" },
-    { title: "PEST CONTROL", section: "05", action: "JOIN" },
-    { title: "CLEANING", section: "06", action: "VISIT" }
-  ];
-
-  const benefits = [
-    {
-      icon: Star,
-      title: "Premium Quality",
-      description: "Experience excellence with our top-tier service quality and attention to detail."
-    },
-    {
-      icon: Shield,
-      title: "Fully Insured",
-      description: "Rest easy knowing all our services are backed by comprehensive insurance coverage."
-    },
-    {
-      icon: Zap,
-      title: "Fast Response",
-      description: "Get quick assistance with our 24/7 rapid response team ready to help."
-    },
-    {
-      icon: Heart,
-      title: "Eco-Friendly",
-      description: "Our sustainable practices and materials minimize environmental impact without compromising quality."
-    },
-    {
-      icon: Users,
-      title: "Expert Team",
-      description: "Work with skilled professionals who bring years of specialized experience to every project."
-    },
-    {
-      icon: DollarSign,
-      title: "Cost Effective",
-      description: "Get exceptional value with competitive pricing and transparent, no-surprise billing."
-    },
-    {
-      icon: BarChart,
-      title: "Data-Driven Results",
-      description: "Benefit from our analytics-backed methodologies that deliver measurable improvements."
-    },
-    {
-      icon: Briefcase,
-      title: "Industry Compliance",
-      description: "All services adhere to the latest industry standards and regulatory requirements for your peace of mind."
-    }
-  ];
 
   useEffect(() => {
     const loadingSteps = [
@@ -112,6 +62,17 @@ function Proposition() {
         const rate = scrolled * 0.5;
         heroRef.current.style.backgroundPosition = `center ${rate}px`;
       }
+
+      // Check which about section is in view
+      aboutSectionRefs.current.forEach((ref, index) => {
+        if (ref) {
+          const rect = ref.getBoundingClientRect();
+          const isInView = rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2;
+          if (isInView) {
+            setCurrentAboutSection(index);
+          }
+        }
+      });
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -256,7 +217,6 @@ function Proposition() {
       {/* Main Content */}
       <div className={`fixed inset-0 z-50 bg-black text-white transition-all duration-1000 overflow-y-auto ${heroAnimationComplete ? 'opacity-100 scale-100' : 'opacity-0 scale-150'}`}>
 
-
         {/* First Section - Hero */}
         <section
           ref={heroRef}
@@ -328,7 +288,6 @@ function Proposition() {
           </div>
         </section>
 
-
         {/* Second Section - Who We Are */}
         <section className="relative min-h-screen bg-white text-gray-600 py-16 px-8 md:px-16 lg:px-20">
           <div className="max-w-7xl mx-auto mt-15">
@@ -392,7 +351,6 @@ function Proposition() {
           </div>
         </section>
 
-
         {/* Third Section - Benefits */}
         <section>
           <div className="w-full py-24 px-8 bg-white">
@@ -423,14 +381,367 @@ function Proposition() {
           </div>
         </section>
 
+        {/* Fourth Section - Reviews & Tweets */}
+        <section className="bg-white min-h-screen relative py-24">
+          <div className="max-w-7xl mx-auto px-6 relative">
+            {/* Tweet Cards */}
+            <div className="grid grid-cols-3 gap-8 mb-16">
+              {/* Left Tweet */}
+              <div className="transform -rotate-3 hover:rotate-0 transition-transform duration-300">
+                <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-w-sm">
+                  <div className="p-4">
+                    <div className="flex items-center">
+                      <img
+                        src={tweets[0].avatar}
+                        alt={tweets[0].name}
+                        className="w-10 h-10 rounded-full"
+                      />
+                      <div className="ml-3 flex-1">
+                        <div className="flex items-center">
+                          <span className="font-bold text-gray-900 text-sm">{tweets[0].name}</span>
+                          {tweets[0].verified && (
+                            <svg className="w-4 h-4 ml-1 text-sky-500" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z" />
+                            </svg>
+                          )}
+                          <span className="ml-1 text-gray-500 text-sm">{tweets[0].handle}</span>
+                        </div>
+                      </div>
+                      <Twitter className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <p className="mt-3 text-gray-800 text-sm leading-relaxed">
+                      {tweets[0].content}
+                    </p>
+                    <img
+                      src={tweets[0].image}
+                      alt="Tweet attachment"
+                      className="mt-3 rounded-xl w-full h-48 object-cover"
+                    />
+                    <div className="mt-3 flex items-center justify-between text-gray-500 text-xs">
+                      <button className="flex items-center hover:text-sky-500 transition-colors">
+                        <MessageCircle className="w-4 h-4 mr-1" />
+                        <span>{tweets[0].stats.comments}</span>
+                      </button>
+                      <button className="flex items-center hover:text-green-500 transition-colors">
+                        <Repeat className="w-4 h-4 mr-1" />
+                        <span>{tweets[0].stats.retweets}</span>
+                      </button>
+                      <button className="flex items-center hover:text-red-500 transition-colors">
+                        <Heart className="w-4 h-4 mr-1" />
+                        <span>{tweets[0].stats.likes}</span>
+                      </button>
+                      <button className="flex items-center hover:text-sky-500 transition-colors">
+                        <Share className="w-4 h-4 mr-1" />
+                        <span>{tweets[0].stats.views}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-        {/* Fourth Section - Services */}
+              {/* Center Tweet */}
+              <div className="transform translate-y-12 hover:translate-y-10 transition-transform duration-300">
+                <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-w-sm">
+                  <div className="p-4">
+                    <div className="flex items-center">
+                      <img
+                        src={tweets[1].avatar}
+                        alt={tweets[1].name}
+                        className="w-10 h-10 rounded-full"
+                      />
+                      <div className="ml-3 flex-1">
+                        <div className="flex items-center">
+                          <span className="font-bold text-gray-900 text-sm">{tweets[1].name}</span>
+                          {tweets[1].verified && (
+                            <svg className="w-4 h-4 ml-1 text-sky-500" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z" />
+                            </svg>
+                          )}
+                          <span className="ml-1 text-gray-500 text-sm">{tweets[1].handle}</span>
+                        </div>
+                      </div>
+                      <Twitter className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <p className="mt-3 text-gray-800 text-sm leading-relaxed">
+                      {tweets[1].content}
+                    </p>
+                    <img
+                      src={tweets[1].image}
+                      alt="Tweet attachment"
+                      className="mt-3 rounded-xl w-full h-48 object-cover"
+                    />
+                    <div className="mt-3 flex items-center justify-between text-gray-500 text-xs">
+                      <button className="flex items-center hover:text-sky-500 transition-colors">
+                        <MessageCircle className="w-4 h-4 mr-1" />
+                        <span>{tweets[1].stats.comments}</span>
+                      </button>
+                      <button className="flex items-center hover:text-green-500 transition-colors">
+                        <Repeat className="w-4 h-4 mr-1" />
+                        <span>{tweets[1].stats.retweets}</span>
+                      </button>
+                      <button className="flex items-center hover:text-red-500 transition-colors">
+                        <Heart className="w-4 h-4 mr-1" />
+                        <span>{tweets[1].stats.likes}</span>
+                      </button>
+                      <button className="flex items-center hover:text-sky-500 transition-colors">
+                        <Share className="w-4 h-4 mr-1" />
+                        <span>{tweets[1].stats.views}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Tweet */}
+              <div className="transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-w-sm">
+                  <div className="p-4">
+                    <div className="flex items-center">
+                      <img
+                        src={tweets[2].avatar}
+                        alt={tweets[2].name}
+                        className="w-10 h-10 rounded-full"
+                      />
+                      <div className="ml-3 flex-1">
+                        <div className="flex items-center">
+                          <span className="font-bold text-gray-900 text-sm">{tweets[2].name}</span>
+                          {tweets[2].verified && (
+                            <svg className="w-4 h-4 ml-1 text-sky-500" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z" />
+                            </svg>
+                          )}
+                          <span className="ml-1 text-gray-500 text-sm">{tweets[2].handle}</span>
+                        </div>
+                      </div>
+                      <Twitter className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <p className="mt-3 text-gray-800 text-sm leading-relaxed">
+                      {tweets[2].content}
+                    </p>
+                    <img
+                      src={tweets[2].image}
+                      alt="Tweet attachment"
+                      className="mt-3 rounded-xl w-full h-48 object-cover"
+                    />
+                    <div className="mt-3 flex items-center justify-between text-gray-500 text-xs">
+                      <button className="flex items-center hover:text-sky-500 transition-colors">
+                        <MessageCircle className="w-4 h-4 mr-1" />
+                        <span>{tweets[2].stats.comments}</span>
+                      </button>
+                      <button className="flex items-center hover:text-green-500 transition-colors">
+                        <Repeat className="w-4 h-4 mr-1" />
+                        <span>{tweets[2].stats.retweets}</span>
+                      </button>
+                      <button className="flex items-center hover:text-red-500 transition-colors">
+                        <Heart className="w-4 h-4 mr-1" />
+                        <span>{tweets[2].stats.likes}</span>
+                      </button>
+                      <button className="flex items-center hover:text-sky-500 transition-colors">
+                        <Share className="w-4 h-4 mr-1" />
+                        <span>{tweets[2].stats.views}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Typography Section */}
+            <div className="text-center max-w-3xl mx-auto">
+              <span className="text-sky-500 text-sm font-semibold tracking-wide uppercase">Customer Reviews</span>
+              <h2 className="mt-4 text-4xl font-bold text-gray-900 leading-tight">
+                Why Our Clients Choose Us
+              </h2>
+              <p className="mt-6 text-lg text-gray-600">
+                Join thousands of satisfied customers who trust our services for their needs. Our commitment to excellence, attention to detail, and customer satisfaction sets us apart.
+              </p>
+              <div className="mt-8 flex justify-center space-x-4">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-sky-500">98%</div>
+                  <div className="mt-2 text-sm text-gray-600">Satisfaction Rate</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-sky-500">5000+</div>
+                  <div className="mt-2 text-sm text-gray-600">Happy Clients</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-sky-500">24/7</div>
+                  <div className="mt-2 text-sm text-gray-600">Support</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Tweet Cards */}
+            <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* First Additional Tweet */}
+              <div className="transform hover:scale-105 transition-transform duration-300">
+                <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                  <div className="p-4">
+                    <div className="flex items-center">
+                      <img
+                        src={tweets[3].avatar}
+                        alt={tweets[3].name}
+                        className="w-10 h-10 rounded-full"
+                      />
+                      <div className="ml-3 flex-1">
+                        <div className="flex items-center">
+                          <span className="font-bold text-gray-900 text-sm">{tweets[3].name}</span>
+                          {tweets[3].verified && (
+                            <svg className="w-4 h-4 ml-1 text-sky-500" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z" />
+                            </svg>
+                          )}
+                          <span className="ml-1 text-gray-500 text-sm">{tweets[3].handle}</span>
+                        </div>
+                      </div>
+                      <Twitter className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <p className="mt-3 text-gray-800 text-sm leading-relaxed">
+                      {tweets[3].content}
+                    </p>
+                    <img
+                      src={tweets[3].image}
+                      alt="Tweet attachment"
+                      className="mt-3 rounded-xl w-full h-48 object-cover"
+                    />
+                    <div className="mt-3 flex items-center justify-between text-gray-500 text-xs">
+                      <button className="flex items-center hover:text-sky-500 transition-colors">
+                        <MessageCircle className="w-4 h-4 mr-1" />
+                        <span>{tweets[3].stats.comments}</span>
+                      </button>
+                      <button className="flex items-center hover:text-green-500 transition-colors">
+                        <Repeat className="w-4 h-4 mr-1" />
+                        <span>{tweets[3].stats.retweets}</span>
+                      </button>
+                      <button className="flex items-center hover:text-red-500 transition-colors">
+                        <Heart className="w-4 h-4 mr-1" />
+                        <span>{tweets[3].stats.likes}</span>
+                      </button>
+                      <button className="flex items-center hover:text-sky-500 transition-colors">
+                        <Share className="w-4 h-4 mr-1" />
+                        <span>{tweets[3].stats.views}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Second Additional Tweet */}
+              <div className="transform translate-y-6 hover:translate-y-3 transition-transform duration-300">
+                <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                  <div className="p-4">
+                    <div className="flex items-center">
+                      <img
+                        src={tweets[4].avatar}
+                        alt={tweets[4].name}
+                        className="w-10 h-10 rounded-full"
+                      />
+                      <div className="ml-3 flex-1">
+                        <div className="flex items-center">
+                          <span className="font-bold text-gray-900 text-sm">{tweets[4].name}</span>
+                          {tweets[4].verified && (
+                            <svg className="w-4 h-4 ml-1 text-sky-500" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z" />
+                            </svg>
+                          )}
+                          <span className="ml-1 text-gray-500 text-sm">{tweets[4].handle}</span>
+                        </div>
+                      </div>
+                      <Twitter className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <p className="mt-3 text-gray-800 text-sm leading-relaxed">
+                      {tweets[4].content}
+                    </p>
+                    <img
+                      src={tweets[4].image}
+                      alt="Tweet attachment"
+                      className="mt-3 rounded-xl w-full h-48 object-cover"
+                    />
+                    <div className="mt-3 flex items-center justify-between text-gray-500 text-xs">
+                      <button className="flex items-center hover:text-sky-500 transition-colors">
+                        <MessageCircle className="w-4 h-4 mr-1" />
+                        <span>{tweets[4].stats.comments}</span>
+                      </button>
+                      <button className="flex items-center hover:text-green-500 transition-colors">
+                        <Repeat className="w-4 h-4 mr-1" />
+                        <span>{tweets[4].stats.retweets}</span>
+                      </button>
+                      <button className="flex items-center hover:text-red-500 transition-colors">
+                        <Heart className="w-4 h-4 mr-1" />
+                        <span>{tweets[4].stats.likes}</span>
+                      </button>
+                      <button className="flex items-center hover:text-sky-500 transition-colors">
+                        <Share className="w-4 h-4 mr-1" />
+                        <span>{tweets[4].stats.views}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Third Additional Tweet */}
+              <div className="transform -rotate-2 hover:rotate-0 transition-transform duration-300">
+                <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                  <div className="p-4">
+                    <div className="flex items-center">
+                      <img
+                        src={tweets[5].avatar}
+                        alt={tweets[5].name}
+                        className="w-10 h-10 rounded-full"
+                      />
+                      <div className="ml-3 flex-1">
+                        <div className="flex items-center">
+                          <span className="font-bold text-gray-900 text-sm">{tweets[5].name}</span>
+                          {tweets[5].verified && (
+                            <svg className="w-4 h-4 ml-1 text-sky-500" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z" />
+                            </svg>
+                          )}
+                          <span className="ml-1 text-gray-500 text-sm">{tweets[5].handle}</span>
+                        </div>
+                      </div>
+                      <Twitter className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <p className="mt-3 text-gray-800 text-sm leading-relaxed">
+                      {tweets[5].content}
+                    </p>
+                    <img
+                      src={tweets[5].image}
+                      alt="Tweet attachment"
+                      className="mt-3 rounded-xl w-full h-48 object-cover"
+                    />
+                    <div className="mt-3 flex items-center justify-between text-gray-500 text-xs">
+                      <button className="flex items-center hover:text-sky-500 transition-colors">
+                        <MessageCircle className="w-4 h-4 mr-1" />
+                        <span>{tweets[5].stats.comments}</span>
+                      </button>
+                      <button className="flex items-center hover:text-green-500 transition-colors">
+                        <Repeat className="w-4 h-4 mr-1" />
+                        <span>{tweets[5].stats.retweets}</span>
+                      </button>
+                      <button className="flex items-center hover:text-red-500 transition-colors">
+                        <Heart className="w-4 h-4 mr-1" />
+                        <span>{tweets[5].stats.likes}</span>
+                      </button>
+                      <button className="flex items-center hover:text-sky-500 transition-colors">
+                        <Share className="w-4 h-4 mr-1" />
+                        <span>{tweets[5].stats.views}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Fifth Section - Services */}
         <section
           ref={servicesRef}
           className="relative min-h-screen bg-white flex flex-col p-8 lg:p-16"
         >
           <div className="text-gray-700 font-medium tracking-wider text-sm md:text-base">
-            OUR <span className="text-sky-400 text-2xl">SERVICES</span>
+            INSIGHT OF OUR <span className="text-sky-400 text-2xl">SERVICES</span>
           </div>
 
           <div className="flex-grow relative justify-center items-center flex ml-[-30rem]">
@@ -467,6 +778,70 @@ function Proposition() {
           <div className="flex justify-between items-end mt-8">
             <div className="flex items-center">
               <span className="text-gray-700 text-sm font-medium tracking-wide mr-2">SEE MORE</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Sixth Section - About HandyGo */}
+        <section className={`relative min-h-screen transition-colors duration-500 ${aboutHandyGo[currentAboutSection].bgColor}`}>
+          <div className="max-w-7xl mx-auto px-6 py-24">
+            <div className="grid grid-cols-12 gap-8">
+              {/* Left Side - Fixed Typography */}
+              <div className="col-span-5 sticky top-24 h-fit">
+                <div className="space-y-6">
+                  <span className={`text-sm font-semibold tracking-wide uppercase ${aboutHandyGo[currentAboutSection].accentColor}`}>
+                    About HandyGo
+                  </span>
+                  <h2 className="text-4xl font-bold text-gray-900 leading-tight">
+                    {aboutHandyGo[currentAboutSection].title}
+                  </h2>
+                  <div className={`text-xl font-medium ${aboutHandyGo[currentAboutSection].accentColor}`}>
+                    {aboutHandyGo[currentAboutSection].subtitle}
+                  </div>
+                  <p className="text-lg text-gray-600">
+                    {aboutHandyGo[currentAboutSection].description}
+                  </p>
+                  <div className="pt-8">
+                    <div className="flex items-center space-x-2">
+                      <div className="flex space-x-1">
+                        {aboutHandyGo.map((_, index) => (
+                          <div
+                            key={index}
+                            className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                              index === currentAboutSection 
+                                ? aboutHandyGo[currentAboutSection].accentColor.replace('text', 'bg')
+                                : 'bg-gray-200'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-sm text-gray-400">
+                        {String(currentAboutSection + 1).padStart(2, '0')}/
+                        {String(aboutHandyGo.length).padStart(2, '0')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Side - Scrolling Images */}
+              <div className="col-span-7 space-y-32">
+                {aboutHandyGo.map((item, index) => (
+                  <div
+                    key={item.id}
+                    ref={el => { aboutSectionRefs.current[index] = el; }}
+                    className="relative"
+                  >
+                    <div className="sticky top-24 bg-white rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl overflow-hidden">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-full h-[600px] object-cover"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
