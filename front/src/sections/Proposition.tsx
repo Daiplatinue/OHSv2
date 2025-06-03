@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { X, Twitter, MessageCircle, Repeat, Share, Heart } from 'lucide-react';
-import { benefits, tweets, services, aboutHandyGo } from './propositionData';
+import { benefits, tweets, services, aboutHandyGo, sponsorLogos } from './propositionData';
 
 function Proposition() {
   const [loading, setLoading] = useState(true);
@@ -872,6 +872,39 @@ function Proposition() {
           <div className="flex justify-between items-end mt-8">
             <div className="flex items-center">
               <span className="text-gray-700 text-sm font-medium tracking-wide mr-2">SEE MORE</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Seventh Section - Sponsors */}
+        <section className="relative min-h-screen bg-white py-24">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="absolute top-8 right-8">
+              <span className="text-yellow-500 text-sm font-medium tracking-widest">CLIENTS</span>
+            </div>
+
+            <div className="flex flex-col items-start">
+              <h2 className="text-6xl md:text-8xl font-bold text-gray-900 mb-4">
+                OUR PARTNERS
+              </h2>
+              <h2 className="text-6xl md:text-8xl font-bold text-gray-900 ml-auto">
+                & CLIENTS
+              </h2>
+            </div>
+
+            <div className="mt-20 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-12">
+              {sponsorLogos.map((sponsor, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-center group transition-all duration-300"
+                >
+                  <img
+                    src={sponsor.image}
+                    alt={sponsor.name}
+                    className="h-12 object-contain opacity-60 group-hover:opacity-100 transition-opacity duration-300"
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </section>

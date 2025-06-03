@@ -199,4 +199,47 @@ export const aboutHandyGo = [
     bgColor: "bg-purple-50",
     accentColor: "text-purple-600"
   }
+]; 
+
+export const sponsorLogos = [
+  {
+    name: "Emporio Armani",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Emporio_Armani_Logo.svg/2560px-Emporio_Armani_Logo.svg.png"
+  },
+  {
+    name: "Falca",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Falca_logo.svg/2560px-Falca_logo.svg.png"
+  },
+  {
+    name: "Chanel",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Chanel_logo_interlocking_cs.svg/1200px-Chanel_logo_interlocking_cs.svg.png"
+  },
+  {
+    name: "Nike",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/1200px-Logo_NIKE.svg.png"
+  },
+  {
+    name: "Givenchy",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Givenchy_logo.svg/2560px-Givenchy_logo.svg.png"
+  },
+  {
+    name: "Sony Music",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Sony_Music_logo.svg/1200px-Sony_Music_logo.svg.png"
+  },
+  {
+    name: "MHD",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/MHD_Logo.svg/1200px-MHD_Logo.svg.png"
+  },
+  {
+    name: "L'Oréal",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/L%27Or%C3%A9al_logo.svg/2560px-L%27Or%C3%A9al_logo.svg.png"
+  },
+  {
+    name: "Louis Vuitton",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Louis_Vuitton_logo_and_wordmark.svg/800px-Louis_Vuitton_logo_and_wordmark.svg.png"
+  },
+  {
+    name: "Adidas",
+    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Adidas_Logo.svg/2560px-Adidas_Logo.svg.png"
+  }
 ];
