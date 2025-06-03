@@ -8,7 +8,6 @@ import {
   Projector,
   MessageCircleMore,
   PowerOff,
-  Mail,
   Bell,
   CircleUserRound,
   Newspaper,

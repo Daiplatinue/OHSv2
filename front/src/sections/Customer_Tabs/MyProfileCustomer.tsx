@@ -48,7 +48,7 @@ interface UserDetails {
 function MyProfile() {
   const [activeTab, setActiveTab] = useState("personal")
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [selectedInfo, setSelectedInfo] = useState<PersonalInfo | null>(null)
+  const [selectedInfo, ] = useState<PersonalInfo | null>(null)
   const [editedInfo, setEditedInfo] = useState<Partial<PersonalInfo>>({})
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [loading, setLoading] = useState(true)

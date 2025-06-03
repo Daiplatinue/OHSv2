@@ -412,7 +412,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
     setErrorMessage(null)
 
     try {
-      const { success, error, authError, result } = await submitBookingToDatabase()
+      const { success, error, authError } = await submitBookingToDatabase()
       
       if (success) {
         setIsSubmitting(false)
