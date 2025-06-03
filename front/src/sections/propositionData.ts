@@ -163,83 +163,103 @@ export const services = [
 ];
 
 export const aboutHandyGo = [
-  {
-    id: 1,
-    title: "CONVENIENCE AT YOUR FINGERTIPS",
-    subtitle: "INSTANT ACCESS",
-    description: "The name 'HandyGo' embodies our core mission: to provide production services that are both accessible and mobile. We're always ready to spring into action, bringing convenience to your fingertips.",
-    image: about1,
-    bgColor: "bg-amber-50",
-    accentColor: "text-amber-600"
-  },
-  {
-    id: 2,
-    title: "EFFICIENCY IN MOTION",
-    subtitle: "SWIFT SERVICE",
-    description: "HandyGo represents our commitment to efficiency. Just like our name suggests, we're quick, agile, and always on the move to ensure your production runs smoothly from start to finish.",
-    image: about2,
-    bgColor: "bg-gray-200",
-    accentColor: "text-emerald-600"
-  },
-  {
-    id: 3,
-    title: "READY WHEN YOU ARE",
-    subtitle: "24/7 AVAILABILITY",
-    description: "The 'Go' in HandyGo signifies our readiness. We're prepared to mobilize at a moment's notice, adapting to your production needs regardless of timeline or complexity.",
-    image: about3,
-    bgColor: "bg-sky-50",
-    accentColor: "text-sky-600"
-  },
-  {
-    id: 4,
-    title: "SIMPLICITY IN COMPLEXITY",
-    subtitle: "SEAMLESS SOLUTIONS",
-    description: "Our name reflects our approach to production challenges. We take complex production requirements and make them handy – simple, manageable, and achievable.",
-    image: about4,
-    bgColor: "bg-purple-50",
-    accentColor: "text-purple-600"
-  }
-]; 
+    {
+        id: 1,
+        title: "CONVENIENCE AT YOUR FINGERTIPS",
+        subtitle: "INSTANT ACCESS",
+        description: "The name 'HandyGo' embodies our core mission: to provide production services that are both accessible and mobile. We're always ready to spring into action, bringing convenience to your fingertips.",
+        image: about1,
+        bgColor: "bg-amber-50",
+        accentColor: "text-amber-600"
+    },
+    {
+        id: 2,
+        title: "EFFICIENCY IN MOTION",
+        subtitle: "SWIFT SERVICE",
+        description: "HandyGo represents our commitment to efficiency. Just like our name suggests, we're quick, agile, and always on the move to ensure your production runs smoothly from start to finish.",
+        image: about2,
+        bgColor: "bg-gray-200",
+        accentColor: "text-emerald-600"
+    },
+    {
+        id: 3,
+        title: "READY WHEN YOU ARE",
+        subtitle: "24/7 AVAILABILITY",
+        description: "The 'Go' in HandyGo signifies our readiness. We're prepared to mobilize at a moment's notice, adapting to your production needs regardless of timeline or complexity.",
+        image: about3,
+        bgColor: "bg-sky-50",
+        accentColor: "text-sky-500"
+    },
+    {
+        id: 4,
+        title: "SIMPLICITY IN COMPLEXITY",
+        subtitle: "SEAMLESS SOLUTIONS",
+        description: "Our name reflects our approach to production challenges. We take complex production requirements and make them handy – simple, manageable, and achievable.",
+        image: about4,
+        bgColor: "bg-purple-50",
+        accentColor: "text-purple-700"
+    }
+];
 
 export const sponsorLogos = [
-  {
-    name: "Emporio Armani",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Emporio_Armani_Logo.svg/2560px-Emporio_Armani_Logo.svg.png"
-  },
-  {
-    name: "Falca",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Falca_logo.svg/2560px-Falca_logo.svg.png"
-  },
-  {
-    name: "Chanel",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Chanel_logo_interlocking_cs.svg/1200px-Chanel_logo_interlocking_cs.svg.png"
-  },
-  {
-    name: "Nike",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Logo_NIKE.svg/1200px-Logo_NIKE.svg.png"
-  },
-  {
-    name: "Givenchy",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Givenchy_logo.svg/2560px-Givenchy_logo.svg.png"
-  },
-  {
-    name: "Sony Music",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Sony_Music_logo.svg/1200px-Sony_Music_logo.svg.png"
-  },
-  {
-    name: "MHD",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/MHD_Logo.svg/1200px-MHD_Logo.svg.png"
-  },
-  {
-    name: "L'Oréal",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/L%27Or%C3%A9al_logo.svg/2560px-L%27Or%C3%A9al_logo.svg.png"
-  },
-  {
-    name: "Louis Vuitton",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Louis_Vuitton_logo_and_wordmark.svg/800px-Louis_Vuitton_logo_and_wordmark.svg.png"
-  },
-  {
-    name: "Adidas",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Adidas_Logo.svg/2560px-Adidas_Logo.svg.png"
-  }
+    {
+        name: "Amazon",
+        image: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg"
+    },
+    {
+        name: "DeebSeek",
+        image: "https://upload.wikimedia.org/wikipedia/commons/e/ec/DeepSeek_logo.svg"
+    },
+    {
+        name: "Lazada",
+        image: "https://upload.wikimedia.org/wikipedia/commons/4/4d/Lazada_%282019%29.svg"
+    },
+    {
+        name: "Google",
+        image: "https://upload.wikimedia.org/wikipedia/commons/c/c9/Google_logo_%282013-2015%29.svg"
+    },
+    {
+        name: "Youtube",
+        image: "https://upload.wikimedia.org/wikipedia/commons/e/e1/Logo_of_YouTube_%282015-2017%29.svg"
+    },
+    {
+        name: "Facebook",
+        image: "https://upload.wikimedia.org/wikipedia/commons/9/93/Facebook_logo_%282023%29.svg"
+    },
+    {
+        name: "GitHub",
+        image: "https://upload.wikimedia.org/wikipedia/commons/2/29/GitHub_logo_2013.svg"
+    },
+    {
+        name: "CloudBees",
+        image: "https://upload.wikimedia.org/wikipedia/commons/0/0e/Cloudbees-logo-black.png"
+    },
+    {
+        name: "Yes Bank",
+        image: "https://upload.wikimedia.org/wikipedia/commons/4/4d/RIT_2018_logo_Image_Permanence_Institute_hor_k.svg"
+    },
+    {
+        name: "Polyga",
+        image: "https://upload.wikimedia.org/wikipedia/commons/f/f5/Polyga-logo-color-small.png"
+    },
+    {
+        name: "LinkedIn",
+        image: "https://upload.wikimedia.org/wikipedia/commons/b/b1/LinkedIn_Logo_2013_%282%29.svg"
+    },
+    {
+        name: "ZAP by Checkmarx",
+        image: "https://upload.wikimedia.org/wikipedia/commons/8/87/Logo_of_ZAP_by_Checkmarx.svg"
+    },
+    {
+        name: "Microsoft",
+        image: "https://upload.wikimedia.org/wikipedia/commons/9/96/Microsoft_logo_%282012%29.svg"
+    },
+    {
+        name: "WildBrain",
+        image: "https://upload.wikimedia.org/wikipedia/commons/b/be/WildBrain_logo.svg"
+    },
+    {
+        name: "New Relic",
+        image: "https://upload.wikimedia.org/wikipedia/commons/2/2b/New_Relic_logo.png"
+    }
 ];

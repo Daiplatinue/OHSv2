@@ -253,9 +253,9 @@ function Proposition() {
         {/* First Section - Hero */}
         <section
           ref={heroRef}
-          className="relative min-h-screen bg-white bg-opacity-90 bg-[url('https://cdn.pixabay.com/photo/2023/05/15/22/09/city-7996136_1280.jpg')] bg-fixed bg-cover bg-center bg-no-repeat overflow-hidden"
+          className="relative min-h-screen bg-white bg-opacity-90 bg-[url('https://cdn.pixabay.com/photo/2021/02/03/00/10/receptionists-5975962_1280.jpg')] bg-fixed bg-cover bg-center bg-no-repeat overflow-hidden"
         >
-          <div className="absolute inset-0 bg-black/60 bg-opacity-70 mix-blend-multiply"></div>
+          <div className="absolute inset-0 bg-black/50 bg-opacity-70 mix-blend-multiply"></div>
 
           <div className={`absolute top-100 left-4 text-[10px] font-mono text-yellow-500 opacity-60 md:text-xs transition-all duration-1000 delay-300 ${heroAnimationComplete ? 'opacity-60 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
             48°51'10.9"N
@@ -390,7 +390,7 @@ function Proposition() {
             <div className="max-w-7xl mx-auto">
               <div className="text-center mb-16">
                 <span className="text-sky-500 text-sm font-semibold tracking-wide">BENEFITS</span>
-                <h2 className="mt-4 text-4xl font-semibold text-gray-700">
+                <h2 className="mt-4 text-4xl font-bold text-gray-600">
                   Why Choose Our Services
                 </h2>
               </div>
@@ -582,7 +582,7 @@ function Proposition() {
             {/* Typography Section */}
             <div className="text-center max-w-3xl mx-auto">
               <span className="text-sky-500 text-sm font-semibold tracking-wide uppercase">Customer Reviews</span>
-              <h2 className="mt-4 text-4xl font-bold text-gray-900 leading-tight">
+              <h2 className="mt-4 text-4xl font-bold text-gray-600 leading-tight">
                 Why Our Clients Choose Us
               </h2>
               <p className="mt-6 text-lg text-gray-600">
@@ -782,7 +782,7 @@ function Proposition() {
                     About HandyGo
                   </span>
                   <h2
-                    className={`text-4xl font-bold text-gray-900 leading-tight transition-all duration-500 block transform ${textAnimating ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'
+                    className={`text-4xl font-bold text-gray-700 leading-tight transition-all duration-500 block transform ${textAnimating ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'
                       }`}
                   >
                     {aboutHandyGo[currentAboutSection].title}
@@ -829,7 +829,36 @@ function Proposition() {
           </div>
         </section>
 
-        {/* Sixth Section - Services */}
+        {/* Sixth Section - Sponsors */}
+        <section className="relative min-h-screen bg-white py-24">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col items-start">
+              <h2 className="text-6xl md:text-8xl font-bold text-gray-600 mb-4">
+                OUR PARTNERS
+              </h2>
+              <h2 className="text-6xl md:text-8xl font-bold text-gray-600 ml-auto">
+                & SPONSORS
+              </h2>
+            </div>
+
+            <div className="mt-20 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-12">
+              {sponsorLogos.map((sponsor, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-center group transition-all duration-300"
+                >
+                  <img
+                    src={sponsor.image}
+                    alt={sponsor.name}
+                    className="h-12 object-contain opacity-60 group-hover:opacity-100 transition-opacity duration-300"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Seventh Section - Services */}
         <section
           ref={servicesRef}
           className="relative min-h-screen bg-white flex flex-col p-8 lg:p-16"
@@ -872,39 +901,6 @@ function Proposition() {
           <div className="flex justify-between items-end mt-8">
             <div className="flex items-center">
               <span className="text-gray-700 text-sm font-medium tracking-wide mr-2">SEE MORE</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Seventh Section - Sponsors */}
-        <section className="relative min-h-screen bg-white py-24">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="absolute top-8 right-8">
-              <span className="text-yellow-500 text-sm font-medium tracking-widest">CLIENTS</span>
-            </div>
-
-            <div className="flex flex-col items-start">
-              <h2 className="text-6xl md:text-8xl font-bold text-gray-900 mb-4">
-                OUR PARTNERS
-              </h2>
-              <h2 className="text-6xl md:text-8xl font-bold text-gray-900 ml-auto">
-                & CLIENTS
-              </h2>
-            </div>
-
-            <div className="mt-20 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-12">
-              {sponsorLogos.map((sponsor, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-center group transition-all duration-300"
-                >
-                  <img
-                    src={sponsor.image}
-                    alt={sponsor.name}
-                    className="h-12 object-contain opacity-60 group-hover:opacity-100 transition-opacity duration-300"
-                  />
-                </div>
-              ))}
             </div>
           </div>
         </section>
