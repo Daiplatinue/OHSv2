@@ -1,4 +1,4 @@
-import { Star, Shield, Zap, Heart, Users, DollarSign, BarChart, Briefcase } from 'lucide-react';
+import { Star, Shield, Zap, Heart, Users, DollarSign, BarChart, Briefcase, Cpu, Lock, Globe, Clock, Database, Cloud } from 'lucide-react';
 
 import customer1 from '../assets/proposition/man-1283231_1280.jpg';
 import customerbg1 from '../assets/proposition/Contemplative Portrait (1).jpeg';
@@ -22,6 +22,8 @@ import about1 from '../assets/proposition/Man Working in Cozy Van.jpeg';
 import about2 from '../assets/proposition/Hand in Spotlight.jpeg';
 import about3 from '../assets/proposition/Outdoor Service Counter Interaction.jpeg';
 import about4 from '../assets/proposition/Aerial View of Lush Green Waterways.jpeg';
+
+import feature1 from '../assets/zoomeye.mp4';
 
 export const benefits = [
     {
@@ -261,5 +263,50 @@ export const sponsorLogos = [
     {
         name: "New Relic",
         image: "https://upload.wikimedia.org/wikipedia/commons/2/2b/New_Relic_logo.png"
+    }
+];
+
+export const sponsorQuote = {
+    text: "These incredible partners and sponsors have made invaluable contributions to building and maintaining our robust service platform. Their support enables us to deliver exceptional quality and innovation to our customers.",
+    author: "HandyGo Team",
+    role: "Development & Management"
+};
+
+export const systemFeatures = [
+    {
+        icon: Cpu,
+        title: "Advanced Processing",
+        description: "State-of-the-art system architecture ensuring fast and efficient service delivery",
+        video: feature1
+    },
+    {
+        icon: Lock,
+        title: "Enhanced Security",
+        description: "Multi-layer security protocols protecting all user data and transactions",
+        video: "https://cdn.pixabay.com/vimeo/529533910/Digital%20Security%20-%2068318.mp4?width=640&hash=a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
+    },
+    {
+        icon: Globe,
+        title: "Global Accessibility",
+        description: "24/7 system availability with worldwide access and minimal downtime",
+        video: "https://cdn.pixabay.com/vimeo/414804112/Earth%20-%2027847.mp4?width=640&hash=9876543210abcdef0123456789abcdef"
+    },
+    {
+        icon: Clock,
+        title: "Real-time Updates",
+        description: "Instant synchronization and live status tracking for all services",
+        video: "https://cdn.pixabay.com/vimeo/470290078/Time%20-%2046661.mp4?width=640&hash=fedcba9876543210fedcba9876543210"
+    },
+    {
+        icon: Database,
+        title: "Smart Storage",
+        description: "Optimized data management system with automated backup and recovery",
+        video: "https://cdn.pixabay.com/vimeo/527438875/Database%20-%2067088.mp4?width=640&hash=123456789abcdef0123456789abcdef0"
+    },
+    {
+        icon: Cloud,
+        title: "Cloud Integration",
+        description: "Seamless cloud-based operations for scalability and reliability",
+        video: "https://cdn.pixabay.com/vimeo/527438842/Cloud%20-%2067087.mp4?width=640&hash=abcdef0123456789abcdef0123456789"
     }
 ];

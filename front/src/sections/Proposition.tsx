@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { X, Twitter, MessageCircle, Repeat, Share, Heart } from 'lucide-react';
-import { benefits, tweets, services, aboutHandyGo, sponsorLogos } from './propositionData';
+import { benefits, tweets, services, aboutHandyGo, sponsorLogos, sponsorQuote, systemFeatures } from './propositionData';
+import Footer from '../sections/Styles/Footer';
 
 function Proposition() {
   const [loading, setLoading] = useState(true);
@@ -19,6 +20,18 @@ function Proposition() {
   const servicesRef = useRef<HTMLDivElement | null>(null);
   const aboutSectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [heroAnimationComplete, setHeroAnimationComplete] = useState(false);
+
+  const [currentFeature, setCurrentFeature] = useState(0);
+  const [, setIsVideoPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleFeatureChange = (index: number) => {
+    setCurrentFeature(index);
+    if (videoRef.current) {
+      videoRef.current.load();
+      videoRef.current.play();
+    }
+  };
 
   useEffect(() => {
     const loadingSteps = [
@@ -855,10 +868,111 @@ function Proposition() {
                 </div>
               ))}
             </div>
+
+            <div className="mt-20 max-w-3xl mx-auto text-center">
+              <p className="text-xl text-gray-600 italic">{sponsorQuote.text}</p>
+              <div className="mt-4">
+                <p className="text-sky-500 font-semibold">{sponsorQuote.author}</p>
+                <p className="text-gray-500 text-sm">{sponsorQuote.role}</p>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* Seventh Section - Services */}
+        {/* Seven Section - System Features */}
+        <section className="relative min-h-screen bg-white py-24 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <span className="text-sky-400 text-sm font-semibold tracking-wide uppercase">System Features</span>
+              <h2 className="mt-4 text-4xl font-bold text-gray-600">
+                Cutting-Edge Technology
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+              {systemFeatures.slice(0, 3).map((feature, index) => (
+                <button
+                  key={feature.title}
+                  onClick={() => handleFeatureChange(index)}
+                  className={`p-6 rounded-xl transition-all duration-300 text-left ${currentFeature === index
+                    ? 'bg-sky-50'
+                    : 'hover:bg-gray-50'
+                    }`}
+                >
+                  <div className="flex items-center">
+                    <feature.icon className={`w-6 h-6 ${currentFeature === index ? 'text-sky-500' : 'text-gray-400'
+                      }`} />
+                    <span className={`ml-3 font-medium ${currentFeature === index ? 'text-sky-500' : 'text-gray-600'
+                      }`}>
+                      {feature.title}
+                    </span>
+                  </div>
+                  <p className={`mt-2 text-sm ${currentFeature === index ? 'text-sky-600' : 'text-gray-500'
+                    }`}>
+                    {feature.description}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            {/* Video Display */}
+            <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100 mx-auto max-w-4xl mb-12">
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+                onPlay={() => setIsVideoPlaying(true)}
+              >
+                <source src={systemFeatures[currentFeature].video} type="video/mp4" />
+              </video>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {systemFeatures.slice(3).map((feature, index) => (
+                <button
+                  key={feature.title}
+                  onClick={() => handleFeatureChange(index + 3)}
+                  className={`p-6 rounded-xl transition-all duration-300 text-left ${currentFeature === index + 3
+                    ? 'bg-sky-50'
+                    : 'hover:bg-gray-50'
+                    }`}
+                >
+                  <div className="flex items-center">
+                    <feature.icon className={`w-6 h-6 ${currentFeature === index + 3 ? 'text-sky-500' : 'text-gray-400'
+                      }`} />
+                    <span className={`ml-3 font-medium ${currentFeature === index + 3 ? 'text-sky-500' : 'text-gray-600'
+                      }`}>
+                      {feature.title}
+                    </span>
+                  </div>
+                  <p className={`mt-2 text-sm ${currentFeature === index + 3 ? 'text-sky-600' : 'text-gray-500'
+                    }`}>
+                    {feature.description}
+                  </p>
+                </button>
+              ))}
+            </div>
+
+            {/* Pagination Dots */}
+            <div className="flex justify-center mt-12 space-x-2">
+              {systemFeatures.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleFeatureChange(index)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${currentFeature === index
+                    ? 'bg-sky-400 w-8'
+                    : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Eight Section - Services */}
         <section
           ref={servicesRef}
           className="relative min-h-screen bg-white flex flex-col p-8 lg:p-16"
@@ -904,6 +1018,160 @@ function Proposition() {
             </div>
           </div>
         </section>
+
+        {/* Ninth Section - Join Now */}
+        <section className="relative min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 py-24 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+              {/* Left Side - Typography */}
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-sky-100 text-sky-600">
+                    Join Our Network
+                  </span>
+                  <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight">
+                    Become Part of Our
+                    <span className="block mt-2 text-sky-500">Growing Family</span>
+                  </h2>
+                </div>
+
+                <p className="text-lg text-gray-600 leading-relaxed">
+                  Join thousands of professionals who trust HandyGo for exceptional service experiences. Our network continues to expand, bringing quality solutions to more locations every day.
+                </p>
+
+                <div className="space-y-6">
+                  <div className="group p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-12 w-12 bg-sky-500 rounded-2xl flex items-center justify-center text-white font-medium">
+                        1
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-xl font-semibold text-gray-900">Register Your Account</h3>
+                        <p className="mt-1 text-gray-500">Complete a simple registration process with your basic details</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="group p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-12 w-12 bg-sky-500 rounded-2xl flex items-center justify-center text-white font-medium">
+                        2
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-xl font-semibold text-gray-900">Create Your Profile</h3>
+                        <p className="mt-1 text-gray-500">Set up your professional profile highlighting your expertise</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="group p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-12 w-12 bg-sky-500 rounded-2xl flex items-center justify-center text-white font-medium">
+                        3
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-xl font-semibold text-gray-900">Start Your Journey</h3>
+                        <p className="mt-1 text-gray-500">Begin connecting with clients and growing your business</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-6">
+                  <button
+                    onClick={navigateToLogin}
+                    className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white bg-sky-500 rounded-2xl overflow-hidden transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg hover:bg-sky-600"
+                  >
+                    <span className="relative">Join HandyGo Network</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Side - Features */}
+              <div className="relative space-y-6">
+                <div className="absolute inset-0 bg-sky-100 rounded-[40px] transform rotate-3"></div>
+                <div className="relative bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
+                  <div className="space-y-8">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <h3 className="text-xl font-semibold text-gray-900">Professional Network</h3>
+                        <p className="text-sm text-gray-500">Connect with industry experts</p>
+                      </div>
+                      <div className="flex -space-x-2">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="inline-block h-10 w-10 rounded-full ring-2 ring-white overflow-hidden">
+                            <img
+                              src={`https://i.pravatar.cc/100?img=${20 + i}`}
+                              alt={`Team member ${i}`}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ))}
+                        <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-sky-100 ring-2 ring-white text-sky-600 font-medium text-sm">
+                          +58
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded-2xl bg-gray-50">
+                        <div className="text-2xl font-bold text-gray-900">5K+</div>
+                        <div className="text-sm text-gray-500">Active Members</div>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-gray-50">
+                        <div className="text-2xl font-bold text-gray-900">95%</div>
+                        <div className="text-sm text-gray-500">Success Rate</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-xl font-semibold text-gray-900">Network Highlights</h3>
+                      <span className="text-sm text-sky-600">View all</span>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-xl bg-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-900">Top Rated Services</span>
+                          <span className="text-sm text-sky-500">98%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-sky-500 h-2 rounded-full" style={{ width: '98%' }}></div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-900">Client Satisfaction</span>
+                          <span className="text-sm text-sky-500">95%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-sky-500 h-2 rounded-full" style={{ width: '95%' }}></div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-900">Service Growth</span>
+                          <span className="text-sm text-sky-500">87%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="bg-sky-500 h-2 rounded-full" style={{ width: '87%' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <Footer />
 
       </div>
     </>
