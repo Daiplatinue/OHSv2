@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { X, Twitter, MessageCircle, Repeat, Share, Heart } from 'lucide-react';
 import { benefits, tweets, services, aboutHandyGo, sponsorLogos, sponsorQuote, systemFeatures } from './propositionData';
-import Footer from '../sections/Styles/Footer';
 
 function Proposition() {
   const [loading, setLoading] = useState(true);
@@ -22,15 +21,27 @@ function Proposition() {
   const [heroAnimationComplete, setHeroAnimationComplete] = useState(false);
 
   const [currentFeature, setCurrentFeature] = useState(0);
-  const [, setIsVideoPlaying] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isVideoLoading, setIsVideoLoading] = useState(false);
+  const phoneVideoRef = useRef<HTMLVideoElement>(null);
+  const laptopVideoRef = useRef<HTMLVideoElement>(null);
 
   const handleFeatureChange = (index: number) => {
+    if (index === currentFeature) return;
+
+    setIsVideoLoading(true);
     setCurrentFeature(index);
-    if (videoRef.current) {
-      videoRef.current.load();
-      videoRef.current.play();
-    }
+
+    setTimeout(() => {
+      if (phoneVideoRef.current) {
+        phoneVideoRef.current.load();
+        phoneVideoRef.current.play();
+      }
+      if (laptopVideoRef.current) {
+        laptopVideoRef.current.load();
+        laptopVideoRef.current.play();
+      }
+      setIsVideoLoading(false);
+    }, 300);
   };
 
   useEffect(() => {
@@ -785,29 +796,29 @@ function Proposition() {
         <section className={`relative min-h-screen transition-colors duration-500 ${aboutHandyGo[currentAboutSection].bgColor}`}>
           <div className="max-w-7xl mx-auto px-6 py-24">
             <div className="grid grid-cols-12 gap-8">
-              {/* Left Side - Dynamic Typography */}
+              {/* Left Side - Dynamic Typography with Blur Animation */}
               <div className="col-span-5 sticky top-60 h-fit mr-10 ml-[-2rem]">
                 <div className="space-y-5 overflow-hidden">
                   <span
-                    className={`text-sm font-semibold tracking-wide uppercase transition-all duration-500 block transform ${textAnimating ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'
+                    className={`text-sm font-semibold tracking-wide uppercase transition-all duration-500 block ${textAnimating ? 'blur-md opacity-0' : 'blur-0 opacity-100'
                       } ${aboutHandyGo[currentAboutSection].accentColor}`}
                   >
                     About HandyGo
                   </span>
                   <h2
-                    className={`text-4xl font-bold text-gray-700 leading-tight transition-all duration-500 block transform ${textAnimating ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'
+                    className={`text-4xl font-bold text-gray-700 leading-tight transition-all duration-500 block ${textAnimating ? 'blur-md opacity-0' : 'blur-0 opacity-100'
                       }`}
                   >
                     {aboutHandyGo[currentAboutSection].title}
                   </h2>
                   <div
-                    className={`text-xl font-medium transition-all duration-500 block transform ${textAnimating ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
+                    className={`text-xl font-medium transition-all duration-500 block ${textAnimating ? 'blur-md opacity-0' : 'blur-0 opacity-100'
                       } ${aboutHandyGo[currentAboutSection].accentColor}`}
                   >
                     {aboutHandyGo[currentAboutSection].subtitle}
                   </div>
                   <p
-                    className={`text-lg text-gray-600 transition-all duration-500 block transform ${textAnimating ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'
+                    className={`text-lg text-gray-600 transition-all duration-500 block ${textAnimating ? 'blur-md opacity-0' : 'blur-0 opacity-100'
                       }`}
                   >
                     {aboutHandyGo[currentAboutSection].description}
@@ -879,95 +890,153 @@ function Proposition() {
           </div>
         </section>
 
-        {/* Seven Section - System Features */}
-        <section className="relative min-h-screen bg-white py-24 overflow-hidden">
+        {/* Seventh Section - System Features with Laptop and Phone Intersection */}
+        <section className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 py-24 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
+            {/* Header */}
             <div className="text-center mb-16">
-              <span className="text-sky-400 text-sm font-semibold tracking-wide uppercase">System Features</span>
+              <span className="text-sky-500 text-sm font-semibold tracking-wide uppercase">System Features</span>
               <h2 className="mt-4 text-4xl font-bold text-gray-600">
                 Cutting-Edge Technology
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-              {systemFeatures.slice(0, 3).map((feature, index) => (
+            {/* Feature Cards Grid - Top Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+              {systemFeatures.map((feature, index) => (
                 <button
                   key={feature.title}
                   onClick={() => handleFeatureChange(index)}
-                  className={`p-6 rounded-xl transition-all duration-300 text-left ${currentFeature === index
-                    ? 'bg-sky-50'
-                    : 'hover:bg-gray-50'
+                  className={`relative p-6 rounded-2xl transition-all duration-300 text-left group border-2 ${currentFeature === index
+                    ? 'bg-white text-gray-600 border-gray-200 hover:border-sky-200'
+                    : 'bg-white hover:bg-gray-50 text-gray-600 border-gray-200 hover:border-sky-200'
                     }`}
                 >
-                  <div className="flex items-center">
-                    <feature.icon className={`w-6 h-6 ${currentFeature === index ? 'text-sky-500' : 'text-gray-400'
-                      }`} />
-                    <span className={`ml-3 font-medium ${currentFeature === index ? 'text-sky-500' : 'text-gray-600'
-                      }`}>
+                  {/* Bottom Indicator for Active State */}
+                  {currentFeature === index && (
+                    <div className="absolute bottom-0 left-6 right-6 h-1 bg-sky-500 rounded-t-full"></div>
+                  )}
+
+                  <div className="flex items-center mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-sky-100 flex items-center justify-center">
+                      <feature.icon className="w-6 h-6 text-sky-500" />
+                    </div>
+                    <span className="ml-4 font-semibold text-lg text-gray-900">
                       {feature.title}
                     </span>
                   </div>
-                  <p className={`mt-2 text-sm ${currentFeature === index ? 'text-sky-600' : 'text-gray-500'
-                    }`}>
+                  <p className="text-sm leading-relaxed text-gray-500">
                     {feature.description}
                   </p>
                 </button>
               ))}
             </div>
 
-            {/* Video Display */}
-            <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100 mx-auto max-w-4xl mb-12">
-              <video
-                ref={videoRef}
-                className="w-full h-full object-cover"
-                autoPlay
-                muted
-                loop
-                playsInline
-                onPlay={() => setIsVideoPlaying(true)}
-              >
-                <source src={systemFeatures[currentFeature].video} type="video/mp4" />
-              </video>
-            </div>
+            {/* Device Display Section - Middle with Intersection */}
+            <div className="flex justify-center items-center mb-16 relative">
+              {/* Background Elements */}
+              <div className="absolute inset-0 bg-gradient-to-r from-sky-100 via-transparent to-sky-100 rounded-3xl opacity-30"></div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {systemFeatures.slice(3).map((feature, index) => (
-                <button
-                  key={feature.title}
-                  onClick={() => handleFeatureChange(index + 3)}
-                  className={`p-6 rounded-xl transition-all duration-300 text-left ${currentFeature === index + 3
-                    ? 'bg-sky-50'
-                    : 'hover:bg-gray-50'
-                    }`}
-                >
-                  <div className="flex items-center">
-                    <feature.icon className={`w-6 h-6 ${currentFeature === index + 3 ? 'text-sky-500' : 'text-gray-400'
-                      }`} />
-                    <span className={`ml-3 font-medium ${currentFeature === index + 3 ? 'text-sky-500' : 'text-gray-600'
-                      }`}>
-                      {feature.title}
-                    </span>
+              <div className="relative flex items-center justify-center">
+                {/* Laptop Display */}
+                <div className="relative z-10">
+                  <div className="w-[40rem] h-[25rem] bg-gradient-to-br from-gray-800 to-gray-900 rounded-t-2xl p-3 shadow-2xl">
+                    <div className="w-full h-full bg-black rounded-t-xl overflow-hidden relative">
+                      {/* Loading Overlay */}
+                      {isVideoLoading && (
+                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
+                          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      )}
+
+                      {/* Video Content */}
+                      <video
+                        ref={laptopVideoRef}
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                      >
+                        <source src={systemFeatures[currentFeature].video} type="video/mp4" />
+                      </video>
+
+                      {/* Laptop UI Overlay */}
+                      <div className="absolute top-3 left-3 right-3">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
+                          <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full"></div>
+                          <div className="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
+                          <div className="flex-1 bg-gray-700 rounded-md px-3 py-1 ml-3">
+                            <span className="text-gray-300 text-xs">ohs-one.vercel.app</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <p className={`mt-2 text-sm ${currentFeature === index + 3 ? 'text-sky-600' : 'text-gray-500'
-                    }`}>
-                    {feature.description}
-                  </p>
-                </button>
-              ))}
+
+                  {/* Laptop Base */}
+                  <div className="w-[40rem] h-6 bg-gradient-to-br from-gray-600 to-gray-800 rounded-b-2xl"></div>
+                  <div className="w-48 h-3 bg-gradient-to-br from-gray-700 to-gray-900 rounded-full mx-auto -mt-1"></div>
+                </div>
+
+                {/* Phone Display - Intersecting with Laptop */}
+                <div className="relative z-20 -ml-32 mt-8">
+                  <div className="w-56 h-[28rem] bg-gradient-to-br from-gray-800 to-gray-900 rounded-[2.5rem] p-2 shadow-2xl">
+                    <div className="w-full h-full bg-black rounded-[2rem] overflow-hidden relative">
+
+                      {/* Phone Notch */}
+                      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-24 h-6 bg-black rounded-b-2xl z-40"></div>
+
+                      {/* Loading Overlay */}
+                      {isVideoLoading && (
+                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
+                          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      )}
+
+                      {/* Video Content */}
+                      <video
+                        ref={phoneVideoRef}
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                      >
+                        <source src={systemFeatures[currentFeature].video} type="video/mp4" />
+                      </video>
+
+                      {/* Home Indicator */}
+                      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-white bg-opacity-60 rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Pagination Dots */}
-            <div className="flex justify-center mt-12 space-x-2">
-              {systemFeatures.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleFeatureChange(index)}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${currentFeature === index
-                    ? 'bg-sky-400 w-8'
-                    : 'bg-gray-300 hover:bg-gray-400'
-                    }`}
-                />
-              ))}
+            {/* Performance Stats - Bottom Section */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="text-center p-8 bg-white rounded-2xl border border-gray-100">
+                <div className="text-4xl font-bold text-sky-500 mb-3">99.9%</div>
+                <div className="text-sm text-gray-600 font-medium">Uptime</div>
+                <div className="text-xs text-gray-400 mt-1">System Reliability</div>
+              </div>
+              <div className="text-center p-8 bg-white rounded-2xl border border-gray-100">
+                <div className="text-4xl font-bold text-sky-500 mb-3">&lt;50ms</div>
+                <div className="text-sm text-gray-600 font-medium">Response Time</div>
+                <div className="text-xs text-gray-400 mt-1">Lightning Fast</div>
+              </div>
+              <div className="text-center p-8 bg-white rounded-2xl border border-gray-100">
+                <div className="text-4xl font-bold text-sky-500 mb-3">256-bit</div>
+                <div className="text-sm text-gray-600 font-medium">Encryption</div>
+                <div className="text-xs text-gray-400 mt-1">Bank-Level Security</div>
+              </div>
+              <div className="text-center p-8 bg-white rounded-2xl border border-gray-100">
+                <div className="text-4xl font-bold text-sky-500 mb-3">24/7</div>
+                <div className="text-sm text-gray-600 font-medium">Monitoring</div>
+                <div className="text-xs text-gray-400 mt-1">Always Protected</div>
+              </div>
             </div>
           </div>
         </section>
@@ -1076,15 +1145,6 @@ function Proposition() {
                     </div>
                   </div>
                 </div>
-
-                <div className="pt-6">
-                  <button
-                    onClick={navigateToLogin}
-                    className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white bg-sky-500 rounded-2xl overflow-hidden transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg hover:bg-sky-600"
-                  >
-                    <span className="relative">Join HandyGo Network</span>
-                  </button>
-                </div>
               </div>
 
               {/* Right Side - Features */}
@@ -1171,7 +1231,50 @@ function Proposition() {
           </div>
         </section>
 
-        <Footer />
+        {/* Tenth Section - Apple-inspired Minimalistic Call to Action */}
+        <section className="relative py-16 bg-white">
+          <div className="max-w-2xl mx-auto px-6 text-center mt-20 mb-40">
+            {/* Header Badge */}
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-medium mb-8">
+              Ready to get started?
+            </div>
+
+            {/* Main Heading */}
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-gray-900 leading-tight mb-6">
+              Let's set a world record
+              <span className="block">together</span>
+            </h2>
+
+            {/* CTA Button */}
+            <button
+              onClick={navigateToLogin}
+              className="inline-flex items-center justify-center px-8 py-3 text-base font-medium text-white bg-gray-900 rounded-full hover:bg-gray-800 transition-colors duration-200 mb-8"
+            >
+              Register now
+            </button>
+
+            {/* Footer Text */}
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Hackathon is powered by Devpost. See their{' '}
+              <a href="#" className="text-gray-700 hover:text-gray-900 transition-colors">
+                terms
+              </a>{' '}
+              and{' '}
+              <a href="#" className="text-gray-700 hover:text-gray-900 transition-colors">
+                privacy policy
+              </a>
+              .
+            </p>
+
+            {/* Powered by Badge */}
+            <div className="flex justify-center mt-6">
+              <div className="inline-flex items-center text-xs text-gray-400">
+                Powered by{' '}
+                <span className="ml-1 font-medium text-gray-600">Netlify</span>
+              </div>
+            </div>
+          </div>
+        </section>
 
       </div>
     </>
