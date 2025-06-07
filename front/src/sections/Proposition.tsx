@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { X, Twitter, MessageCircle, Repeat, Share, Heart } from 'lucide-react';
+import { X, Twitter, MessageCircle, Repeat, Share, Heart, Blend } from 'lucide-react';
 import { tweets, aboutHandyGo } from '../sections/propositionData';
 
 import ThirdSection from '../sections/Proposition_Sections/ThirdSection';
@@ -28,6 +28,12 @@ function Proposition() {
   const [hoveredTeamMember, setHoveredTeamMember] = useState("");
   const [imageTransitioning, setImageTransitioning] = useState(false);
 
+  // New states for floating indicator
+  const [showFloatingIndicator, setShowFloatingIndicator] = useState(false);
+  const [showSpeechBubble, setShowSpeechBubble] = useState(false);
+  const [isFloatingIndicatorIdle, setIsFloatingIndicatorIdle] = useState(false);
+  const [showNavigationCloud, setShowNavigationCloud] = useState(false);
+
   const heroRef = useRef<HTMLDivElement | null>(null);
   const aboutSectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [heroAnimationComplete, setHeroAnimationComplete] = useState(false);
@@ -41,6 +47,39 @@ function Proposition() {
   };
 
   const defaultImage = "https://images.pexels.com/photos/3214995/pexels-photo-3214995.jpeg";
+
+  // Navigation sections for the cloud
+  const navigationSections = [
+    { name: "Home", target: "hero-sections" },
+    { name: "Who Are We", target: "who-we-are" },
+    { name: "Benefits", target: "benefits" },
+    { name: "Reviews", target: "reviews" },
+    { name: "About HG", target: "about-handygo" },
+    { name: "Sponsors", target: "sponsors" },
+    { name: "Features", target: "features" },
+    { name: "Services", target: "services" },
+    { name: "How To Join", target: "join" },
+    { name: "Get Started", target: "get-started" }
+  ];
+
+  // Floating Indicator Timer Effect
+  useEffect(() => {
+    if (!loading && heroAnimationComplete) {
+      const timer = setTimeout(() => {
+        setShowFloatingIndicator(true);
+
+        // Show speech bubble for 10 seconds initially
+        setShowSpeechBubble(true);
+        setTimeout(() => {
+          setShowSpeechBubble(false);
+          // Set opacity to 50% after 10 seconds of being idle
+          setIsFloatingIndicatorIdle(true);
+        }, 5000);
+      }, 5000); // Show indicator after 5 second
+
+      return () => clearTimeout(timer);
+    }
+  }, [loading, heroAnimationComplete]);
 
   useEffect(() => {
     const loadingSteps = [
@@ -134,6 +173,33 @@ function Proposition() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [currentAboutSection]);
 
+  const scrollToSection = (sectionName: string) => {
+    if (sectionName === "hero") {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (sectionName === "contact") {
+      setShowContact(true);
+    } else {
+      const section = document.querySelector(`[data-section="${sectionName}"]`) ||
+        document.querySelector(`section:nth-of-type(${getSectionIndex(sectionName)})`);
+      section?.scrollIntoView({ behavior: 'smooth' });
+    }
+    setShowNavigationCloud(false);
+  };
+
+  const getSectionIndex = (sectionName: string) => {
+    const sectionMap: { [key: string]: number } = {
+      "who-we-are": 2,
+      "benefits": 3,
+      "reviews": 4,
+      "about-handygo": 5,
+      "sponsors": 6,
+      "features": 7,
+      "services": 8,
+      "join": 9
+    };
+    return sectionMap[sectionName] || 1;
+  };
+
   const scrollToServices = () => {
     const servicesSection = document.querySelector('[data-section="services"]');
     servicesSection?.scrollIntoView({ behavior: 'smooth' });
@@ -172,8 +238,105 @@ function Proposition() {
     return defaultImage;
   };
 
+  const handleFloatingIndicatorClick = () => {
+    setShowSpeechBubble(false);
+    setShowNavigationCloud(!showNavigationCloud);
+  };
+
+  const handleFloatingIndicatorHover = () => {
+    setShowSpeechBubble(true);
+    setIsFloatingIndicatorIdle(false); // Reset idle state on hover
+  };
+
+  const handleFloatingIndicatorLeave = () => {
+    if (!showNavigationCloud) {
+      setShowSpeechBubble(false);
+    }
+  };
+
   return (
     <>
+
+      {/* Navigation Cloud */}
+      <div className={`fixed inset-0 z-[80] transition-all duration-500 ease-out ${showNavigationCloud
+        ? 'opacity-100 backdrop-blur-sm'
+        : 'opacity-0 pointer-events-none'
+        }`}>
+        <div className="absolute inset-0 bg-black/20" onClick={() => setShowNavigationCloud(false)}></div>
+
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px]">
+          <div className="relative w-full h-full">
+            {/* Navigation Items in Cloud Formation */}
+            {navigationSections.map((section, index) => {
+              const angle = (index * 360) / navigationSections.length;
+              const radius = 180;
+              const x = Math.cos((angle * Math.PI) / 180) * radius;
+              const y = Math.sin((angle * Math.PI) / 180) * radius;
+
+              return (
+                <button
+                  key={section.name}
+                  onClick={() => scrollToSection(section.target)}
+                  className={`absolute bg-white hover:bg-sky-500 text-gray-700 hover:text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border border-gray-200 group ${showNavigationCloud ? 'fade-in-item' : ''
+                    }`}
+                  style={{
+                    left: `calc(50% + ${x}px)`,
+                    top: `calc(50% + ${y}px)`,
+                    transform: 'translate(-50%, -50%)',
+                    animationDelay: `${index * 100}ms`
+                  }}
+                >
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium whitespace-nowrap">{section.name}</span>
+                  </div>
+                </button>
+              );
+            })}
+
+            {/* Center Close Button */}
+            <button
+              onClick={() => setShowNavigationCloud(false)}
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-sky-500 hover:bg-sky-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+            >
+              <X size={24} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Indicator */}
+      <div className={`fixed bottom-8 right-8 z-[70] transition-all duration-700 ease-out ${showFloatingIndicator
+        ? 'opacity-100 translate-y-0 scale-100'
+        : 'opacity-0 translate-y-10 scale-75 pointer-events-none'
+        }`}>
+        {/* Speech Bubble */}
+        <div className={`absolute bottom-full right-0 mb-4 transition-all duration-500 ease-out ${showSpeechBubble
+          ? 'opacity-100 translate-y-0 scale-100'
+          : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
+          }`}>
+          <div className="relative bg-white px-4 py-3 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
+            <div className="text-sm font-medium text-gray-800">
+              Click me for easy navigation
+            </div>
+            {/* Speech bubble arrow */}
+            <div className="absolute top-full right-6 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-white"></div>
+            <div className="absolute top-full right-6 w-0 h-0 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-gray-200 transform translate-y-px"></div>
+          </div>
+        </div>
+
+        {/* Floating Button */}
+        <button
+          onClick={handleFloatingIndicatorClick}
+          onMouseEnter={handleFloatingIndicatorHover}
+          onMouseLeave={handleFloatingIndicatorLeave}
+          className={`bg-sky-400 text-white p-3 rounded-full shadow-lg hover:bg-sky-500 cursor-pointer transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-75 hover:scale-110 active:scale-95 ${isFloatingIndicatorIdle ? 'opacity-50 hover:opacity-100' : 'opacity-100'
+            }`}
+          aria-label="Navigate faster"
+        >
+          <Blend size={20} />
+        </button>
+      </div>
+
       {/* Contact Overlay */}
       <div className="fixed inset-0 z-[60] pointer-events-none">
         <div
@@ -298,6 +461,7 @@ function Proposition() {
         {/* First Section - Hero */}
         <section
           ref={heroRef}
+          data-section="hero-section"
           className="relative min-h-screen bg-white bg-opacity-90 bg-[url('https://cdn.pixabay.com/photo/2021/02/03/00/10/receptionists-5975962_1280.jpg')] bg-fixed bg-cover bg-center bg-no-repeat overflow-hidden"
         >
           <div className="absolute inset-0 bg-black/50 bg-opacity-70 mix-blend-multiply"></div>
@@ -367,7 +531,7 @@ function Proposition() {
         </section>
 
         {/* Second Section - Who We Are */}
-        <section className="relative min-h-screen bg-white text-gray-600 py-16 px-8 md:px-16 lg:px-20">
+        <section data-section="who-we-are" className="relative min-h-screen bg-white text-gray-600 py-16 px-8 md:px-16 lg:px-20">
           <div className="max-w-7xl mx-auto mt-15">
             <div className="pb-8">
               <h2 className="text-[12px] font-medium tracking-[0.2em] uppercase">WHO WE ARE</h2>
@@ -394,7 +558,7 @@ function Proposition() {
                       </p>
 
                       <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase mt-6 w-[25rem]">
-                        What started as a small initiative has grown into a full-service online home solution. Whether it’s a quick repair or a complex project, Handy Go is here to deliver smooth, affordable, and dependable service right when you need it most.
+                        What started as a small initiative has grown into a full-service online home solution. Whether it's a quick repair or a complex project, Handy Go is here to deliver smooth, affordable, and dependable service right when you need it most.
                       </p>
 
                       <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase mt-6 w-[25rem]">
@@ -463,10 +627,12 @@ function Proposition() {
         </section>
 
         {/* Third Section - Benefits */}
-        <ThirdSection />
+        <div data-section="benefits">
+          <ThirdSection />
+        </div>
 
         {/* Fourth Section - Reviews & Tweets */}
-        <section className="bg-white min-h-screen relative py-24">
+        <section data-section="reviews" className="bg-white min-h-screen relative py-24">
           <div className="max-w-7xl mx-auto px-6 relative">
             {/* Tweet Cards */}
             <div className="grid grid-cols-3 gap-8 mb-16">
@@ -631,7 +797,7 @@ function Proposition() {
             </div>
 
             {/* Typography Section */}
-            <div className="text-center max-w-3xl mx-auto">
+            <div className="text-center max-w-3xl mx-auto mt-[8rem]">
               <span className="text-sky-500 text-sm tracking-wide font-semibold uppercase">Customer Reviews</span>
               <h2 className="mt-4 text-5xl font-semibold text-gray-600 leading-tight">
                 Our Clients Feedback
@@ -716,7 +882,7 @@ function Proposition() {
         </section>
 
         {/* Fifth Section - About HandyGo */}
-        <section className={`relative min-h-screen transition-colors duration-700 ease-in-out ${aboutHandyGo[currentAboutSection].bgColor}`}>
+        <section data-section="about-handygo" className={`relative min-h-screen transition-colors duration-700 ease-in-out ${aboutHandyGo[currentAboutSection].bgColor}`}>
           <div className="max-w-7xl mx-auto px-6 py-24">
             <div className="grid grid-cols-12 gap-8">
               {/* Left Side - Dynamic Typography with Enhanced Blur Animation */}
@@ -777,10 +943,14 @@ function Proposition() {
         </section>
 
         {/* Sixth Section - Sponsors */}
-        <SixthSection />
+        <div data-section="sponsors">
+          <SixthSection />
+        </div>
 
         {/* Seventh Section - System Features */}
-        <SeventhSection />
+        <div data-section="features">
+          <SeventhSection />
+        </div>
 
         {/* Eighth Section - Services */}
         <div data-section="services">
@@ -788,12 +958,80 @@ function Proposition() {
         </div>
 
         {/* Ninth Section - Join Now */}
-        <NinthSection />
+        <div data-section="join">
+          <NinthSection />
+        </div>
 
         {/* Tenth Section - Call to Action */}
-        <TenthSection navigateToLogin={navigateToLogin} />
+        <div data-section="get-started">
+          <TenthSection navigateToLogin={navigateToLogin} />
+        </div>
 
       </div>
+
+      <style>{`
+        @keyframes fade-in {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.8);
+          }
+          100% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+          }
+        }
+        
+        .fade-in-item {
+          animation: fade-in 0.6s ease-out forwards;
+        }
+        
+        .contact-text {
+          animation: fadeSlideUp 0.8s ease-out forwards;
+        }
+        
+        .contact-heading {
+          animation: fadeSlideUp 1s ease-out forwards;
+        }
+        
+        .contact-details {
+          animation: fadeSlideUp 1.2s ease-out forwards;
+        }
+        
+        .fade-slide-up {
+          animation: fadeSlideUp 0.8s ease-out forwards;
+        }
+        
+        .delay-1 {
+          animation-delay: 0.2s;
+        }
+        
+        .delay-2 {
+          animation-delay: 0.4s;
+        }
+        
+        .delay-3 {
+          animation-delay: 0.6s;
+        }
+        
+        .delay-4 {
+          animation-delay: 0.8s;
+        }
+        
+        .delay-5 {
+          animation-delay: 1s;
+        }
+        
+        @keyframes fadeSlideUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </>
   );
 }
