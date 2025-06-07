@@ -1,6 +1,19 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { X, Twitter, MessageCircle, Repeat, Share, Heart } from 'lucide-react';
-import { benefits, tweets, services, aboutHandyGo, sponsorLogos, sponsorQuote, systemFeatures } from './propositionData';
+import { tweets, aboutHandyGo } from '../sections/propositionData';
+
+import ThirdSection from '../sections/Proposition_Sections/ThirdSection';
+import SixthSection from '../sections/Proposition_Sections/SixthSection';
+import SeventhSection from '../sections/Proposition_Sections/SeventhSection';
+import EighthSection from '../sections/Proposition_Sections/EightSection';
+import NinthSection from '../sections/Proposition_Sections/NinethSection';
+import TenthSection from '../sections/Proposition_Sections/TenthSection';
+
+import img1 from '../assets/proposition/Aerial View of Lush Green Waterways.jpeg';
+import img2 from '../assets/proposition/Airplane Wing at Sunset.jpeg';
+import img3 from '../assets/proposition/Cheerful Man in Maroon Turtleneck.jpeg';
+import img4 from '../assets/proposition/Close-Up Dewy Face.jpeg';
+import img5 from '../assets/proposition/Contemplative Portrait (1).jpeg';
 
 function Proposition() {
   const [loading, setLoading] = useState(true);
@@ -11,38 +24,23 @@ function Proposition() {
   const [showContact, setShowContact] = useState(false);
   const [hoveredContactHeader, setHoveredContactHeader] = useState(false);
   const [hoveredContactPhone, setHoveredContactPhone] = useState(false);
-  const [hoveredService, setHoveredService] = useState("");
-  const [indicatorPosition, setIndicatorPosition] = useState(0);
   const [currentAboutSection, setCurrentAboutSection] = useState(0);
+  const [hoveredTeamMember, setHoveredTeamMember] = useState("");
+  const [imageTransitioning, setImageTransitioning] = useState(false);
 
   const heroRef = useRef<HTMLDivElement | null>(null);
-  const servicesRef = useRef<HTMLDivElement | null>(null);
   const aboutSectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [heroAnimationComplete, setHeroAnimationComplete] = useState(false);
 
-  const [currentFeature, setCurrentFeature] = useState(0);
-  const [isVideoLoading, setIsVideoLoading] = useState(false);
-  const phoneVideoRef = useRef<HTMLVideoElement>(null);
-  const laptopVideoRef = useRef<HTMLVideoElement>(null);
-
-  const handleFeatureChange = (index: number) => {
-    if (index === currentFeature) return;
-
-    setIsVideoLoading(true);
-    setCurrentFeature(index);
-
-    setTimeout(() => {
-      if (phoneVideoRef.current) {
-        phoneVideoRef.current.load();
-        phoneVideoRef.current.play();
-      }
-      if (laptopVideoRef.current) {
-        laptopVideoRef.current.load();
-        laptopVideoRef.current.play();
-      }
-      setIsVideoLoading(false);
-    }, 300);
+  const teamMemberImages = {
+    "KIMBERLY BARON CAÑON AS PROJECT MANAGER": img1,
+    "KATHLEEN REPUNTE AS DOCUMTENTOR": img2,
+    "VINCE EDWARD CAÑEDO MAÑACAP AS DEVELOPER": img3,
+    "KYLE SELLOTE AS DEVELOPER": img4,
+    "BART JUAREZ AS SYSTEM ANALYST": img5
   };
+
+  const defaultImage = "https://images.pexels.com/photos/3214995/pexels-photo-3214995.jpeg";
 
   useEffect(() => {
     const loadingSteps = [
@@ -102,8 +100,8 @@ function Proposition() {
                   setCurrentAboutSection(index);
                   setTimeout(() => {
                     setTextAnimating(false);
-                  }, 300);
-                }, 300);
+                  }, 400);
+                }, 200);
               }
             }
           });
@@ -137,18 +135,41 @@ function Proposition() {
   }, [currentAboutSection]);
 
   const scrollToServices = () => {
-    servicesRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const servicesSection = document.querySelector('[data-section="services"]');
+    servicesSection?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const navigateToLogin = () => {
     window.location.href = '/login';
   };
 
-  const handleServiceHover = (title: string, event: React.MouseEvent<HTMLDivElement>) => {
-    const element = event.currentTarget;
-    const rect = element.getBoundingClientRect();
-    setHoveredService(title);
-    setIndicatorPosition(rect.top - 90);
+  const handleTeamMemberHover = (memberName: string) => {
+    if (memberName !== hoveredTeamMember) {
+      setImageTransitioning(true);
+      setTimeout(() => {
+        setHoveredTeamMember(memberName);
+        setTimeout(() => {
+          setImageTransitioning(false);
+        }, 300);
+      }, 200);
+    }
+  };
+
+  const handleTeamMemberLeave = () => {
+    setImageTransitioning(true);
+    setTimeout(() => {
+      setHoveredTeamMember("");
+      setTimeout(() => {
+        setImageTransitioning(false);
+      }, 300);
+    }, 200);
+  };
+
+  const getCurrentImage = () => {
+    if (hoveredTeamMember && teamMemberImages[hoveredTeamMember as keyof typeof teamMemberImages]) {
+      return teamMemberImages[hoveredTeamMember as keyof typeof teamMemberImages];
+    }
+    return defaultImage;
   };
 
   return (
@@ -282,10 +303,10 @@ function Proposition() {
           <div className="absolute inset-0 bg-black/50 bg-opacity-70 mix-blend-multiply"></div>
 
           <div className={`absolute top-100 left-4 text-[10px] font-mono text-yellow-500 opacity-60 md:text-xs transition-all duration-1000 delay-300 ${heroAnimationComplete ? 'opacity-60 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
-            48°51'10.9"N
+            14°35'46.0"N
           </div>
           <div className={`absolute top-100 right-4 text-[10px] font-mono text-yellow-500 opacity-60 md:text-xs transition-all duration-1000 delay-300 ${heroAnimationComplete ? 'opacity-60 translate-x-0' : 'opacity-0 translate-x-10'}`}>
-            2°23'25.2"E
+            121°01'15.0"E
           </div>
 
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 md:px-12">
@@ -357,42 +378,76 @@ function Proposition() {
                 <div className="space-y-6">
                   <h1 className="text-[42px] sm:text-[52px] md:text-[62px] lg:text-[72px] font-bold tracking-[-0.02em] leading-[0.95] uppercase">
                     WELCOME TO THE
-                    GREATEST CITY
-                    IN THE WORLD
-                    FEEL AT HOME
-                    IN PARIS
+                    GREATEST ONLINE
+                    HOME SERVICE
+                    PLATFORM
                   </h1>
 
                   <div className="space-y-6 mt-16 ml-40 flex">
                     <div>
                       <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase">
-                        NESTLED IN THE HEART OF PARIS, WE ARE A DEDICATED<br />
-                        PRODUCTION SERVICES COMPANY COMMITTED TO<br />
-                        CRAFTING STUNNING VISUAL EXPERIENCES FOR CLIENTS<br />
-                        FROM AROUND THE GLOBE.
+                        NESTLED IN THE HEART OF THE PHILIPPINES, WE ARE A DEDICATED<br />
+                        ONLINE HOME SERVICE COMPANY COMMITTED TO<br />
+                        CRAFTING STUNNING SERVICE EXPERIENCES FOR CLIENTS<br />
+                        FROM AROUND THE COUNTRY.
                       </p>
 
                       <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase mt-6">
-                        REGARDLESS THE SCALE OF YOUR PROJECT, FROM AN<br />
-                        AGILE SHOOT IN THE STREETS OF PARIS TO COMPLEX<br />
-                        CAMPAIGNS MIXING REAL LOCATIONS AND STUDIO WORK,<br />
+                        REGARDLESS THE SCALE OF YOUR PROJECT, FROM A<br />
+                        SIMPLE HOME REPAIR TO COMPLEX<br />
+                        MAINTENANCE MIXING MULTIPLE SERVICES AND EXPERTISE,<br />
                         WE'RE HERE TO MAKE THINGS EASY FOR YOU.<br />
                         WE'LL GET IT DONE SMOOTHLY AND COST-EFFECTIVELY.
                       </p>
 
                       <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase mt-6">
-                        KIMBERLY BARON CAÑON AS PROJECT MANAGER<br />
-                        KATHLEEN REPUNTE AS DOCUMTENTOR<br />
-                        VINCE EDWARD CAÑEDO MAÑACAP AS DEVELOPER<br />
-                        KYLE SELLOTE AS DEVELOPER<br />
-                        BART JUAREZ AS SYSTEM ANALYST
+                        <span
+                          className="cursor-pointer hover:text-sky-500 transition-colors duration-300"
+                          onMouseEnter={() => handleTeamMemberHover("KIMBERLY BARON CAÑON AS PROJECT MANAGER")}
+                          onMouseLeave={handleTeamMemberLeave}
+                        >
+                          KIMBERLY BARON CAÑON AS PROJECT MANAGER
+                        </span><br />
+                        <span
+                          className="cursor-pointer hover:text-sky-500 transition-colors duration-300"
+                          onMouseEnter={() => handleTeamMemberHover("KATHLEEN REPUNTE AS DOCUMTENTOR")}
+                          onMouseLeave={handleTeamMemberLeave}
+                        >
+                          KATHLEEN REPUNTE AS DOCUMTENTOR
+                        </span><br />
+                        <span
+                          className="cursor-pointer hover:text-sky-500 transition-colors duration-300"
+                          onMouseEnter={() => handleTeamMemberHover("VINCE EDWARD CAÑEDO MAÑACAP AS DEVELOPER")}
+                          onMouseLeave={handleTeamMemberLeave}
+                        >
+                          VINCE EDWARD CAÑEDO MAÑACAP AS DEVELOPER
+                        </span><br />
+                        <span
+                          className="cursor-pointer hover:text-sky-500 transition-colors duration-300"
+                          onMouseEnter={() => handleTeamMemberHover("KYLE SELLOTE AS DEVELOPER")}
+                          onMouseLeave={handleTeamMemberLeave}
+                        >
+                          KYLE SELLOTE AS DEVELOPER
+                        </span><br />
+                        <span
+                          className="cursor-pointer hover:text-sky-500 transition-colors duration-300"
+                          onMouseEnter={() => handleTeamMemberHover("BART JUAREZ AS SYSTEM ANALYST")}
+                          onMouseLeave={handleTeamMemberLeave}
+                        >
+                          BART JUAREZ AS SYSTEM ANALYST
+                        </span>
                       </p>
                     </div>
-                    <div className="flex bg-amber-300 ml-60">
+                    <div className="flex bg-sky-300 ml-60 relative overflow-hidden">
+                      {/* Cascading Wipe Animation Overlays */}
+                      <div className={`absolute inset-0 bg-sky-300 z-10 transition-transform duration-500 ease-out ${imageTransitioning ? 'translate-x-0' : 'translate-x-full'}`} style={{ transformOrigin: 'left' }}></div>
+                      <div className={`absolute inset-0 bg-sky-400 z-20 transition-transform duration-400 ease-out delay-100 ${imageTransitioning ? 'translate-x-0' : 'translate-x-full'}`} style={{ transformOrigin: 'left' }}></div>
+                      <div className={`absolute inset-0 bg-sky-500 z-30 transition-transform duration-300 ease-out delay-200 ${imageTransitioning ? 'translate-x-0' : 'translate-x-full'}`} style={{ transformOrigin: 'left' }}></div>
+
                       <img
-                        src="https://images.pexels.com/photos/3214995/pexels-photo-3214995.jpeg"
-                        alt="Grand Palais interior in Paris"
-                        className="w-[400px] h-[400px] object-cover"
+                        src={getCurrentImage()}
+                        alt="Team member"
+                        className={`w-[400px] h-[400px] object-cover transition-all duration-700 ease-in-out transform ${hoveredTeamMember ? 'brightness-1.1 contrast-1.05 scale-102' : 'brightness-1 contrast-1 scale-100'} ${imageTransitioning ? 'opacity-0' : 'opacity-100'}`}
                       />
                     </div>
                   </div>
@@ -409,34 +464,7 @@ function Proposition() {
         </section>
 
         {/* Third Section - Benefits */}
-        <section>
-          <div className="w-full py-24 px-8 bg-white">
-            <div className="max-w-7xl mx-auto">
-              <div className="text-center mb-16">
-                <span className="text-sky-500 text-sm font-semibold tracking-wide">BENEFITS</span>
-                <h2 className="mt-4 text-4xl font-bold text-gray-600">
-                  Why Choose Our Services
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {benefits.map((benefit, index) => (
-                  <div key={index} className="group p-6 rounded-3xl bg-[#FBFBFD] hover:bg-sky-50 transition-all duration-300">
-                    <div className="w-12 h-12 rounded-2xl bg-sky-100 flex items-center justify-center mb-6 group-hover:bg-sky-200 transition-colors duration-300">
-                      <benefit.icon className="w-6 h-6 text-sky-600" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                      {benefit.title}
-                    </h3>
-                    <p className="text-gray-500 text-sm leading-relaxed">
-                      {benefit.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
+        <ThirdSection />
 
         {/* Fourth Section - Reviews & Tweets */}
         <section className="bg-white min-h-screen relative py-24">
@@ -630,195 +658,91 @@ function Proposition() {
 
             {/* Additional Tweet Cards */}
             <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
-              {/* First Additional Tweet */}
-              <div className="transform hover:scale-105 transition-transform duration-300">
-                <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                  <div className="p-4">
-                    <div className="flex items-center">
-                      <img
-                        src={tweets[3].avatar}
-                        alt={tweets[3].name}
-                        className="w-10 h-10 rounded-full"
-                      />
-                      <div className="ml-3 flex-1">
-                        <div className="flex items-center">
-                          <span className="font-bold text-gray-900 text-sm">{tweets[3].name}</span>
-                          {tweets[3].verified && (
-                            <svg className="w-4 h-4 ml-1 text-sky-500" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z" />
-                            </svg>
-                          )}
-                          <span className="ml-1 text-gray-500 text-sm">{tweets[3].handle}</span>
+              {/* Additional tweets rendering */}
+              {tweets.slice(3).map((tweet, index) => (
+                <div key={index + 3} className={`transform ${index === 0 ? 'hover:scale-105' : index === 1 ? 'translate-y-6 hover:translate-y-3' : '-rotate-2 hover:rotate-0'} transition-transform duration-300`}>
+                  <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                    <div className="p-4">
+                      <div className="flex items-center">
+                        <img
+                          src={tweet.avatar}
+                          alt={tweet.name}
+                          className="w-10 h-10 rounded-full"
+                        />
+                        <div className="ml-3 flex-1">
+                          <div className="flex items-center">
+                            <span className="font-bold text-gray-900 text-sm">{tweet.name}</span>
+                            {tweet.verified && (
+                              <svg className="w-4 h-4 ml-1 text-sky-500" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z" />
+                              </svg>
+                            )}
+                            <span className="ml-1 text-gray-500 text-sm">{tweet.handle}</span>
+                          </div>
                         </div>
+                        <Twitter className="w-5 h-5 text-gray-400" />
                       </div>
-                      <Twitter className="w-5 h-5 text-gray-400" />
-                    </div>
-                    <p className="mt-3 text-gray-800 text-sm leading-relaxed">
-                      {tweets[3].content}
-                    </p>
-                    <img
-                      src={tweets[3].image}
-                      alt="Tweet attachment"
-                      className="mt-3 rounded-xl w-full h-48 object-cover"
-                    />
-                    <div className="mt-3 flex items-center justify-between text-gray-500 text-xs">
-                      <button className="flex items-center hover:text-sky-500 transition-colors">
-                        <MessageCircle className="w-4 h-4 mr-1" />
-                        <span>{tweets[3].stats.comments}</span>
-                      </button>
-                      <button className="flex items-center hover:text-green-500 transition-colors">
-                        <Repeat className="w-4 h-4 mr-1" />
-                        <span>{tweets[3].stats.retweets}</span>
-                      </button>
-                      <button className="flex items-center hover:text-red-500 transition-colors">
-                        <Heart className="w-4 h-4 mr-1" />
-                        <span>{tweets[3].stats.likes}</span>
-                      </button>
-                      <button className="flex items-center hover:text-sky-500 transition-colors">
-                        <Share className="w-4 h-4 mr-1" />
-                        <span>{tweets[3].stats.views}</span>
-                      </button>
+                      <p className="mt-3 text-gray-800 text-sm leading-relaxed">
+                        {tweet.content}
+                      </p>
+                      <img
+                        src={tweet.image}
+                        alt="Tweet attachment"
+                        className="mt-3 rounded-xl w-full h-48 object-cover"
+                      />
+                      <div className="mt-3 flex items-center justify-between text-gray-500 text-xs">
+                        <button className="flex items-center hover:text-sky-500 transition-colors">
+                          <MessageCircle className="w-4 h-4 mr-1" />
+                          <span>{tweet.stats.comments}</span>
+                        </button>
+                        <button className="flex items-center hover:text-green-500 transition-colors">
+                          <Repeat className="w-4 h-4 mr-1" />
+                          <span>{tweet.stats.retweets}</span>
+                        </button>
+                        <button className="flex items-center hover:text-red-500 transition-colors">
+                          <Heart className="w-4 h-4 mr-1" />
+                          <span>{tweet.stats.likes}</span>
+                        </button>
+                        <button className="flex items-center hover:text-sky-500 transition-colors">
+                          <Share className="w-4 h-4 mr-1" />
+                          <span>{tweet.stats.views}</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Second Additional Tweet */}
-              <div className="transform translate-y-6 hover:translate-y-3 transition-transform duration-300">
-                <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                  <div className="p-4">
-                    <div className="flex items-center">
-                      <img
-                        src={tweets[4].avatar}
-                        alt={tweets[4].name}
-                        className="w-10 h-10 rounded-full"
-                      />
-                      <div className="ml-3 flex-1">
-                        <div className="flex items-center">
-                          <span className="font-bold text-gray-900 text-sm">{tweets[4].name}</span>
-                          {tweets[4].verified && (
-                            <svg className="w-4 h-4 ml-1 text-sky-500" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z" />
-                            </svg>
-                          )}
-                          <span className="ml-1 text-gray-500 text-sm">{tweets[4].handle}</span>
-                        </div>
-                      </div>
-                      <Twitter className="w-5 h-5 text-gray-400" />
-                    </div>
-                    <p className="mt-3 text-gray-800 text-sm leading-relaxed">
-                      {tweets[4].content}
-                    </p>
-                    <img
-                      src={tweets[4].image}
-                      alt="Tweet attachment"
-                      className="mt-3 rounded-xl w-full h-48 object-cover"
-                    />
-                    <div className="mt-3 flex items-center justify-between text-gray-500 text-xs">
-                      <button className="flex items-center hover:text-sky-500 transition-colors">
-                        <MessageCircle className="w-4 h-4 mr-1" />
-                        <span>{tweets[4].stats.comments}</span>
-                      </button>
-                      <button className="flex items-center hover:text-green-500 transition-colors">
-                        <Repeat className="w-4 h-4 mr-1" />
-                        <span>{tweets[4].stats.retweets}</span>
-                      </button>
-                      <button className="flex items-center hover:text-red-500 transition-colors">
-                        <Heart className="w-4 h-4 mr-1" />
-                        <span>{tweets[4].stats.likes}</span>
-                      </button>
-                      <button className="flex items-center hover:text-sky-500 transition-colors">
-                        <Share className="w-4 h-4 mr-1" />
-                        <span>{tweets[4].stats.views}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Third Additional Tweet */}
-              <div className="transform -rotate-2 hover:rotate-0 transition-transform duration-300">
-                <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                  <div className="p-4">
-                    <div className="flex items-center">
-                      <img
-                        src={tweets[5].avatar}
-                        alt={tweets[5].name}
-                        className="w-10 h-10 rounded-full"
-                      />
-                      <div className="ml-3 flex-1">
-                        <div className="flex items-center">
-                          <span className="font-bold text-gray-900 text-sm">{tweets[5].name}</span>
-                          {tweets[5].verified && (
-                            <svg className="w-4 h-4 ml-1 text-sky-500" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .494.083.964.237 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z" />
-                            </svg>
-                          )}
-                          <span className="ml-1 text-gray-500 text-sm">{tweets[5].handle}</span>
-                        </div>
-                      </div>
-                      <Twitter className="w-5 h-5 text-gray-400" />
-                    </div>
-                    <p className="mt-3 text-gray-800 text-sm leading-relaxed">
-                      {tweets[5].content}
-                    </p>
-                    <img
-                      src={tweets[5].image}
-                      alt="Tweet attachment"
-                      className="mt-3 rounded-xl w-full h-48 object-cover"
-                    />
-                    <div className="mt-3 flex items-center justify-between text-gray-500 text-xs">
-                      <button className="flex items-center hover:text-sky-500 transition-colors">
-                        <MessageCircle className="w-4 h-4 mr-1" />
-                        <span>{tweets[5].stats.comments}</span>
-                      </button>
-                      <button className="flex items-center hover:text-green-500 transition-colors">
-                        <Repeat className="w-4 h-4 mr-1" />
-                        <span>{tweets[5].stats.retweets}</span>
-                      </button>
-                      <button className="flex items-center hover:text-red-500 transition-colors">
-                        <Heart className="w-4 h-4 mr-1" />
-                        <span>{tweets[5].stats.likes}</span>
-                      </button>
-                      <button className="flex items-center hover:text-sky-500 transition-colors">
-                        <Share className="w-4 h-4 mr-1" />
-                        <span>{tweets[5].stats.views}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </section>
 
         {/* Fifth Section - About HandyGo */}
-        <section className={`relative min-h-screen transition-colors duration-500 ${aboutHandyGo[currentAboutSection].bgColor}`}>
+        <section className={`relative min-h-screen transition-colors duration-700 ease-in-out ${aboutHandyGo[currentAboutSection].bgColor}`}>
           <div className="max-w-7xl mx-auto px-6 py-24">
             <div className="grid grid-cols-12 gap-8">
-              {/* Left Side - Dynamic Typography with Blur Animation */}
+              {/* Left Side - Dynamic Typography with Enhanced Blur Animation */}
               <div className="col-span-5 sticky top-60 h-fit mr-10 ml-[-2rem]">
                 <div className="space-y-5 overflow-hidden">
                   <span
-                    className={`text-sm font-semibold tracking-wide uppercase transition-all duration-500 block ${textAnimating ? 'blur-md opacity-0' : 'blur-0 opacity-100'
+                    className={`text-sm font-semibold tracking-wide uppercase transition-all duration-700 ease-out block ${textAnimating ? 'blur-lg opacity-0 transform translate-y-4' : 'blur-0 opacity-100 transform translate-y-0'
                       } ${aboutHandyGo[currentAboutSection].accentColor}`}
                   >
                     About HandyGo
                   </span>
                   <h2
-                    className={`text-4xl font-bold text-gray-700 leading-tight transition-all duration-500 block ${textAnimating ? 'blur-md opacity-0' : 'blur-0 opacity-100'
+                    className={`text-4xl font-bold text-gray-700 leading-tight transition-all duration-700 ease-out block ${textAnimating ? 'blur-lg opacity-0 transform translate-y-6' : 'blur-0 opacity-100 transform translate-y-0'
                       }`}
                   >
                     {aboutHandyGo[currentAboutSection].title}
                   </h2>
                   <div
-                    className={`text-xl font-medium transition-all duration-500 block ${textAnimating ? 'blur-md opacity-0' : 'blur-0 opacity-100'
+                    className={`text-xl font-medium transition-all duration-700 ease-out block ${textAnimating ? 'blur-lg opacity-0 transform translate-y-8' : 'blur-0 opacity-100 transform translate-y-0'
                       } ${aboutHandyGo[currentAboutSection].accentColor}`}
                   >
                     {aboutHandyGo[currentAboutSection].subtitle}
                   </div>
                   <p
-                    className={`text-lg text-gray-600 transition-all duration-500 block ${textAnimating ? 'blur-md opacity-0' : 'blur-0 opacity-100'
+                    className={`text-lg text-gray-600 transition-all duration-700 ease-out block ${textAnimating ? 'blur-lg opacity-0 transform translate-y-10' : 'blur-0 opacity-100 transform translate-y-0'
                       }`}
                   >
                     {aboutHandyGo[currentAboutSection].description}
@@ -835,7 +759,7 @@ function Proposition() {
                     className="relative h-screen flex items-center"
                   >
                     <div
-                      className={`w-full bg-white rounded-2xl shadow-lg transition-all duration-500 hover:shadow-xl overflow-hidden transform ${index === currentAboutSection
+                      className={`w-full bg-white rounded-2xl shadow-lg transition-all duration-700 ease-out hover:shadow-xl overflow-hidden transform ${index === currentAboutSection
                         ? 'scale-100 opacity-100'
                         : 'scale-95 opacity-50'
                         }`}
@@ -843,7 +767,7 @@ function Proposition() {
                       <img
                         src={item.image}
                         alt={item.title}
-                        className="w-full h-[600px] object-cover transition-transform duration-500 hover:scale-105"
+                        className="w-full h-[600px] object-cover transition-transform duration-700 hover:scale-105"
                       />
                     </div>
                   </div>
@@ -854,427 +778,21 @@ function Proposition() {
         </section>
 
         {/* Sixth Section - Sponsors */}
-        <section className="relative min-h-screen bg-white py-24">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col items-start">
-              <h2 className="text-6xl md:text-8xl font-bold text-gray-600 mb-4">
-                OUR PARTNERS
-              </h2>
-              <h2 className="text-6xl md:text-8xl font-bold text-gray-600 ml-auto">
-                & SPONSORS
-              </h2>
-            </div>
+        <SixthSection />
 
-            <div className="mt-20 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-12">
-              {sponsorLogos.map((sponsor, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-center group transition-all duration-300"
-                >
-                  <img
-                    src={sponsor.image}
-                    alt={sponsor.name}
-                    className="h-12 object-contain opacity-60 group-hover:opacity-100 transition-opacity duration-300"
-                  />
-                </div>
-              ))}
-            </div>
+        {/* Seventh Section - System Features */}
+        <SeventhSection />
 
-            <div className="mt-20 max-w-3xl mx-auto text-center">
-              <p className="text-xl text-gray-600 italic">{sponsorQuote.text}</p>
-              <div className="mt-4">
-                <p className="text-sky-500 font-semibold">{sponsorQuote.author}</p>
-                <p className="text-gray-500 text-sm">{sponsorQuote.role}</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Seventh Section - System Features with Laptop and Phone Intersection */}
-        <section className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 py-24 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-6">
-            {/* Header */}
-            <div className="text-center mb-16">
-              <span className="text-sky-500 text-sm font-semibold tracking-wide uppercase">System Features</span>
-              <h2 className="mt-4 text-4xl font-bold text-gray-600">
-                Cutting-Edge Technology
-              </h2>
-            </div>
-
-            {/* Feature Cards Grid - Top Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-              {systemFeatures.map((feature, index) => (
-                <button
-                  key={feature.title}
-                  onClick={() => handleFeatureChange(index)}
-                  className={`relative p-6 rounded-2xl transition-all duration-300 text-left group border-2 ${currentFeature === index
-                    ? 'bg-white text-gray-600 border-gray-200 hover:border-sky-200'
-                    : 'bg-white hover:bg-gray-50 text-gray-600 border-gray-200 hover:border-sky-200'
-                    }`}
-                >
-                  {/* Bottom Indicator for Active State */}
-                  {currentFeature === index && (
-                    <div className="absolute bottom-0 left-6 right-6 h-1 bg-sky-500 rounded-t-full"></div>
-                  )}
-
-                  <div className="flex items-center mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-sky-100 flex items-center justify-center">
-                      <feature.icon className="w-6 h-6 text-sky-500" />
-                    </div>
-                    <span className="ml-4 font-semibold text-lg text-gray-900">
-                      {feature.title}
-                    </span>
-                  </div>
-                  <p className="text-sm leading-relaxed text-gray-500">
-                    {feature.description}
-                  </p>
-                </button>
-              ))}
-            </div>
-
-            {/* Device Display Section - Middle with Intersection */}
-            <div className="flex justify-center items-center mb-16 relative">
-              {/* Background Elements */}
-              <div className="absolute inset-0 bg-gradient-to-r from-sky-100 via-transparent to-sky-100 rounded-3xl opacity-30"></div>
-
-              <div className="relative flex items-center justify-center">
-                {/* Laptop Display */}
-                <div className="relative z-10">
-                  <div className="w-[40rem] h-[25rem] bg-gradient-to-br from-gray-800 to-gray-900 rounded-t-2xl p-3 shadow-2xl">
-                    <div className="w-full h-full bg-black rounded-t-xl overflow-hidden relative">
-                      {/* Loading Overlay */}
-                      {isVideoLoading && (
-                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
-                          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                      )}
-
-                      {/* Video Content */}
-                      <video
-                        ref={laptopVideoRef}
-                        className="w-full h-full object-cover"
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                      >
-                        <source src={systemFeatures[currentFeature].video} type="video/mp4" />
-                      </video>
-
-                      {/* Laptop UI Overlay */}
-                      <div className="absolute top-3 left-3 right-3">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
-                          <div className="w-2.5 h-2.5 bg-yellow-500 rounded-full"></div>
-                          <div className="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
-                          <div className="flex-1 bg-gray-700 rounded-md px-3 py-1 ml-3">
-                            <span className="text-gray-300 text-xs">ohs-one.vercel.app</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Laptop Base */}
-                  <div className="w-[40rem] h-6 bg-gradient-to-br from-gray-600 to-gray-800 rounded-b-2xl"></div>
-                  <div className="w-48 h-3 bg-gradient-to-br from-gray-700 to-gray-900 rounded-full mx-auto -mt-1"></div>
-                </div>
-
-                {/* Phone Display - Intersecting with Laptop */}
-                <div className="relative z-20 -ml-32 mt-8">
-                  <div className="w-56 h-[28rem] bg-gradient-to-br from-gray-800 to-gray-900 rounded-[2.5rem] p-2 shadow-2xl">
-                    <div className="w-full h-full bg-black rounded-[2rem] overflow-hidden relative">
-
-                      {/* Phone Notch */}
-                      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-24 h-6 bg-black rounded-b-2xl z-40"></div>
-
-                      {/* Loading Overlay */}
-                      {isVideoLoading && (
-                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
-                          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                      )}
-
-                      {/* Video Content */}
-                      <video
-                        ref={phoneVideoRef}
-                        className="w-full h-full object-cover"
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                      >
-                        <source src={systemFeatures[currentFeature].video} type="video/mp4" />
-                      </video>
-
-                      {/* Home Indicator */}
-                      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-white bg-opacity-60 rounded-full"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Performance Stats - Bottom Section */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="text-center p-8 bg-white rounded-2xl border border-gray-100">
-                <div className="text-4xl font-bold text-sky-500 mb-3">99.9%</div>
-                <div className="text-sm text-gray-600 font-medium">Uptime</div>
-                <div className="text-xs text-gray-400 mt-1">System Reliability</div>
-              </div>
-              <div className="text-center p-8 bg-white rounded-2xl border border-gray-100">
-                <div className="text-4xl font-bold text-sky-500 mb-3">&lt;50ms</div>
-                <div className="text-sm text-gray-600 font-medium">Response Time</div>
-                <div className="text-xs text-gray-400 mt-1">Lightning Fast</div>
-              </div>
-              <div className="text-center p-8 bg-white rounded-2xl border border-gray-100">
-                <div className="text-4xl font-bold text-sky-500 mb-3">256-bit</div>
-                <div className="text-sm text-gray-600 font-medium">Encryption</div>
-                <div className="text-xs text-gray-400 mt-1">Bank-Level Security</div>
-              </div>
-              <div className="text-center p-8 bg-white rounded-2xl border border-gray-100">
-                <div className="text-4xl font-bold text-sky-500 mb-3">24/7</div>
-                <div className="text-sm text-gray-600 font-medium">Monitoring</div>
-                <div className="text-xs text-gray-400 mt-1">Always Protected</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Eight Section - Services */}
-        <section
-          ref={servicesRef}
-          className="relative min-h-screen bg-white flex flex-col p-8 lg:p-16"
-        >
-          <div className="text-gray-700 font-medium tracking-wider text-sm md:text-base">
-            INSIGHT OF OUR <span className="text-sky-400 text-2xl">SERVICES</span>
-          </div>
-
-          <div className="flex-grow relative justify-center items-center flex ml-[-30rem]">
-            <div className="flex flex-col max-w-7xl space-y-6">
-              {services.map((service) => (
-                <div
-                  key={service.title}
-                  className="group relative"
-                  onMouseEnter={(e) => handleServiceHover(service.title, e)}
-                  onMouseLeave={() => setHoveredService("")}
-                >
-                  <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-8xl font-bold leading-12 cursor-pointer tracking-tight text-gray-500/70 transition-all duration-300 ease-in-out transform group-hover:text-sky-400 group-hover:translate-x-4">
-                    {service.title}
-                  </h2>
-                </div>
-              ))}
-            </div>
-
-            <div
-              className={`absolute right-0 transition-all duration-300 ease-in-out transform ${hoveredService ? 'opacity-100' : 'opacity-0'}`}
-              style={{ top: `${indicatorPosition}px` }}
-            >
-              <div className="text-right">
-                <div className="text-gray-700 text-lg md:text-xl font-bold tracking-tight">
-                  {hoveredService ? services.find(s => s.title === hoveredService)?.section : "01"}
-                </div>
-                <div className="text-sky-400 text-sm md:text-base font-bold tracking-wide">
-                  {hoveredService ? services.find(s => s.title === hoveredService)?.action : "DISCOVER"}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-between items-end mt-8">
-            <div className="flex items-center">
-              <span className="text-gray-700 text-sm font-medium tracking-wide mr-2">SEE MORE</span>
-            </div>
-          </div>
-        </section>
+        {/* Eighth Section - Services */}
+        <div data-section="services">
+          <EighthSection />
+        </div>
 
         {/* Ninth Section - Join Now */}
-        <section className="relative min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 py-24 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-              {/* Left Side - Typography */}
-              <div className="space-y-8">
-                <div className="space-y-4">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-sky-100 text-sky-600">
-                    Join Our Network
-                  </span>
-                  <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 leading-tight">
-                    Become Part of Our
-                    <span className="block mt-2 text-sky-500">Growing Family</span>
-                  </h2>
-                </div>
+        <NinthSection />
 
-                <p className="text-lg text-gray-600 leading-relaxed">
-                  Join thousands of professionals who trust HandyGo for exceptional service experiences. Our network continues to expand, bringing quality solutions to more locations every day.
-                </p>
-
-                <div className="space-y-6">
-                  <div className="group p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-12 w-12 bg-sky-500 rounded-2xl flex items-center justify-center text-white font-medium">
-                        1
-                      </div>
-                      <div className="ml-4">
-                        <h3 className="text-xl font-semibold text-gray-900">Register Your Account</h3>
-                        <p className="mt-1 text-gray-500">Complete a simple registration process with your basic details</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="group p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-12 w-12 bg-sky-500 rounded-2xl flex items-center justify-center text-white font-medium">
-                        2
-                      </div>
-                      <div className="ml-4">
-                        <h3 className="text-xl font-semibold text-gray-900">Create Your Profile</h3>
-                        <p className="mt-1 text-gray-500">Set up your professional profile highlighting your expertise</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="group p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-12 w-12 bg-sky-500 rounded-2xl flex items-center justify-center text-white font-medium">
-                        3
-                      </div>
-                      <div className="ml-4">
-                        <h3 className="text-xl font-semibold text-gray-900">Start Your Journey</h3>
-                        <p className="mt-1 text-gray-500">Begin connecting with clients and growing your business</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Side - Features */}
-              <div className="relative space-y-6">
-                <div className="absolute inset-0 bg-sky-100 rounded-[40px] transform rotate-3"></div>
-                <div className="relative bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
-                  <div className="space-y-8">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <h3 className="text-xl font-semibold text-gray-900">Professional Network</h3>
-                        <p className="text-sm text-gray-500">Connect with industry experts</p>
-                      </div>
-                      <div className="flex -space-x-2">
-                        {[1, 2, 3].map((i) => (
-                          <div key={i} className="inline-block h-10 w-10 rounded-full ring-2 ring-white overflow-hidden">
-                            <img
-                              src={`https://i.pravatar.cc/100?img=${20 + i}`}
-                              alt={`Team member ${i}`}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                        ))}
-                        <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-sky-100 ring-2 ring-white text-sky-600 font-medium text-sm">
-                          +58
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 rounded-2xl bg-gray-50">
-                        <div className="text-2xl font-bold text-gray-900">5K+</div>
-                        <div className="text-sm text-gray-500">Active Members</div>
-                      </div>
-                      <div className="p-4 rounded-2xl bg-gray-50">
-                        <div className="text-2xl font-bold text-gray-900">95%</div>
-                        <div className="text-sm text-gray-500">Success Rate</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="relative bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-xl font-semibold text-gray-900">Network Highlights</h3>
-                      <span className="text-sm text-sky-600">View all</span>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="p-4 rounded-xl bg-gray-50">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-900">Top Rated Services</span>
-                          <span className="text-sm text-sky-500">98%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-sky-500 h-2 rounded-full" style={{ width: '98%' }}></div>
-                        </div>
-                      </div>
-
-                      <div className="p-4 rounded-xl bg-gray-50">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-900">Client Satisfaction</span>
-                          <span className="text-sm text-sky-500">95%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-sky-500 h-2 rounded-full" style={{ width: '95%' }}></div>
-                        </div>
-                      </div>
-
-                      <div className="p-4 rounded-xl bg-gray-50">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-900">Service Growth</span>
-                          <span className="text-sm text-sky-500">87%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-sky-500 h-2 rounded-full" style={{ width: '87%' }}></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Tenth Section - Apple-inspired Minimalistic Call to Action */}
-        <section className="relative py-16 bg-white">
-          <div className="max-w-2xl mx-auto px-6 text-center mt-20 mb-40">
-            {/* Header Badge */}
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-medium mb-8">
-              Ready to get started?
-            </div>
-
-            {/* Main Heading */}
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-gray-900 leading-tight mb-6">
-              Let's set a world record
-              <span className="block">together</span>
-            </h2>
-
-            {/* CTA Button */}
-            <button
-              onClick={navigateToLogin}
-              className="inline-flex items-center justify-center px-8 py-3 text-base font-medium text-white bg-gray-900 rounded-full hover:bg-gray-800 transition-colors duration-200 mb-8"
-            >
-              Register now
-            </button>
-
-            {/* Footer Text */}
-            <p className="text-sm text-gray-500 leading-relaxed">
-              Hackathon is powered by Devpost. See their{' '}
-              <a href="#" className="text-gray-700 hover:text-gray-900 transition-colors">
-                terms
-              </a>{' '}
-              and{' '}
-              <a href="#" className="text-gray-700 hover:text-gray-900 transition-colors">
-                privacy policy
-              </a>
-              .
-            </p>
-
-            {/* Powered by Badge */}
-            <div className="flex justify-center mt-6">
-              <div className="inline-flex items-center text-xs text-gray-400">
-                Powered by{' '}
-                <span className="ml-1 font-medium text-gray-600">Netlify</span>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* Tenth Section - Call to Action */}
+        <TenthSection navigateToLogin={navigateToLogin} />
 
       </div>
     </>
