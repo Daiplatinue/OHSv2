@@ -27,13 +27,13 @@ const SeventhSection: React.FC = () => {
   };
 
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 py-24 overflow-hidden">
+    <section className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 py-24 overflow-hidden tracking-tight">
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <div className="text-center mb-16">
-          <span className="text-sky-500 text-sm font-semibold tracking-wide uppercase">System Features</span>
-          <h2 className="mt-4 text-4xl font-bold text-gray-600">
-            Cutting-Edge Technology
+          <span className="text-sky-500 text-sm tracking-wide font-semibold uppercase">System Features</span>
+          <h2 className="mt-4 text-5xl font-semibold text-gray-600">
+            Revolutionary Experience
           </h2>
         </div>
 
@@ -57,7 +57,7 @@ const SeventhSection: React.FC = () => {
                 <div className="w-12 h-12 rounded-xl bg-sky-100 flex items-center justify-center">
                   <feature.icon className="w-6 h-6 text-sky-500" />
                 </div>
-                <span className="ml-4 font-semibold text-lg text-gray-900">
+                <span className="ml-4 font-semibold text-lg text-gray-600">
                   {feature.title}
                 </span>
               </div>

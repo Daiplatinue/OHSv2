@@ -5,13 +5,13 @@ interface NinthSectionProps {
 
 const NinthSection: React.FC<NinthSectionProps> = () => {
   return (
-    <section className="relative min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 py-24 overflow-hidden">
+    <section className="relative min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 py-24 overflow-hidden tracking-tight">
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           {/* Left Side - Typography */}
           <div className="space-y-8">
             <div className="space-y-4">
-              <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-600 leading-tight">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl text-gray-600 leading-tight">
                 Become Part of Our
                 <span className="block mt-2 text-sky-500">Growing Family</span>
               </h2>
@@ -28,7 +28,7 @@ const NinthSection: React.FC<NinthSectionProps> = () => {
                     1
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-xl font-semibold text-gray-900">Register Your Account</h3>
+                    <h3 className="text-xl font-semibold text-gray-700">Register Your Account</h3>
                     <p className="mt-1 text-gray-500">Complete a simple registration process with your basic details</p>
                   </div>
                 </div>
@@ -40,7 +40,7 @@ const NinthSection: React.FC<NinthSectionProps> = () => {
                     2
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-xl font-semibold text-gray-900">Create Your Profile</h3>
+                    <h3 className="text-xl font-semibold text-gray-700">Create Your Profile</h3>
                     <p className="mt-1 text-gray-500">Set up your professional profile highlighting your expertise</p>
                   </div>
                 </div>
@@ -52,7 +52,7 @@ const NinthSection: React.FC<NinthSectionProps> = () => {
                     3
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-xl font-semibold text-gray-900">Start Your Journey</h3>
+                    <h3 className="text-xl font-semibold text-gray-700">Start Your Journey</h3>
                     <p className="mt-1 text-gray-500">Begin connecting with clients and growing your business</p>
                   </div>
                 </div>
@@ -67,7 +67,7 @@ const NinthSection: React.FC<NinthSectionProps> = () => {
               <div className="space-y-8">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <h3 className="text-xl font-semibold text-gray-900">Professional Network</h3>
+                    <h3 className="text-xl font-semibold text-gray-700">Professional Network</h3>
                     <p className="text-sm text-gray-500">Connect with industry experts</p>
                   </div>
                   <div className="flex -space-x-2">
@@ -102,14 +102,14 @@ const NinthSection: React.FC<NinthSectionProps> = () => {
             <div className="relative bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-semibold text-gray-900">Network Highlights</h3>
+                  <h3 className="text-xl font-semibold text-gray-700">Network Highlights</h3>
                   <span className="text-sm text-sky-600">View all</span>
                 </div>
 
                 <div className="space-y-4">
                   <div className="p-4 rounded-xl bg-gray-50">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-900">Top Rated Services</span>
+                      <span className="text-sm font-medium text-gray-600">Top Rated Services</span>
                       <span className="text-sm text-sky-500">98%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -119,7 +119,7 @@ const NinthSection: React.FC<NinthSectionProps> = () => {
 
                   <div className="p-4 rounded-xl bg-gray-50">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-900">Client Satisfaction</span>
+                      <span className="text-sm font-medium text-gray-600">Client Satisfaction</span>
                       <span className="text-sm text-sky-500">95%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -129,7 +129,7 @@ const NinthSection: React.FC<NinthSectionProps> = () => {
 
                   <div className="p-4 rounded-xl bg-gray-50">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-900">Service Growth</span>
+                      <span className="text-sm font-medium text-gray-600">Service Growth</span>
                       <span className="text-sm text-sky-500">87%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">

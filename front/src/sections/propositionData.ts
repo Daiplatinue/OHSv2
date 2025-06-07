@@ -29,44 +29,53 @@ export const benefits = [
     {
         icon: Star,
         title: "Premium Quality",
-        description: "Experience excellence with our top-tier service quality and attention to detail."
+        description:
+            "Enjoy outstanding service built on precision, care, and a commitment to excellence.",
     },
     {
         icon: Shield,
         title: "Fully Insured",
-        description: "Rest easy knowing all our services are backed by comprehensive insurance coverage."
+        description:
+            "Your peace of mind matters — every service is backed by full insurance protection.",
     },
     {
         icon: Zap,
-        title: "Fast Response",
-        description: "Get quick assistance with our 24/7 rapid response team ready to help."
+        title: "Rapid Response",
+        description:
+            "Need help fast? Our 24/7 response team is always ready to assist — anytime, anywhere.",
     },
     {
         icon: Heart,
-        title: "Eco-Friendly",
-        description: "Our sustainable practices and materials minimize environmental impact without compromising quality."
+        title: "Eco-Conscious",
+        description:
+            "We prioritize sustainability through green practices and eco-friendly materials.",
     },
     {
         icon: Users,
-        title: "Expert Team",
-        description: "Work with skilled professionals who bring years of specialized experience to every project."
+        title: "Certified Experts",
+        description:
+            "Our experienced professionals are vetted, trained, and equipped to handle every task with confidence.",
     },
     {
         icon: DollarSign,
-        title: "Cost Effective",
-        description: "Get exceptional value with competitive pricing and transparent, no-surprise billing."
+        title: "Transparent Pricing",
+        description:
+            "Fair, competitive rates — no hidden fees. You only pay for what you need.",
     },
     {
         icon: BarChart,
-        title: "Data-Driven Results",
-        description: "Benefit from our analytics-backed methodologies that deliver measurable improvements."
+        title: "Proven Results",
+        description:
+            "We use data-driven approaches to consistently deliver measurable outcomes and client satisfaction.",
     },
     {
         icon: Briefcase,
-        title: "Industry Compliance",
-        description: "All services adhere to the latest industry standards and regulatory requirements for your peace of mind."
-    }
+        title: "Standards-Compliant",
+        description:
+            "Our services follow the latest industry standards and safety regulations — guaranteed.",
+    },
 ];
+
 
 export const tweets = [
     {
@@ -74,7 +83,7 @@ export const tweets = [
         name: "Dillion",
         handle: "@dillionverma",
         verified: true,
-        content: "Companies spend $30000+ and several weeks to build beautiful landing pages like @linear, @wopehq and @reflectnotes 🔨 I built @reactjs + @tailwindcss components for you to do the same in hours, starting at just $29",
+        content: "Just had my electrical wiring checked by HandyGo! Super quick and the technician explained everything clearly. Feeling much safer now. Highly recommend their efficiency! ⚡",
         image: customerbg1,
         stats: {
             comments: 12,
@@ -88,7 +97,7 @@ export const tweets = [
         name: "Sarah Johnson",
         handle: "@sarahcodes",
         verified: true,
-        content: "Just tried @HandyGo's services - absolutely blown away by their professionalism and attention to detail! The team went above and beyond. Highly recommend! 🌟",
+        content: "Just used HandyGo for a plumbing repair – absolutely blown away by their professionalism and attention to detail! The technician was super efficient. Highly recommend! 🌟",
         image: customerbg2,
         stats: {
             comments: 8,
@@ -102,7 +111,7 @@ export const tweets = [
         name: "Alex Rivera",
         handle: "@alexdev",
         verified: true,
-        content: "After trying multiple service providers, @HandyGo stands out for their reliability and quality. Their team is responsive, professional, and delivers exceptional results every time! 💯",
+        content: "After trying multiple service platforms, HandyGo stands out for their reliability and quality. Their team is responsive, professional, and delivers exceptional results every time! 💯",
         image: customerbg3,
         stats: {
             comments: 15,
@@ -116,7 +125,7 @@ export const tweets = [
         name: "Michael Chen",
         handle: "@mikedesigns",
         verified: true,
-        content: "I'm amazed by the quality and efficiency of @HandyGo's plumbing services! Fixed an emergency leak in under an hour. Their technicians are true professionals. Will definitely be calling them again! 🔧",
+        content: "I'm amazed by the quality and efficiency of HandyGo for my appliance repair! Fixed an emergency issue in under an hour. Their technicians are true professionals. Will definitely be using them again! 🔧",
         image: customerbg4,
         stats: {
             comments: 18,
@@ -130,7 +139,7 @@ export const tweets = [
         name: "Emma Wilson",
         handle: "@emma_homes",
         verified: false,
-        content: "The @HandyGo landscaping team transformed our backyard into a paradise! Their attention to detail and creative vision exceeded all expectations. Worth every penny for the incredible results. 🌿",
+        content: "The HandyGo cleaning team transformed our home into a paradise! Their attention to detail and thoroughness exceeded all expectations. Worth every penny for the incredible results. 🌿",
         image: customerbg5,
         stats: {
             comments: 24,
@@ -144,7 +153,7 @@ export const tweets = [
         name: "James Rodriguez",
         handle: "@jrod_home",
         verified: true,
-        content: "Hired @HandyGo for a complete roof inspection and repair. Their team was thorough, professional, and completed the work ahead of schedule! No more leaks during rainy season. Couldn't be happier with the service! ☔",
+        content: "Hired HandyGo for a complete AC inspection and tune-up. Their team was thorough, professional, and completed the work ahead of schedule! No more worries during the hot season. Couldn't be happier with the service! ❄️",
         image: customerbg6,
         stats: {
             comments: 11,

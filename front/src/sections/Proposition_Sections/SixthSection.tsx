@@ -3,7 +3,7 @@ import { sponsorLogos, sponsorQuote } from '../propositionData';
 
 const SixthSection: React.FC = () => {
   return (
-    <section className="relative min-h-screen bg-white py-24">
+    <section className="relative min-h-screen bg-white py-24 tracking-tight">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col items-start">
           <h2 className="text-6xl md:text-8xl font-bold text-gray-600 mb-4">

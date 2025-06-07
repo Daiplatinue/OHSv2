@@ -13,7 +13,7 @@ const EighthSection: React.FC = () => {
   };
 
   return (
-    <section className="relative min-h-screen bg-white flex flex-col p-8 lg:p-16">
+    <section className="relative min-h-screen bg-white flex flex-col p-8 lg:p-16 tracking-tight">
       <div className="text-gray-700 font-medium tracking-wider text-sm md:text-base">
         INSIGHT OF OUR <span className="text-sky-400 text-2xl">SERVICES</span>
       </div>
@@ -27,7 +27,7 @@ const EighthSection: React.FC = () => {
               onMouseEnter={(e) => handleServiceHover(service.title, e)}
               onMouseLeave={() => setHoveredService("")}
             >
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-8xl font-bold leading-12 cursor-pointer tracking-tight text-gray-500/70 transition-all duration-300 ease-in-out transform group-hover:text-sky-400 group-hover:translate-x-4">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-8xl font-bold leading-12 cursor-pointer text-gray-500/70 transition-all duration-300 ease-in-out transform group-hover:text-sky-400 group-hover:translate-x-4">
                 {service.title}
               </h2>
             </div>

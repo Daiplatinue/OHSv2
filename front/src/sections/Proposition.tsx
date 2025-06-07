@@ -376,67 +376,66 @@ function Proposition() {
             <div className="">
               <div className="pr-0 md:pr-8">
                 <div className="space-y-6">
-                  <h1 className="text-[42px] sm:text-[52px] md:text-[62px] lg:text-[72px] font-bold tracking-[-0.02em] leading-[0.95] uppercase">
+                  <h1 className="text-[42px] sm:text-[52px] md:text-[62px] lg:text-[72px] font-semibold tracking-[-0.02em] leading-[0.95] uppercase">
                     WELCOME TO THE
                     GREATEST ONLINE
-                    HOME SERVICE
+                    <br /><span className="text-sky-500">HOME SERVICE </span>
                     PLATFORM
                   </h1>
 
-                  <div className="space-y-6 mt-16 ml-40 flex">
+                  <div className="space-y-6 mt-16 ml-40 flex text-justify">
                     <div>
-                      <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase">
-                        NESTLED IN THE HEART OF THE PHILIPPINES, WE ARE A DEDICATED<br />
-                        ONLINE HOME SERVICE COMPANY COMMITTED TO<br />
-                        CRAFTING STUNNING SERVICE EXPERIENCES FOR CLIENTS<br />
-                        FROM AROUND THE COUNTRY.
+                      <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase w-[25rem]">
+                        Handy Go was born out of a simple idea to make
+                        home services easier. During a time when many struggled to
+                        find a more reliable help for repairs, cleaning, and
+                        maintenance, we saw the need for a trusted platform
+                        that connects skilled professionals with homeowners.
                       </p>
 
-                      <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase mt-6">
-                        REGARDLESS THE SCALE OF YOUR PROJECT, FROM A<br />
-                        SIMPLE HOME REPAIR TO COMPLEX<br />
-                        MAINTENANCE MIXING MULTIPLE SERVICES AND EXPERTISE,<br />
-                        WE'RE HERE TO MAKE THINGS EASY FOR YOU.<br />
-                        WE'LL GET IT DONE SMOOTHLY AND COST-EFFECTIVELY.
+                      <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase mt-6 w-[25rem]">
+                        What started as a small initiative has grown into a full-service online home solution. Whether it’s a quick repair or a complex project, Handy Go is here to deliver smooth, affordable, and dependable service right when you need it most.
                       </p>
 
-                      <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase mt-6">
+                      <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase mt-6 w-[25rem]">
+                        HANDY GO WAS DEVELOPED BY A DEDICATED TEAM OF FIVE MEMBERS:{" "}
                         <span
-                          className="cursor-pointer hover:text-sky-500 transition-colors duration-300"
+                          className="cursor-pointer hover:text-sky-600 transition-colors duration-300 text-sky-500"
                           onMouseEnter={() => handleTeamMemberHover("KIMBERLY BARON CAÑON AS PROJECT MANAGER")}
                           onMouseLeave={handleTeamMemberLeave}
                         >
                           KIMBERLY BARON CAÑON AS PROJECT MANAGER
-                        </span><br />
+                        </span>,{" "}
                         <span
-                          className="cursor-pointer hover:text-sky-500 transition-colors duration-300"
-                          onMouseEnter={() => handleTeamMemberHover("KATHLEEN REPUNTE AS DOCUMTENTOR")}
+                          className="cursor-pointer hover:text-sky-600 transition-colors duration-300 text-sky-500"
+                          onMouseEnter={() => handleTeamMemberHover("KATHLEEN REPUNTE AS DOCUMENTOR")}
                           onMouseLeave={handleTeamMemberLeave}
                         >
-                          KATHLEEN REPUNTE AS DOCUMTENTOR
-                        </span><br />
+                          KATHLEEN REPUNTE AS DOCUMENTOR
+                        </span>,{" "}
                         <span
-                          className="cursor-pointer hover:text-sky-500 transition-colors duration-300"
+                          className="cursor-pointer hover:text-sky-600 transition-colors duration-300 text-sky-500"
                           onMouseEnter={() => handleTeamMemberHover("VINCE EDWARD CAÑEDO MAÑACAP AS DEVELOPER")}
                           onMouseLeave={handleTeamMemberLeave}
                         >
                           VINCE EDWARD CAÑEDO MAÑACAP AS DEVELOPER
-                        </span><br />
+                        </span>,{" "}
                         <span
-                          className="cursor-pointer hover:text-sky-500 transition-colors duration-300"
+                          className="cursor-pointer hover:text-sky-600 transition-colors duration-300 text-sky-500"
                           onMouseEnter={() => handleTeamMemberHover("KYLE SELLOTE AS DEVELOPER")}
                           onMouseLeave={handleTeamMemberLeave}
                         >
                           KYLE SELLOTE AS DEVELOPER
-                        </span><br />
+                        </span>, AND{" "}
                         <span
-                          className="cursor-pointer hover:text-sky-500 transition-colors duration-300"
+                          className="cursor-pointer hover:text-sky-600 transition-colors duration-300 text-sky-500"
                           onMouseEnter={() => handleTeamMemberHover("BART JUAREZ AS SYSTEM ANALYST")}
                           onMouseLeave={handleTeamMemberLeave}
                         >
-                          BART JUAREZ AS SYSTEM ANALYST
+                          BART JUAREZ AS SYSTEM ANALYST.
                         </span>
                       </p>
+
                     </div>
                     <div className="flex bg-sky-300 ml-60 relative overflow-hidden">
                       {/* Cascading Wipe Animation Overlays */}
@@ -633,9 +632,9 @@ function Proposition() {
 
             {/* Typography Section */}
             <div className="text-center max-w-3xl mx-auto">
-              <span className="text-sky-500 text-sm font-semibold tracking-wide uppercase">Customer Reviews</span>
-              <h2 className="mt-4 text-4xl font-bold text-gray-600 leading-tight">
-                Why Our Clients Choose Us
+              <span className="text-sky-500 text-sm tracking-wide font-semibold uppercase">Customer Reviews</span>
+              <h2 className="mt-4 text-5xl font-semibold text-gray-600 leading-tight">
+                Our Clients Feedback
               </h2>
               <p className="mt-6 text-lg text-gray-600">
                 Join thousands of satisfied customers who trust our services for their needs. Our commitment to excellence, attention to detail, and customer satisfaction sets us apart.
@@ -646,7 +645,7 @@ function Proposition() {
                   <div className="mt-2 text-sm text-gray-600">Satisfaction Rate</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-sky-500">5000+</div>
+                  <div className="text-4xl font-bold text-sky-500">100M+</div>
                   <div className="mt-2 text-sm text-gray-600">Happy Clients</div>
                 </div>
                 <div className="text-center">
@@ -730,7 +729,7 @@ function Proposition() {
                     About HandyGo
                   </span>
                   <h2
-                    className={`text-4xl font-bold text-gray-700 leading-tight transition-all duration-700 ease-out block ${textAnimating ? 'blur-lg opacity-0 transform translate-y-6' : 'blur-0 opacity-100 transform translate-y-0'
+                    className={`text-4xl font-bold text-gray-600 leading-tight transition-all duration-700 ease-out block ${textAnimating ? 'blur-lg opacity-0 transform translate-y-6' : 'blur-0 opacity-100 transform translate-y-0'
                       }`}
                   >
                     {aboutHandyGo[currentAboutSection].title}
