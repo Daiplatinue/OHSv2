@@ -1,4 +1,4 @@
-import { Star, Shield, Zap, Heart, Users, DollarSign, BarChart, Briefcase, Cpu, Lock, Globe, Clock, Database, Cloud } from 'lucide-react';
+import { Cpu, Lock, Globe, Clock, Database, Cloud } from 'lucide-react';
 
 import customer1 from '../assets/proposition/man-1283231_1280.jpg';
 import customerbg1 from '../assets/proposition/Contemplative Portrait (1).jpeg';
@@ -25,57 +25,58 @@ import about4 from '../assets/proposition/Contemplative Figure Amidst Vibrant Ge
 
 import feature1 from '../assets/zoomeye.mp4';
 
-export const benefits = [
-    {
-        icon: Star,
-        title: "Premium Quality",
-        description:
-            "Enjoy outstanding service built on precision, care, and a commitment to excellence.",
-    },
-    {
-        icon: Shield,
-        title: "Fully Insured",
-        description:
-            "Your peace of mind matters — every service is backed by full insurance protection.",
-    },
-    {
-        icon: Zap,
-        title: "Rapid Response",
-        description:
-            "Need help fast? Our 24/7 response team is always ready to assist — anytime, anywhere.",
-    },
-    {
-        icon: Heart,
-        title: "Eco-Conscious",
-        description:
-            "We prioritize sustainability through green practices and eco-friendly materials.",
-    },
-    {
-        icon: Users,
-        title: "Certified Experts",
-        description:
-            "Our experienced professionals are vetted, trained, and equipped to handle every task with confidence.",
-    },
-    {
-        icon: DollarSign,
-        title: "Transparent Pricing",
-        description:
-            "Fair, competitive rates — no hidden fees. You only pay for what you need.",
-    },
-    {
-        icon: BarChart,
-        title: "Proven Results",
-        description:
-            "We use data-driven approaches to consistently deliver measurable outcomes and client satisfaction.",
-    },
-    {
-        icon: Briefcase,
-        title: "Standards-Compliant",
-        description:
-            "Our services follow the latest industry standards and safety regulations — guaranteed.",
-    },
-];
+export interface Benefit {
+  id: number;
+  title: string;
+  subtitle: string;
+  description: string;
+  image: string;
+}
 
+export const benefits: Benefit[] = [
+  {
+    id: 1,
+    title: "Instant Booking",
+    subtitle: "Quick & Easy",
+    description: "Book your service provider in just a few taps. Our streamlined process gets you connected with professionals instantly.",
+    image: "https://images.pexels.com/photos/4386431/pexels-photo-4386431.jpeg"
+  },
+  {
+    id: 2,
+    title: "Verified Professionals",
+    subtitle: "Trusted Service",
+    description: "All our service providers are thoroughly vetted and verified. Work with confidence knowing you're getting quality service.",
+    image: "https://images.pexels.com/photos/5691659/pexels-photo-5691659.jpeg"
+  },
+  {
+    id: 3,
+    title: "Real-time Tracking",
+    subtitle: "Stay Updated",
+    description: "Track your service provider's location and estimated arrival time in real-time. Never wonder when help will arrive.",
+    image: "https://images.pexels.com/photos/4386370/pexels-photo-4386370.jpeg"
+  },
+  {
+    id: 4,
+    title: "Secure Payments",
+    subtitle: "Safe & Reliable",
+    description: "Multiple payment options with bank-level security. Pay safely through our encrypted payment system.",
+    image: "https://images.pexels.com/photos/4386433/pexels-photo-4386433.jpeg"
+  },
+  {
+    id: 6,
+    title: "24/7 Support",
+    subtitle: "Always Available",
+    description: "Our customer support team is available round the clock to help you with any questions or concerns.",
+    image: "https://images.pexels.com/photos/4386372/pexels-photo-4386372.jpeg"
+  },
+  {
+    id: 5,
+    title: "Quality Guarantee",
+    subtitle: "Satisfaction Assured",
+    description: "We guarantee the quality of our services. If you're not satisfied, we'll make it right or refund your money.",
+    image: "https://images.pexels.com/photos/5691658/pexels-photo-5691658.jpeg"
+  }
+];
 
 export const tweets = [
     {
