@@ -19,9 +19,9 @@ import customer6 from '../assets/proposition/Elegant Man in Nature.jpeg';
 import customerbg6 from '../assets/proposition/Close-up Portrait with Black Turtleneck.jpeg';
 
 import about1 from '../assets/proposition/Man Working in Cozy Van.jpeg';
-import about2 from '../assets/proposition/Hand in Spotlight.jpeg';
+import about2 from '../assets/proposition/Joyful Woman in Blue.jpeg';
 import about3 from '../assets/proposition/Outdoor Service Counter Interaction.jpeg';
-import about4 from '../assets/proposition/Aerial View of Lush Green Waterways.jpeg';
+import about4 from '../assets/proposition/Contemplative Figure Amidst Vibrant Geometry.jpeg';
 
 import feature1 from '../assets/zoomeye.mp4';
 
@@ -190,7 +190,7 @@ export const aboutHandyGo = [
         description: "HandyGo represents our commitment to efficiency. Just like our name suggests, we're quick, agile, and always on the move to ensure your production runs smoothly from start to finish.",
         image: about2,
         bgColor: "bg-gray-200",
-        accentColor: "text-emerald-600"
+        accentColor: "text-emerald-500"
     },
     {
         id: 3,
@@ -207,8 +207,8 @@ export const aboutHandyGo = [
         subtitle: "SEAMLESS SOLUTIONS",
         description: "Our name reflects our approach to production challenges. We take complex production requirements and make them handy – simple, manageable, and achievable.",
         image: about4,
-        bgColor: "bg-purple-50",
-        accentColor: "text-purple-700"
+        bgColor: "bg-pink-50",
+        accentColor: "text-pink-500"
     }
 ];
 
