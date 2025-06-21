@@ -50,7 +50,7 @@ const app = express()
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:3000", "*"], // Add your frontend URL
+    origin: ["http://localhost:5173", "http://localhost:3000", "http://localhost:3006", "*"], // Add your frontend URL and the new backend port
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -162,6 +162,71 @@ app.use((req, res, next) => {
   }
   next()
 })
+
+// NEW RECAPTCHA VERIFICATION ENDPOINT
+app.post("/captcha", async (req, res) => {
+  const secretKey = process.env.RECAPTCHA_SECRET_KEY
+  const recaptchaToken = req.body.recaptchaToken
+
+  if (!secretKey) {
+    console.error("Backend /captcha: RECAPTCHA_SECRET_KEY is NOT set.")
+    return res
+      .status(500)
+      .json({ success: false, message: "Server configuration error: Missing reCAPTCHA secret key." })
+  }
+
+  if (!recaptchaToken) {
+    return res.status(400).json({ success: false, message: "reCAPTCHA token missing." })
+  }
+
+  console.log("Backend /captcha: Attempting to verify reCAPTCHA token.")
+
+  try {
+    const params = new URLSearchParams()
+    params.append("secret", secretKey)
+    params.append("response", recaptchaToken)
+
+    const googleResponse = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params.toString(),
+      signal: AbortSignal.timeout(10000), // 10-second timeout
+    })
+
+    if (!googleResponse.ok) {
+      const errorText = await googleResponse.text()
+      console.error(`Backend /captcha: HTTP error! Status: ${googleResponse.status}, Body: ${errorText}`)
+      return res
+        .status(googleResponse.status)
+        .json({ success: false, message: `reCAPTCHA verification failed with HTTP status ${googleResponse.status}.` })
+    }
+
+    const data = await googleResponse.json()
+
+    if (data.success) {
+      console.log("Backend /captcha: reCAPTCHA verification successful.")
+      return res.json({ success: true, message: "reCAPTCHA verified successfully!" })
+    } else {
+      console.error("Backend /captcha: reCAPTCHA verification failed with error codes:", data["error-codes"])
+      let errorMessage = "reCAPTCHA verification failed. Please try again."
+      if (data["error-codes"] && data["error-codes"].length > 0) {
+        errorMessage += ` Error: ${data["error-codes"].join(", ")}`
+      }
+      return res.status(400).json({ success: false, message: errorMessage, errors: data["error-codes"] })
+    }
+  } catch (error) {
+    console.error("Backend /captcha: Error during reCAPTCHA verification:", error)
+    if (error.name === "AbortError") {
+      return res.status(504).json({ success: false, message: "reCAPTCHA verification timed out." })
+    }
+    return res
+      .status(500)
+      .json({ success: false, message: `Internal server error during reCAPTCHA verification: ${error.message}` })
+  }
+})
+// END NEW RECAPTCHA VERIFICATION ENDPOINT
 
 // Authentication routes
 app.post("/login", loginUser)

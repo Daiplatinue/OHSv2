@@ -1,8 +1,38 @@
-import React, { useState, useEffect } from "react"
-import { X, AlertTriangle, XCircle, Clock } from "lucide-react"
+"use client"
+
+import type React from "react"
+import { useState, useEffect } from "react"
+import { X, AlertTriangle, XCircle, Clock, CheckCircle2, AlertCircle } from "lucide-react" // Import CheckCircle2 for success modal
 import CustomerRequirements from "./Styles/CustomerRequirements"
 import ManagerRequirements from "./Styles/ManagerRequirements"
 import OTP from "../sections/Styles/OTP"
+import TermsCondition from "../sections/Styles/TermsCondition" // Import the new TermsCondition component
+import Cookies from "js-cookie"
+
+// Animation keyframes from Transaction.tsx
+const keyframes = `
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); }
+  100% { transform: 1; opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+`
 
 const slideshowImages = [
   {
@@ -66,9 +96,8 @@ const documentCategories = [
   },
   {
     id: "service-guidelines",
-    title: "Service Guidelines & SOPs",
+    title: "Standard Operating Procedures (SOPs) – Service quality and safety standards",
     documents: [
-      "Standard Operating Procedures (SOPs) – Service quality and safety standards",
       "Code of Conduct – Professional behavior guidelines for employees",
       "Complaint & Dispute Resolution Policy – Handling customer issues",
     ],
@@ -107,22 +136,35 @@ const documentCategories = [
 
 function LoginAlt() {
   const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPasswordField, setShowPasswordField] = useState(false)
+  const [saveCredentials, setSaveCredentials] = useState(false)
   const [activeSlide, setActiveSlide] = useState(0)
-  const [showModal, setShowModal] = useState(false)
+  const [showModal, setShowModal] = useState(false) // State for Select Account Type modal
   const [accountType, setAccountType] = useState<string | null>(null)
   const [registrationStep, setRegistrationStep] = useState<"type" | "requirements">("type")
   const [showPendingWarning, setShowPendingWarning] = useState(false)
-  const [modalVisible, setModalVisible] = useState(false) // For animation
-  const [showOtpModal, setShowOtpModal] = useState(false) // New state for OTP modal
+  const [modalVisible, setModalVisible] = useState(false)
+  const [showOtpModal, setShowOtpModal] = useState(false)
+  const [showTermsModal, setShowTermsModal] = useState(false) // State for TermsCondition modal
+  const [showUnsuccessModal, setShowUnsuccessModal] = useState(false) // State for unsuccess modal
+  const [unsuccessMessage, setUnsuccessMessage] = useState("") // Message for unsuccess modal
+  const [showSuccessModal, setShowSuccessModal] = useState(false) // State for success modal
+  const [successMessage, setSuccessMessage] = useState("") // Message for success modal
+  const [termsAccepted, setTermsAccepted] = useState(() => Cookies.get("terms_accepted") === "true") // New state to track terms acceptance
 
   const [, setValidId] = useState<File | null>(null)
   const [, setSalaryCertificate] = useState<File | null>(null)
   const [, setUploadedDocuments] = useState<{ [key: string]: File[] }>({})
   const [, setActiveCategoryIndex] = useState(0)
 
-  // Replace router with navigate
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+
+  // New states for customer registration flow
+  const [showFillAllPrompt, setShowFillAllPrompt] = useState(false)
+  const [showUnverifiedWarning, setShowUnverifiedWarning] = useState(false)
+  const [customerMinimalMode, setCustomerMinimalMode] = useState(false)
 
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
@@ -130,42 +172,57 @@ function LoginAlt() {
     setLoading(true)
 
     try {
-      // Simulate sending a magic link
-      console.log("Magic link requested for:", email)
-      
-      // Show OTP modal instead of success message
-      setTimeout(() => {
-        setLoading(false)
-        setShowOtpModal(true)
-      }, 1000)
-      
+      if (showPasswordField) {
+        console.log("Login with password requested for:", email, "and password:", password)
+        if (saveCredentials) {
+          console.log("Saving login credentials...")
+        }
+        setTimeout(() => {
+          setLoading(false)
+          setError("Password login simulated. Redirecting...")
+          setTimeout(() => {
+            console.log("Redirecting to dashboard...")
+          }, 1000)
+        }, 1000)
+      } else {
+        console.log("Magic link requested for:", email)
+        setTimeout(() => {
+          setLoading(false)
+          setShowOtpModal(true)
+        }, 1000)
+      }
     } catch (err) {
       console.error("Login error:", err)
-      setError("Failed to send magic link. Please try again.")
+      setError(`Failed to login. Please try again.`)
       setLoading(false)
     }
   }
 
   const handleOtpVerification = () => {
-    // Handle successful OTP verification
     console.log("OTP verified successfully for:", email)
-    
-    // Close OTP modal
     setShowOtpModal(false)
-    
-    // Show success message or redirect to dashboard
     setError("Successfully authenticated! Redirecting to dashboard...")
-    
-    // Simulate redirect after login
     setTimeout(() => {
-      // In a real app, you would redirect to the dashboard
       console.log("Redirecting to dashboard...")
     }, 2000)
   }
 
   const closeStatusModal = () => {
     setModalVisible(false)
-    setTimeout(() => setShowPendingWarning(false), 300) // Wait for animation to complete
+    setTimeout(() => setShowPendingWarning(false), 300)
+  }
+
+  const handleGoBackFromUnverifiedWarning = () => {
+    setShowUnverifiedWarning(false)
+    setShowFillAllPrompt(true) // Go back to the previous prompt
+  }
+
+  const handleConfirmSkipUnverified = () => {
+    setShowUnverifiedWarning(false)
+    setCustomerMinimalMode(true)
+    setAccountType("customer")
+    setRegistrationStep("requirements")
+    setShowModal(true)
   }
 
   useEffect(() => {
@@ -188,7 +245,17 @@ function LoginAlt() {
   }, [showModal])
 
   useEffect(() => {
-    if (showModal) {
+    // This effect now correctly manages body overflow based on any modal being open
+    if (
+      showModal ||
+      showTermsModal ||
+      showOtpModal ||
+      showPendingWarning ||
+      showUnsuccessModal ||
+      showSuccessModal ||
+      showFillAllPrompt || // Include new modals
+      showUnverifiedWarning // Include new modals
+    ) {
       document.body.style.overflow = "hidden"
     } else {
       document.body.style.overflow = "auto"
@@ -196,7 +263,16 @@ function LoginAlt() {
     return () => {
       document.body.style.overflow = "auto"
     }
-  }, [showModal])
+  }, [
+    showModal,
+    showTermsModal,
+    showOtpModal,
+    showPendingWarning,
+    showUnsuccessModal,
+    showSuccessModal,
+    showFillAllPrompt,
+    showUnverifiedWarning,
+  ]) // Include all modal states
 
   useEffect(() => {
     setValidId(null)
@@ -215,11 +291,9 @@ function LoginAlt() {
     }
   }, [accountType])
 
-  // Get user data for status modal
   const userData = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}") : {}
   const userStatus = userData.status || "pending"
 
-  // Status-specific content
   const getStatusContent = () => {
     switch (userStatus) {
       case "pending":
@@ -256,7 +330,10 @@ function LoginAlt() {
   const statusContent = getStatusContent()
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="min-h-screen flex flex-col md:flex-row">
+      {/* Include animation keyframes */}
+      <style>{keyframes}</style>
+
       {/* Left side with image and description */}
       <div className="relative w-full md:w-1/2 overflow-hidden justify-center items-center p-8">
         <div className="relative h-full">
@@ -301,7 +378,7 @@ function LoginAlt() {
           <h2 className="text-3xl font-bold text-sky-400">Welcome Back!</h2>
         </div>
 
-        <div className="space-y-5">
+        <div className="bg-white p-6 rounded-lg space-y-6">
           <div className="space-y-1.5">
             <label htmlFor="email" className="text-sm font-medium">
               Email
@@ -314,30 +391,77 @@ function LoginAlt() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
+            <button
+              onClick={() => setShowPasswordField(!showPasswordField)}
+              className="text-sm text-sky-500 hover:underline text-right block w-full mt-1"
+            >
+              {showPasswordField ? "Use Magic Link Instead" : "Use Password Instead"}
+            </button>
           </div>
-
+          {/* Password field with animation */}
+          <div
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              showPasswordField ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+            }`}
+          >
+            <div className="space-y-1.5 pt-4">
+              <label htmlFor="password" className="text-sm font-medium">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
+              />
+            </div>
+            {showPasswordField && (
+              <div className="flex justify-between items-center text-sm mt-2">
+                <div className="flex items-center">
+                  <input
+                    id="save-credentials"
+                    type="checkbox"
+                    checked={saveCredentials}
+                    onChange={(e) => setSaveCredentials(e.target.checked)}
+                    className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="save-credentials" className="ml-2 text-gray-700">
+                    Save Login Credentials
+                  </label>
+                </div>
+                <button className="text-sky-500 hover:underline">Forgot Password?</button>
+              </div>
+            )}
+          </div>
           <button
             onClick={handleLogin}
             className={`w-full bg-gray-200 text-gray-500 hover:bg-gray-300 rounded-full h-12 font-medium transition-colors
-              ${!email || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
-            disabled={!email || loading}
+          ${!email || (showPasswordField && !password) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
+            disabled={!email || (showPasswordField && !password) || loading}
           >
-            {loading ? "Sending Link..." : "Login Using Magic Link"}
+            {loading
+              ? showPasswordField
+                ? "Logging In..."
+                : "Sending Link..."
+              : showPasswordField
+                ? "Login Using Password"
+                : "Login Using Magic Link"}
           </button>
-
           {error && (
-            <div className={`mt-2 text-sm text-center ${error.includes("Success") ? "text-green-500" : "text-red-500"}`}>
+            <div
+              className={`mt-2 text-sm text-center ${error.includes("Success") ? "text-green-500" : "text-red-500"}`}
+            >
               {error}
             </div>
           )}
-
-          <div className="relative flex items-center justify-center text-xs text-gray-500 my-4 mt-[-15px]">
+          <div className="relative flex items-center justify-center text-xs text-gray-500 my-4 ">
             <span className="bg-white px-2 mt-10">or sign in with</span>
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t"></span>
             </div>
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <button className="flex items-center justify-center gap-2 rounded-full text-sm font-medium border border-gray-300 py-2 hover:bg-gray-50 transition-colors">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -374,10 +498,19 @@ function LoginAlt() {
               Apple ID
             </button>
           </div>
-
           <div className="text-center text-sm text-gray-500 mt-4">
             Don't have account?{" "}
-            <button onClick={() => setShowModal(true)} className="font-medium text-black hover:underline">
+            <button
+              onClick={() => {
+                if (Cookies.get("terms_accepted") === "true") {
+                  setTermsAccepted(true)
+                  setShowModal(true)
+                } else {
+                  setShowTermsModal(true)
+                }
+              }}
+              className="font-medium text-black hover:underline"
+            >
               Create Account
             </button>
           </div>
@@ -385,7 +518,7 @@ function LoginAlt() {
       </div>
 
       {/* OTP Verification Modal */}
-      <OTP 
+      <OTP
         email={email}
         onClose={() => setShowOtpModal(false)}
         onVerify={handleOtpVerification}
@@ -403,6 +536,7 @@ function LoginAlt() {
                 setShowModal(false)
                 setRegistrationStep("type")
                 setAccountType(null)
+                setTermsAccepted(false) // Reset terms acceptance on modal close
               }}
               className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 z-10"
             >
@@ -416,10 +550,19 @@ function LoginAlt() {
                 <div className="flex justify-center gap-6 mx-auto">
                   <button
                     onClick={() => {
-                      setAccountType("customer")
-                      setRegistrationStep("requirements")
+                      if (termsAccepted) {
+                        setShowFillAllPrompt(true) // Show the new prompt first
+                      } else {
+                        setShowTermsModal(true)
+                      }
                     }}
-                    className="flex flex-col items-center justify-center p-6 border-2 rounded-xl hover:border-sky-400 hover:bg-sky-50 transition-all w-[13rem] cursor-pointer"
+                    disabled={!termsAccepted} // Disabled if terms not accepted
+                    className={`flex flex-col items-center justify-center p-6 border-2 rounded-xl transition-all w-[13rem] cursor-pointer
+                      ${
+                        termsAccepted
+                          ? "hover:border-sky-400 hover:bg-sky-50"
+                          : "opacity-50 cursor-not-allowed bg-gray-100"
+                      }`}
                   >
                     <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mb-4">
                       <svg
@@ -447,7 +590,13 @@ function LoginAlt() {
                       setAccountType("manager")
                       setRegistrationStep("requirements")
                     }}
-                    className="flex flex-col items-center justify-center p-6 border-2 rounded-xl hover:border-sky-400 hover:bg-sky-50 transition-all w-[13rem] cursor-pointer"
+                    disabled={!termsAccepted} // Disabled if terms not accepted
+                    className={`flex flex-col items-center justify-center p-6 border-2 rounded-xl transition-all w-[13rem] cursor-pointer
+                      ${
+                        termsAccepted
+                          ? "hover:border-sky-400 hover:bg-sky-50"
+                          : "opacity-50 cursor-not-allowed bg-gray-100"
+                      }`}
                   >
                     <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mb-4">
                       <svg
@@ -472,11 +621,22 @@ function LoginAlt() {
                     <p className="text-sm text-gray-500 text-center mt-2">Sign up to offer services</p>
                   </button>
                 </div>
+                <div className="mt-8 text-center text-sm text-gray-600 px-4">
+                  <p className="mb-2">
+                    By choosing an account type, you're taking the first step towards a seamless experience with
+                    HandyGo. Whether you're looking to hire services or offer your expertise, our platform is designed
+                    to connect you efficiently.
+                  </p>
+                </div>
               </div>
             ) : (
               <>
                 {accountType === "customer" ? (
-                  <CustomerRequirements onClose={() => setShowModal(false)} parentModal={true} />
+                  <CustomerRequirements
+                    onClose={() => setShowModal(false)}
+                    parentModal={true}
+                    minimalMode={customerMinimalMode}
+                  />
                 ) : accountType === "manager" ? (
                   <ManagerRequirements />
                 ) : null}
@@ -498,11 +658,10 @@ function LoginAlt() {
 
           {/* Modal card with Apple-inspired design */}
           <div
-            className="relative bg-white/90 backdrop-blur-md rounded-2xl max-w-md w-full shadow-2xl overflow-hidden transition-all duration-300 transform"
+            className="relative bg-white/90 backdrop-blur-md rounded-2xl max-w-md w-full overflow-hidden transition-all duration-300 transform"
             style={{
               opacity: modalVisible ? 1 : 0,
               transform: modalVisible ? "scale(1)" : "scale(0.95)",
-              boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
             }}
           >
             {/* Status icon at top */}
@@ -516,7 +675,7 @@ function LoginAlt() {
                 {statusContent.title}
               </h3>
 
-              <p className="text-center text-gray-600 mb-8 font-['SF Pro Text', -apple-system, BlinkMacSystemFont, system-ui, sans-serif] text-sm leading-relaxed">
+              <p className="text-center text-gray-600 mb-6 font-['SF Pro Text', -apple-system, BlinkMacSystemFont, system-ui, sans-serif] text-sm leading-relaxed">
                 {statusContent.description}
               </p>
 
@@ -534,6 +693,314 @@ function LoginAlt() {
                   className="w-full py-3 px-4 bg-gray-200 text-gray-800 font-medium rounded-full hover:bg-gray-300 transition-colors duration-200"
                 >
                   Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Render TermsCondition Modal */}
+      {showTermsModal && (
+        <TermsCondition
+          onClose={(accepted: boolean) => {
+            setShowTermsModal(false) // Close the terms modal
+            if (accepted) {
+              Cookies.set("terms_accepted", "true", { expires: 365 }) // Store for 1 year
+              setSuccessMessage(
+                "Thank you for participating in our system! We wish you the best and a wonderful time on our platform.",
+              )
+              setShowSuccessModal(true) // Show the success modal
+              setTermsAccepted(true) // Set terms as accepted
+              // After a short delay, open the account type modal
+              setTimeout(() => {
+                setShowSuccessModal(false) // Dismiss success modal
+                setShowModal(true) // Open the account type modal
+              }, 1500) // Adjust delay as needed
+            } else {
+              // If terms were not accepted (i.e., Cancel was clicked)
+              Cookies.remove("terms_accepted") // Remove the cookie if terms are not accepted
+              setUnsuccessMessage(
+                "Sorry for making you dislike our terms and services. You cannot find a website just like us.",
+              )
+              setShowUnsuccessModal(true) // Show the unsuccess modal
+              setTermsAccepted(false) // Ensure terms are not accepted
+            }
+          }}
+        />
+      )}
+
+      {/* Unsuccess Modal (based on Transaction.tsx success modal) */}
+      {showUnsuccessModal && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          style={{ animation: "fadeIn 0.3s ease-out" }}
+        >
+          <div
+            className="mx-auto max-w-md w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden transform transition-all border border-white/20 p-6"
+            style={{ animation: "fadeIn 0.5s ease-out" }}
+          >
+            <div className="flex flex-col items-center text-center">
+              <div
+                className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mb-6"
+                style={{ animation: "pulse 2s ease-in-out infinite" }}
+              >
+                <XCircle className="h-10 w-10 text-red-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
+              </div>
+
+              <h3 className="text-xl font-medium text-gray-900 mb-2" style={{ animation: "slideInUp 0.4s ease-out" }}>
+                Terms Not Accepted
+              </h3>
+
+              <p className="text-gray-600 mb-6" style={{ animation: "fadeIn 0.5s ease-out 0.2s both" }}>
+                {unsuccessMessage}
+              </p>
+
+              <button
+                onClick={() => setShowUnsuccessModal(false)}
+                className="px-8 py-3 bg-red-500 text-white rounded-full font-medium hover:bg-red-600 active:scale-95 transition-all duration-200"
+                style={{ animation: "fadeIn 0.5s ease-out 0.3s both" }}
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Success Modal */}
+      {showSuccessModal && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          style={{ animation: "fadeIn 0.3s ease-out" }}
+        >
+          <div
+            className="mx-auto max-w-md w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden transform transition-all border border-white/20 p-6"
+            style={{ animation: "fadeIn 0.5s ease-out" }}
+          >
+            <div className="flex flex-col items-center text-center">
+              <div
+                className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6"
+                style={{ animation: "pulse 2s ease-in-out infinite" }}
+              >
+                <CheckCircle2 className="h-10 w-10 text-green-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
+              </div>
+
+              <h3 className="text-xl font-medium text-gray-900 mb-2" style={{ animation: "slideInUp 0.4s ease-out" }}>
+                Welcome Aboard!
+              </h3>
+
+              <p className="text-gray-600 mb-6" style={{ animation: "fadeIn 0.5s ease-out 0.2s both" }}>
+                {successMessage}
+              </p>
+
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="px-8 py-3 bg-sky-500 text-white rounded-full font-medium hover:bg-sky-600 active:scale-95 transition-all duration-200"
+                style={{ animation: "fadeIn 0.5s ease-out 0.3s both" }}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New: Fill All Requirements Prompt Modal */}
+      {showFillAllPrompt && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md"
+          style={{ animation: "fadeIn 0.3s ease-out" }}
+        >
+          <div
+            className="bg-white/90 backdrop-blur-xl rounded-3xl max-w-md w-full p-6 border border-white/20"
+            style={{ animation: "slideInUp 0.4s ease-out" }}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center">
+                <AlertTriangle className="h-6 w-6 text-sky-500 mr-2" />
+                <h3 className="text-lg font-semibold">Account Setup Options</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setShowFillAllPrompt(false)
+                  setShowModal(true)
+                  setRegistrationStep("type")
+                  setAccountType(null)
+                }}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-gray-600 mb-4">
+                To ensure full access to all features and services, we recommend completing all required information.
+                However, you can choose to proceed with a basic account.
+              </p>
+
+              <ul className="list-disc pl-5 space-y-2 text-gray-600">
+                <li>
+                  <span className="font-medium">Full Registration:</span> Access to all booking features, verified
+                  profile, and priority support.
+                </li>
+                <li>
+                  <span className="font-medium">Basic Registration:</span> Limited features, unverified profile, and
+                  restricted booking capabilities.
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex flex-col space-y-3">
+              <button
+                onClick={() => {
+                  setCustomerMinimalMode(false)
+                  setAccountType("customer")
+                  setRegistrationStep("requirements")
+                  setShowModal(true)
+                  setShowFillAllPrompt(false)
+                }}
+                className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600"
+              >
+                Fill All Requirements
+              </button>
+              <button
+                onClick={() => {
+                  setCustomerMinimalMode(true)
+                  setAccountType("customer")
+                  setRegistrationStep("requirements")
+                  setShowModal(true)
+                  setShowFillAllPrompt(false)
+                }}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                Skip Some (Unverified Account)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New: Unverified Account Warning Modal (styled like ManagerRequirements.tsx warning) */}
+      {showUnverifiedWarning && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md"
+          style={{ animation: "fadeIn 0.3s ease-out" }}
+        >
+          <div
+            className="bg-white/90 backdrop-blur-xl rounded-3xl max-w-6xl w-full p-6 border border-white/20"
+            style={{ animation: "fadeIn 0.5s ease-out" }}
+          >
+            <div className="flex flex-col items-center text-center mb-6">
+              <div
+                className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mb-6"
+                style={{ animation: "pulse 2s ease-in-out infinite" }}
+              >
+                <AlertCircle className="h-10 w-10 text-amber-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
+              </div>
+
+              <h3 className="text-xl font-medium text-gray-900 mb-2" style={{ animation: "slideInUp 0.4s ease-out" }}>
+                Warning: Unverified Account Limitations
+              </h3>
+
+              <p className="text-gray-600 mb-6" style={{ animation: "fadeIn 0.5s ease-out 0.2s both" }}>
+                If you skip verification, your account will remain unverified, which has the following limitations:
+              </p>
+              <div className="grid md:grid-cols-2 gap-8 mb-8">
+                {/* Left Column - Limitations */}
+                <div className="bg-amber-50 p-6 rounded-xl border border-amber-100">
+                  <h4 className="font-medium text-gray-800 mb-4 flex items-center text-lg border-b pb-3 border-amber-200">
+                    <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
+                    Account Limitations
+                  </h4>
+                  <ul className="space-y-4">
+                    <li className="flex items-start">
+                      <XCircle className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+                      <div>
+                        <h5 className="font-medium text-gray-800">Service Creation Restricted</h5>
+                        <p className="text-gray-600 text-sm">
+                          Unable to create or publish any services on the platform
+                        </p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <XCircle className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+                      <div>
+                        <h5 className="font-medium text-gray-800">Unverified Badge</h5>
+                        <p className="text-gray-600 text-sm">A visible unverified status badge on your profile</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <XCircle className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+                      <div>
+                        <h5 className="font-medium text-gray-800">Limited Visibility</h5>
+                        <p className="text-gray-600 text-sm">Lower ranking and reduced visibility in search results</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <XCircle className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+                      <div>
+                        <h5 className="font-medium text-gray-800">Feature Restrictions</h5>
+                        <p className="text-gray-600 text-sm">No access to premium features and advanced tools</p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Right Column - Example Account */}
+                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                  <h4 className="font-medium text-gray-800 mb-4 flex items-center text-lg border-b pb-3 border-gray-200">
+                    <AlertCircle className="h-5 w-5 mr-2 text-gray-500" />
+                    Example: Unverified Account View
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="bg-white rounded-lg border border-gray-200">
+                      <div className="p-4 border-b border-gray-100">
+                        <div className="flex items-center">
+                          <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                          <div className="ml-4">
+                            <div className="flex items-center gap-2">
+                              <h5 className="font-medium text-gray-900">Business Name</h5>
+                              <span className="px-2 py-1 bg-amber-100 text-amber-800 text-xs rounded-full border border-amber-200 flex items-center">
+                                <AlertTriangle className="h-3 w-3 mr-1" /> Unverified
+                              </span>
+                            </div>
+                            <p className="text-gray-500 text-sm">@username</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <div className="bg-gray-50 border border-dashed border-gray-300 rounded-lg p-4 text-center">
+                          <AlertTriangle className="h-6 w-6 text-amber-500 mx-auto mb-2" />
+                          <p className="text-gray-600 text-sm">Service creation is disabled for unverified accounts</p>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-gray-50 border-t border-gray-100">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-500">Profile views: Limited</span>
+                          <span className="text-gray-500">Search rank: Reduced</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                className="flex flex-col sm:flex-row gap-4 w-full"
+                style={{ animation: "fadeIn 0.5s ease-out 0.4s both" }}
+              >
+                <button
+                  onClick={handleConfirmSkipUnverified}
+                  className="px-6 py-3 border border-gray-300 bg-white text-gray-700 rounded-full font-medium hover:bg-gray-50 transition-all w-full sm:w-1/2 order-2 sm:order-1"
+                >
+                  Skip Anyway
+                </button>
+                <button
+                  onClick={handleGoBackFromUnverifiedWarning}
+                  className="px-6 py-3 bg-amber-500 text-white rounded-full font-medium hover:bg-amber-600 active:scale-95 transition-all duration-200 w-full sm:w-1/2 order-1 sm:order-2"
+                >
+                  Go Back
                 </button>
               </div>
             </div>

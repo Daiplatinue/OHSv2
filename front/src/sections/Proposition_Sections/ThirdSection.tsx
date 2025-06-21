@@ -9,7 +9,6 @@ const ThirdSection: React.FC = () => {
     const handleScroll = () => {
       if (!containerRef.current) return;
 
-      // Find the scrolling container (the main content div with overflow-y-auto)
       const scrollingContainer = document.querySelector('.overflow-y-auto') as HTMLElement;
       if (!scrollingContainer) return;
 
@@ -18,33 +17,26 @@ const ThirdSection: React.FC = () => {
       const containerTop = scrollingContainer.getBoundingClientRect().top;
       const windowHeight = window.innerHeight;
 
-      // Calculate relative position within the scrolling container
       const relativeTop = rect.top - containerTop;
 
-      // Check if the container is in the viewport
       if (relativeTop <= 0 && relativeTop + container.offsetHeight >= windowHeight) {
-        // Calculate how much we've scrolled through this section
         const scrolled = Math.abs(relativeTop);
         const totalScrollable = container.offsetHeight - windowHeight;
 
-        // Ensure we don't divide by zero and clamp between 0 and 1
         const progress = totalScrollable > 0 ? Math.max(0, Math.min(1, scrolled / totalScrollable)) : 0;
 
         setScrollProgress(progress);
       } else if (relativeTop > 0) {
-        // Section hasn't been reached yet
         setScrollProgress(0);
       } else if (relativeTop + container.offsetHeight < windowHeight) {
-        // Section has been completely scrolled past
         setScrollProgress(1);
       }
     };
 
-    // Listen to scroll events on the main scrolling container instead of window
     const scrollingContainer = document.querySelector('.overflow-y-auto');
     if (scrollingContainer) {
       scrollingContainer.addEventListener('scroll', handleScroll, { passive: true });
-      handleScroll(); // Initial call
+      handleScroll();
     }
 
     return () => {
