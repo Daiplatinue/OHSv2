@@ -31,8 +31,8 @@ const SeventhSection: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6">
         {/* Header */}
         <div className="text-center mb-16">
-          <span className="text-sky-500 text-sm tracking-wide font-semibold uppercase">System Features</span>
-          <h2 className="mt-4 text-5xl font-semibold text-gray-600">
+          <span className="text-sky-500 text-sm tracking-wide font-medium uppercase">System Features</span>
+          <h2 className="mt-4 text-5xl font-medium text-gray-600">
             Revolutionary Experience
           </h2>
         </div>
@@ -57,7 +57,7 @@ const SeventhSection: React.FC = () => {
                 <div className="w-12 h-12 rounded-xl bg-sky-100 flex items-center justify-center">
                   <feature.icon className="w-6 h-6 text-sky-500" />
                 </div>
-                <span className="ml-4 font-semibold text-lg text-gray-600">
+                <span className="ml-4 font-medium text-lg text-gray-600">
                   {feature.title}
                 </span>
               </div>
@@ -154,22 +154,22 @@ const SeventhSection: React.FC = () => {
         {/* Performance Stats - Bottom Section */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div className="text-center p-8 bg-white rounded-2xl border border-gray-100">
-            <div className="text-4xl font-bold text-sky-500 mb-3">99.9%</div>
+            <div className="text-4xl font-medium text-sky-500 mb-3">99.9%</div>
             <div className="text-sm text-gray-600 font-medium">Uptime</div>
             <div className="text-xs text-gray-400 mt-1">System Reliability</div>
           </div>
           <div className="text-center p-8 bg-white rounded-2xl border border-gray-100">
-            <div className="text-4xl font-bold text-sky-500 mb-3">&lt;50ms</div>
+            <div className="text-4xl font-medium text-sky-500 mb-3">&lt;50ms</div>
             <div className="text-sm text-gray-600 font-medium">Response Time</div>
             <div className="text-xs text-gray-400 mt-1">Lightning Fast</div>
           </div>
           <div className="text-center p-8 bg-white rounded-2xl border border-gray-100">
-            <div className="text-4xl font-bold text-sky-500 mb-3">256-bit</div>
+            <div className="text-4xl font-medium text-sky-500 mb-3">256-bit</div>
             <div className="text-sm text-gray-600 font-medium">Encryption</div>
             <div className="text-xs text-gray-400 mt-1">Bank-Level Security</div>
           </div>
           <div className="text-center p-8 bg-white rounded-2xl border border-gray-100">
-            <div className="text-4xl font-bold text-sky-500 mb-3">24/7</div>
+            <div className="text-4xl font-medium text-sky-500 mb-3">24/7</div>
             <div className="text-sm text-gray-600 font-medium">Monitoring</div>
             <div className="text-xs text-gray-400 mt-1">Always Protected</div>
           </div>

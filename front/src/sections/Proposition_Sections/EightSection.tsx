@@ -145,8 +145,8 @@ const EighthSection: React.FC = () => {
           {/* Starting Price */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm opacity-75 mb-1">Starting from</p>
-              <p className="text-4xl font-bold text-green-400">
+              <p className="text-sm opacity-75 mb-1 tracking-widest">Starting from</p>
+              <p className="text-4xl font-medium text-green-400">
                 {metric.startingPrice}
               </p>
             </div>
@@ -154,7 +154,7 @@ const EighthSection: React.FC = () => {
 
           {/* Service Name */}
           <div className="mt-auto">
-            <h3 className="text-3xl font-bold leading-tight mb-2 text-gray-200">
+            <h3 className="text-3xl font-medium leading-tight mb-2 text-gray-200">
               {metric.serviceName}
             </h3>
           </div>

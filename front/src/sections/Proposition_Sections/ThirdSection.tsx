@@ -60,26 +60,26 @@ const ThirdSection: React.FC = () => {
         <div className="relative w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-white">
           <div className="lg:col-span-7 order-2 lg:order-1">
             <div
-              className="aspect-[4/3] rounded-3xl bg-cover bg-center shadow-2xl"
+              className="aspect-[4/3] rounded-3xl bg-cover bg-center mt-10"
               style={{ backgroundImage: `url(${benefit.image})` }}
             >
               <div className="w-full h-full rounded-3xl bg-black/40 flex items-end p-8">
                 <div className="text-white">
                   <p className="text-sm uppercase tracking-widest opacity-80 mb-2">Featured Solution</p>
-                  <h3 className="text-2xl font-light">{benefit.subtitle}</h3>
+                  <h3 className="text-2xl text-gray-200 font-light">{benefit.subtitle}</h3>
                 </div>
               </div>
             </div>
           </div>
           <div className="lg:col-span-5 space-y-6 order-1 lg:order-2">
-            <h1 className="text-4xl md:text-6xl font-thin text-gray-900 leading-tight">
+            <h1 className="text-4xl md:text-6xl font-thin text-gray-700 leading-tight">
               {benefit.title}
             </h1>
             <p className="text-lg md:text-xl text-gray-600 font-light leading-relaxed">
               {benefit.description}
             </p>
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-px bg-gray-300"></div>
+              <div className="w-12 h-px bg-gray-400"></div>
               <span className="text-sm text-gray-400 font-light">0{index + 1}</span>
             </div>
           </div>
@@ -92,10 +92,7 @@ const ThirdSection: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
             <div className="space-y-8 order-2 lg:order-1">
               <div className="space-y-4">
-                <span className="inline-block px-4 py-2 bg-white rounded-full text-sm text-gray-600 shadow-sm">
-                  {benefit.subtitle}
-                </span>
-                <h1 className="text-5xl md:text-7xl font-extralight text-gray-900 leading-none">
+                <h1 className="text-5xl md:text-7xl font-extralight text-gray-700 leading-none">
                   {benefit.title.split(' ')[0]}
                 </h1>
                 <h2 className="text-2xl md:text-3xl font-light text-gray-700">
@@ -129,7 +126,7 @@ const ThirdSection: React.FC = () => {
                   {benefit.subtitle}
                 </p>
               </div>
-              <h1 className="text-4xl md:text-5xl font-thin text-gray-900 leading-tight">
+              <h1 className="text-4xl md:text-5xl font-thin text-gray-700 leading-tight">
                 {benefit.title}
               </h1>
               <p className="text-gray-600 font-light leading-relaxed">
@@ -153,7 +150,7 @@ const ThirdSection: React.FC = () => {
         <div className="relative w-full max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-5 space-y-6 z-10 relative order-2 lg:order-1">
-              <h1 className="text-4xl md:text-6xl font-thin text-gray-900 leading-tight">
+              <h1 className="text-4xl md:text-6xl font-thin text-gray-700 leading-tight">
                 {benefit.title}
               </h1>
               <p className="text-lg md:text-xl text-gray-500 font-light leading-relaxed">
@@ -197,7 +194,7 @@ const ThirdSection: React.FC = () => {
             </div>
           </div>
           <div className="space-y-8 order-1 lg:order-2">
-            <h1 className="text-4xl md:text-5xl font-thin text-gray-900 leading-tight">
+            <h1 className="text-4xl md:text-5xl font-thin text-gray-700 leading-tight">
               {benefit.title}
             </h1>
             <p className="text-lg text-gray-500 font-light leading-relaxed">
@@ -223,7 +220,7 @@ const ThirdSection: React.FC = () => {
             <p className="text-sm uppercase tracking-widest text-gray-500">
               {benefit.subtitle}
             </p>
-            <h1 className="text-5xl md:text-7xl font-extralight text-gray-900 leading-none">
+            <h1 className="text-5xl md:text-7xl font-extralight text-gray-700 leading-none">
               {benefit.title}
             </h1>
             <p className="text-lg md:text-xl text-gray-600 font-light leading-relaxed max-w-2xl mx-auto">

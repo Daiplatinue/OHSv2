@@ -23,7 +23,7 @@ function SecondSection({
         <div className="">
           <div className="pr-0 md:pr-8">
             <div className="space-y-6">
-              <h1 className="text-[42px] sm:text-[52px] md:text-[62px] lg:text-[72px] font-semibold tracking-[-0.02em] leading-[0.95] uppercase">
+              <h1 className="text-[42px] sm:text-[52px] md:text-[55px] lg:text-[55px] font-medium tracking-[-0.02em] leading-[0.95] uppercase">
                 WELCOME TO THE
                 GREATEST ONLINE
                 <br /><span className="text-sky-500">HOME SERVICE </span>
@@ -93,7 +93,7 @@ function SecondSection({
                   <img
                     src={getCurrentImage()}
                     alt="Team member"
-                    className={`w-[400px] h-[400px] object-cover transition-all duration-700 ease-in-out transform ${hoveredTeamMember ? 'brightness-1.1 contrast-1.05 scale-102' : 'brightness-1 contrast-1 scale-100'} ${imageTransitioning ? 'opacity-0' : 'opacity-100'}`}
+                    className={`w-[425px] h-[425px] object-cover transition-all duration-700 ease-in-out transform ${hoveredTeamMember ? 'brightness-1.1 contrast-1.05 scale-102' : 'brightness-1 contrast-1 scale-100'} ${imageTransitioning ? 'opacity-0' : 'opacity-100'}`}
                   />
                 </div>
               </div>

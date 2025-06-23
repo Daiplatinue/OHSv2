@@ -10,39 +10,39 @@ const topServices = [
     providerName: "SparkleClean",
     serviceName: "Regular Cleaning",
     image: img1, 
-    startingPrice: "120,000",
+    startingPrice: "10,000,000",
     isFirst: true,
     reviews: "3.2M+",
     rating: "5.0",
     location: "New York",
     avgPrice: "150,000",
-    prizeMoney: "10,000,000",
+    prizeMoney: "120,000",
   },
   {
     id: 2,
     providerName: "FixIt All",
     serviceName: "Furniture Assembly",
     image: img1, 
-    startingPrice: "100,000",
+    startingPrice: "5,000,000",
     isFirst: false,
     reviews: "2.9M+",
     rating: "4.9",
     location: "Los Angeles",
     avgPrice: "110,000",
-    prizeMoney: "5,000,000",
+    prizeMoney: "100,000",
   },
   {
     id: 3,
     providerName: "ColorMasters",
     serviceName: "Painting Services",
     image: img1, 
-    startingPrice: "90,000",
+    startingPrice: "1,000,000",
     isFirst: false,
     reviews: "1.2M+",
     rating: "4.8",
     location: "Chicago",
     avgPrice: "95,000",
-    prizeMoney: "1,000,000",
+    prizeMoney: "90,000",
   },
 ]
 
@@ -224,13 +224,13 @@ export default function Popular() {
                 </div>
                 <div className="flex items-center gap-1">
                   <Award className="w-4 h-4 text-purple-600" />
-                  <span>Prize: ₱{topServices[1].prizeMoney}</span>
+                  <span>Starting: ₱{topServices[1].prizeMoney}</span>
                 </div>
               </div>
               <div className="flex flex-col items-center gap-2 mt-4">
                 <Gem className="w-6 h-6 text-sky-500" />
                 <span className="text-2xl text-sky-500">₱{topServices[1].startingPrice}</span>
-                <span className="text-sm text-gray-600">Starting Price</span>
+                <span className="text-sm text-gray-600">Prize Pool</span>
               </div>
             </div>
           </div>
@@ -268,13 +268,13 @@ export default function Popular() {
                 </div>
                 <div className="flex items-center gap-1">
                   <Award className="w-5 h-5 text-purple-600" />
-                  <span>Prize: ₱{topServices[0].prizeMoney}</span>
+                  <span>Starting: ₱{topServices[0].prizeMoney}</span>
                 </div>
               </div>
               <div className="flex flex-col items-center gap-2 mt-4">
                 <Gem className="w-7 h-7 text-sky-500" />
                 <span className="text-3xl text-sky-500">₱{topServices[0].startingPrice}</span>
-                <span className="text-base text-gray-600">Starting Price</span>
+                <span className="text-base text-gray-600">Prize Pool</span>
               </div>
             </div>
           </div>
@@ -312,13 +312,13 @@ export default function Popular() {
                 </div>
                 <div className="flex items-center gap-1">
                   <Award className="w-4 h-4 text-purple-600" />
-                  <span>Prize: ₱{topServices[2].prizeMoney}</span>
+                  <span>Starting: ₱{topServices[2].prizeMoney}</span>
                 </div>
               </div>
               <div className="flex flex-col items-center gap-2 mt-4">
                 <Gem className="w-6 h-6 text-sky-500" />
                 <span className="text-2xl text-sky-500">₱{topServices[2].startingPrice}</span>
-                <span className="text-sm text-gray-600">Starting Price</span>
+                <span className="text-sm text-gray-600">Prize Pool</span>
               </div>
             </div>
           </div>

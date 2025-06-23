@@ -169,8 +169,8 @@ function FourthSection() {
 
         {/* Typography Section */}
         <div className="text-center max-w-3xl mx-auto mt-[8rem]">
-          <span className="text-sky-500 text-sm tracking-wide font-semibold uppercase">Customer Reviews</span>
-          <h2 className="mt-4 text-5xl font-semibold text-gray-600 leading-tight">
+          <span className="text-sky-500 text-sm tracking-wide font-extralight uppercase">Customer Reviews</span>
+          <h2 className="mt-4 text-5xl font-medium text-gray-700 leading-tight">
             Our Clients Feedback
           </h2>
           <p className="mt-6 text-lg text-gray-600">
@@ -178,15 +178,15 @@ function FourthSection() {
           </p>
           <div className="mt-8 flex justify-center space-x-4">
             <div className="text-center">
-              <div className="text-4xl font-bold text-sky-500">98%</div>
+              <div className="text-4xl font-sembold text-sky-500">98%</div>
               <div className="mt-2 text-sm text-gray-600">Satisfaction Rate</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-sky-500">100M+</div>
+              <div className="text-4xl font-sembold text-sky-500">100M+</div>
               <div className="mt-2 text-sm text-gray-600">Happy Clients</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-sky-500">24/7</div>
+              <div className="text-4xl font-sembold text-sky-500">24/7</div>
               <div className="mt-2 text-sm text-gray-600">Support</div>
             </div>
           </div>

@@ -186,7 +186,7 @@ function Proposition() {
         document.querySelector(`section:nth-of-type(${getSectionIndex(sectionName)})`);
       section?.scrollIntoView({ behavior: 'smooth' });
     }
-    
+
     // Start closing animation
     setIsClosingCloud(true);
     setTimeout(() => {
@@ -285,7 +285,7 @@ function Proposition() {
     <>
 
       {/* Navigation Cloud */}
-      <div className={`fixed inset-0 z-[80] transition-all duration-500 ease-out ${showNavigationCloud
+      <div className={`fixed inset-0 z-[80] transition-all duration-500 ease-out font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] ${showNavigationCloud
         ? 'opacity-100 backdrop-blur-sm'
         : 'opacity-0 pointer-events-none'
         }`}>
@@ -301,7 +301,7 @@ function Proposition() {
               const y = Math.sin((angle * Math.PI) / 180) * radius;
 
               // Simple staggered fade animation
-              const fadeDelay = isClosingCloud 
+              const fadeDelay = isClosingCloud
                 ? (navigationSections.length - 1 - index) * 50 // Reverse order for closing
                 : index * 50; // Normal order for opening
 
@@ -309,13 +309,12 @@ function Proposition() {
                 <button
                   key={section.name}
                   onClick={() => scrollToSection(section.target)}
-                  className={`absolute bg-white hover:bg-sky-500 text-gray-700 hover:text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border border-gray-200 group w-32 ${
-                    showNavigationCloud && !isClosingCloud 
-                      ? 'fade-in' 
-                      : isClosingCloud 
-                        ? 'fade-out' 
-                        : 'opacity-0'
-                  }`}
+                  className={`absolute bg-white hover:bg-sky-500 text-gray-700 hover:text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border border-gray-200 group w-32 ${showNavigationCloud && !isClosingCloud
+                    ? 'fade-in'
+                    : isClosingCloud
+                      ? 'fade-out'
+                      : 'opacity-0'
+                    }`}
                   style={{
                     left: `calc(50% + ${x}px)`,
                     top: `calc(50% + ${y}px)`,
@@ -324,7 +323,7 @@ function Proposition() {
                   }}
                 >
                   <div className="flex items-center justify-center">
-                    <span className="text-sm font-medium text-center truncate">{section.name}</span>
+                    <span className="text-sm font-extralight text-center truncate">{section.name}</span>
                   </div>
                 </button>
               );
@@ -333,13 +332,12 @@ function Proposition() {
             {/* Center Close Button */}
             <button
               onClick={handleCloseNavigationCloud}
-              className={`absolute bg-sky-500 hover:bg-sky-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 ${
-                showNavigationCloud && !isClosingCloud 
-                  ? 'fade-in' 
-                  : isClosingCloud 
-                    ? 'fade-out' 
-                    : 'opacity-0'
-              }`}
+              className={`absolute bg-sky-500 hover:bg-sky-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 ${showNavigationCloud && !isClosingCloud
+                ? 'fade-in'
+                : isClosingCloud
+                  ? 'fade-out'
+                  : 'opacity-0'
+                }`}
               style={{
                 left: '50%',
                 top: '50%',
@@ -354,7 +352,7 @@ function Proposition() {
       </div>
 
       {/* Floating Indicator */}
-      <div className={`fixed bottom-8 right-8 z-[70] transition-all duration-700 ease-out ${showFloatingIndicator
+      <div className={`fixed bottom-8 right-8 z-[70] transition-all duration-700 ease-out font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] ${showFloatingIndicator
         ? 'opacity-100 translate-y-0 scale-100'
         : 'opacity-0 translate-y-10 scale-75 pointer-events-none'
         }`}>
@@ -364,7 +362,7 @@ function Proposition() {
           : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
           }`}>
           <div className="relative bg-white px-4 py-3 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
-            <div className="text-sm font-medium text-gray-800">
+            <div className="text-sm font-medium text-gray-700">
               Click me for easy navigation
             </div>
             {/* Speech bubble arrow */}
@@ -403,7 +401,7 @@ function Proposition() {
             onClick={() => setShowContact(false)}
             className="absolute top-8 right-8 text-black hover:opacity-70 transition-opacity contact-text"
           >
-            <span className="ml-2 text-sm tracking-wide flex items-center cursor-pointer">
+            <span className="ml-2 text-sm tracking-wide flex items-center cursor-pointer ">
               <X size={20} className="mr-1" />CLOSE
             </span>
           </button>
@@ -423,7 +421,7 @@ function Proposition() {
                 onMouseEnter={() => setHoveredContactHeader(true)}
                 onMouseLeave={() => setHoveredContactHeader(false)}
               >
-                <span className={`transition-colors duration-300 ${hoveredContactHeader ? 'text-white' : 'text-gray-900'}`}>
+                <span className={`transition-colors duration-300 font-extralight font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] ${hoveredContactHeader ? 'text-white' : 'text-gray-700'}`}>
                   CONTACT @ <span className={hoveredContactHeader ? 'text-white' : 'text-sky-400'}>HANDYGO</span>
                 </span>
               </h2>
@@ -437,34 +435,34 @@ function Proposition() {
                 onMouseEnter={() => setHoveredContactPhone(true)}
                 onMouseLeave={() => setHoveredContactPhone(false)}
               >
-                <span className={`transition-colors duration-300 ${hoveredContactPhone ? 'text-white' : 'text-gray-900'}`}>
+                <span className={`transition-colors duration-300 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] font-extralight ${hoveredContactPhone ? 'text-white' : 'text-gray-700'}`}>
                   (+63) 96 057 2055
                 </span>
               </h2>
             </div>
 
             <div className="space-y-8 contact-details">
-              <div className="flex justify-between items-center border-b border-gray-100 pb-6 opacity-0 fade-slide-up delay-1">
+              <div className="flex justify-between items-center border-b border-gray-100 pb-6 opacity-0 fade-slide-up delay-1  font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
                 <div className="text-gray-500">KIMBERY CAÑON / PROJECT MANAGER</div>
                 <div className="text-gray-900">KIMBERYCAÑON16@GMAIL.COM / (+63) 96 452 7563</div>
               </div>
 
-              <div className="flex justify-between items-center border-b border-gray-100 pb-6 opacity-0 fade-slide-up delay-2">
+              <div className="flex justify-between items-center border-b border-gray-100 pb-6 opacity-0 fade-slide-up delay-2 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
                 <div className="text-gray-500">KATHLEEN REPUNTE / DOCUMENTOR</div>
                 <div className="text-gray-900">KATHREPUNTE44@GMAIL.COM / (+63) 95 222 4625</div>
               </div>
 
-              <div className="flex justify-between items-center border-b border-gray-100 pb-6 opacity-0 fade-slide-up delay-3">
+              <div className="flex justify-between items-center border-b border-gray-100 pb-6 opacity-0 fade-slide-up delay-3 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
                 <div className="text-gray-500">VINCE EDWARD MAÑACAP / DEVELOPER</div>
                 <div className="text-gray-900">VINCEEDWARD480@GMAIL.COM / (+63) 96 245 2324</div>
               </div>
 
-              <div className="flex justify-between items-center border-b border-gray-100 pb-6 opacity-0 fade-slide-up delay-4">
+              <div className="flex justify-between items-center border-b border-gray-100 pb-6 opacity-0 fade-slide-up delay-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
                 <div className="text-gray-500">BART JAY JUAREZ / ANALYST</div>
                 <div className="text-gray-900">BARTOLOMS122@GMAIL.COM / (+63) 96 057 2055</div>
               </div>
 
-              <div className="flex justify-between items-center border-b border-gray-100 pb-6 opacity-0 fade-slide-up delay-5">
+              <div className="flex justify-between items-center border-b border-gray-100 pb-6 opacity-0 fade-slide-up delay-5 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
                 <div className="text-gray-500">KYLE SELLOTE / DEVELOPER</div>
                 <div className="text-gray-900">KYLEPARDILLO55@GMAIL.COM / (+63) 96 057 2055</div>
               </div>
@@ -475,19 +473,19 @@ function Proposition() {
 
       {/* Loading Animation */}
       {loading && (
-        <div className="fixed inset-0 flex flex-col items-center justify-center bg-white text-gray-800 z-40 overflow-hidden">
+        <div className="fixed inset-0 flex flex-col items-center justify-center bg-white text-gray-800 z-40 overflow-hidden font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
           <div className="w-full">
             <div className="relative w-full">
               <div className="w-full h-16 flex items-center justify-between px-8">
-                <div className="text-gray-500 font-bold text-2xl">LOADING</div>
+                <div className="text-gray-500 font-extralight text-2xl">LOADING</div>
               </div>
 
               <div
                 className="absolute top-0 left-0 h-16 bg-sky-500 flex items-center justify-between px-8 transition-all duration-300 ease-out overflow-hidden"
                 style={{ width: `${progress}%` }}
               >
-                <div className="text-white font-bold text-2xl whitespace-nowrap">LOADING</div>
-                <div className="text-white font-bold text-2xl whitespace-nowrap">/{progress.toFixed(0)}</div>
+                <div className="text-white font-extralight text-2xl whitespace-nowrap">LOADING</div>
+                <div className="text-white font-extralight text-2xl whitespace-nowrap">/{progress.toFixed(0)}</div>
               </div>
             </div>
           </div>
@@ -505,7 +503,7 @@ function Proposition() {
       )}
 
       {/* Main Content */}
-      <div className={`fixed inset-0 z-50 bg-black text-white transition-all duration-1000 overflow-y-auto ${heroAnimationComplete ? 'opacity-100 scale-100' : 'opacity-0 scale-150'}`}>
+      <div className={`fixed inset-0 z-50 bg-black text-white transition-all duration-1000 overflow-y-auto font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] ${heroAnimationComplete ? 'opacity-100 scale-100' : 'opacity-0 scale-150'}`}>
 
         {/* First Section - Hero */}
         <section
@@ -526,13 +524,13 @@ function Proposition() {
             <div className={`max-w-7xl mx-auto text-center transition-all duration-1000 ease-out ${heroAnimationComplete ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl leading-none text-gray-300">
                 <div className={`transition-transform duration-1000 delay-100 ${heroAnimationComplete ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
-                  <span className="block">FULL PRODUCTION</span>
+                  <span className="block text-gray-300 font-medium">FULL PRODUCTION</span>
                 </div>
                 <div className={`transition-transform duration-1000 delay-300 ${heroAnimationComplete ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
-                  <span className="block"><span className="text-sky-400">SERVICES</span> BASED</span>
+                  <span className="block text-gray-300 font-medium"><span className="text-sky-400">SERVICES</span> BASED</span>
                 </div>
                 <div className={`transition-transform duration-1000 delay-500 ${heroAnimationComplete ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
-                  <span className="block">IN PHILIPPINES</span>
+                  <span className="block text-gray-300 font-medium">IN PHILIPPINES</span>
                 </div>
               </h1>
 
@@ -604,13 +602,13 @@ function Proposition() {
               <div className="col-span-5 sticky top-60 h-fit mr-10 ml-[-2rem]">
                 <div className="space-y-5 overflow-hidden">
                   <span
-                    className={`text-sm font-semibold tracking-wide uppercase transition-all duration-700 ease-out block ${textAnimating ? 'blur-lg opacity-0 transform translate-y-4' : 'blur-0 opacity-100 transform translate-y-0'
+                    className={`text-sm font-medium tracking-wide uppercase transition-all duration-700 ease-out block ${textAnimating ? 'blur-lg opacity-0 transform translate-y-4' : 'blur-0 opacity-100 transform translate-y-0'
                       } ${aboutHandyGo[currentAboutSection].accentColor}`}
                   >
                     About HandyGo
                   </span>
                   <h2
-                    className={`text-4xl font-bold text-gray-600 leading-tight transition-all duration-700 ease-out block ${textAnimating ? 'blur-lg opacity-0 transform translate-y-6' : 'blur-0 opacity-100 transform translate-y-0'
+                    className={`text-4xl font-medium text-gray-600 leading-tight transition-all duration-700 ease-out block ${textAnimating ? 'blur-lg opacity-0 transform translate-y-6' : 'blur-0 opacity-100 transform translate-y-0'
                       }`}
                   >
                     {aboutHandyGo[currentAboutSection].title}
