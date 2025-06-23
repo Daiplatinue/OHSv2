@@ -1,15 +1,12 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect } from "react"
-import { X, AlertTriangle, XCircle, Clock, CheckCircle2, AlertCircle } from "lucide-react" // Import CheckCircle2 for success modal
+import { X, AlertTriangle, XCircle, Clock, CheckCircle2, AlertCircle } from "lucide-react" 
 import CustomerRequirements from "./Styles/CustomerRequirements"
 import ManagerRequirements from "./Styles/ManagerRequirements"
 import OTP from "../sections/Styles/OTP"
-import TermsCondition from "../sections/Styles/TermsCondition" // Import the new TermsCondition component
+import TermsCondition from "../sections/Styles/TermsCondition"
 import Cookies from "js-cookie"
 
-// Animation keyframes from Transaction.tsx
 const keyframes = `
 @keyframes fadeIn {
   from { opacity: 0; }

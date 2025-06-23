@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -254,7 +256,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
     status: booking.status,
     date: booking.date || new Date(booking.bookingDate).toLocaleDateString(),
     price: booking.price || booking.pricing.totalRate,
-    image: booking.image || "https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923_1280.jpg",
+    image: booking.image || "/placeholder.svg",
     workerCount: booking.workerCount,
     estimatedTime: booking.estimatedTime || "2-4 hours",
     location: booking.location.name,
@@ -540,15 +542,15 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
   }
 
   return (
-    <div className="flex bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
-      <div className="w-1/3 relative h-[150px]">
+    <div className="flex flex-col sm:flex-row bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
+      <div className="w-full sm:w-1/3 relative h-[150px]">
         <img
           src={displayBooking.image || "/placeholder.svg"}
           alt={displayBooking.service}
           className="w-full h-full object-cover"
         />
       </div>
-      <div className="w-2/3 p-4">
+      <div className="w-full sm:w-2/3 p-4">
         <div className="flex justify-between items-start">
           <div>
             <h3 className="font-semibold text-base">{displayBooking.companyName}</h3>
@@ -601,7 +603,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
               onClick={() => setShowDetailsModal(false)}
             />
             <motion.div
-              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-6 shadow-xl z-50 w-[90%] max-w-4xl"
+              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-6 shadow-xl z-50 w-[90%] max-w-4xl max-h-[90vh] overflow-y-auto"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -768,7 +770,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
               onClick={() => setShowTrackingModal(false)}
             />
             <motion.div
-              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-5 shadow-xl z-50 w-[90%] max-w-2xl"
+              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl p-5 shadow-xl z-50 w-[90%] max-w-2xl max-h-[90vh] overflow-y-auto"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -873,7 +875,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
               onClick={() => setShowReviewModal(false)}
             />
             <motion.div
-              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-xl z-50 w-[90%] max-w-md border border-white/20"
+              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-xl z-50 w-[90%] max-w-md border border-white/20 max-h-[90vh] overflow-y-auto"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -962,7 +964,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
               exit={{ opacity: 0 }}
             />
             <motion.div
-              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-xl z-50 w-[90%] max-w-md border border-white/20"
+              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-xl rounded-3xl p-6 shadow-xl z-50 w-[90%] max-w-md border border-white/20 max-h-[90vh] overflow-y-auto"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
@@ -1785,6 +1787,19 @@ const FloatingDock: React.FC = () => {
     setUnreadNotifications(unreadCount)
   }
 
+  // Add useEffect to control body overflow based on drawer state
+  useEffect(() => {
+    if (showDrawer) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    // Clean up the style when the component unmounts or showDrawer changes
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [showDrawer])
+
   return (
     <AnimatePresence>
       {/* Toggle Button - Only visible when dock is hidden */}
@@ -1862,7 +1877,7 @@ const FloatingDock: React.FC = () => {
                     damping: 25,
                     mass: 0.5,
                   }}
-                  className="absolute bottom-16 right-[-10.5rem] w-80 md:w-96 shadow-xl z-50"
+                  className="absolute bottom-16 left-1/2 -translate-x-1/2 w-80 md:w-96 shadow-xl z-50"
                   style={{
                     transformOrigin: "bottom right",
                     filter: "drop-shadow(0 10px 8px rgb(0 0 0 / 0.04)) drop-shadow(0 4px 3px rgb(0 0 0 / 0.1))",
@@ -2003,7 +2018,7 @@ const FloatingDock: React.FC = () => {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-3 p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4">
                 <StatCard
                   title="Total"
                   count={totalBookings}

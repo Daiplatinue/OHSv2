@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight, Search, X, ChevronDown, ChevronUp } from "lucide-react"
 
@@ -136,31 +138,29 @@ function Home() {
 
       <div className="relative">
         {/* Carousel */}
-        <div className="relative h-[600px] overflow-hidden mx-auto max-w-7xl mt-10 rounded-2xl group">
+        <div className="relative aspect-video max-h-[600px] overflow-hidden mx-auto max-w-7xl mt-10 rounded-2xl group">
           {carouselItems.map((item, index) => (
             <div
               key={index}
-              className={`absolute inset-0 transition-all duration-1000 ease-in-out transform ${index === currentSlide ? "opacity-100" : "opacity-0"
-                }`}
+              className={`absolute inset-0 transition-all duration-1000 ease-in-out transform ${
+                index === currentSlide ? "opacity-100" : "opacity-0"
+              }`}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-lime-400">
-                <img
-                  src={item.image || "/placeholder.svg"}
-                  className="w-full h-full object-cover object-center"
-                />
+                <img src={item.image || "/placeholder.svg"} className="w-full h-full object-cover object-center" />
               </div>
             </div>
           ))}
 
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white bg-black/20 rounded-full hover:bg-black/30 transition-all z-10 opacity-0 group-hover:opacity-100"
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white bg-black/20 rounded-full hover:bg-black/30 transition-all z-10"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white bg-black/20 rounded-full hover:bg-black/30 transition-all z-10 opacity-0 group-hover:opacity-100"
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white bg-black/20 rounded-full hover:bg-black/30 transition-all z-10"
           >
             <ChevronRight className="w-6 h-6" />
           </button>
@@ -169,8 +169,9 @@ function Home() {
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
-                className={`w-2.5 h-2.5 rounded-full transition-all ${index === currentSlide ? "bg-white" : "bg-white/50 hover:bg-white/70"
-                  }`}
+                className={`w-2.5 h-2.5 rounded-full transition-all ${
+                  index === currentSlide ? "bg-white" : "bg-white/50 hover:bg-white/70"
+                }`}
                 aria-label={`Go to slide ${index + 1}`}
               />
             ))}
@@ -188,18 +189,20 @@ function Home() {
 
       <BestCompanies />
 
-      <div className="bg-white/90 text-black py-16 mt-[-6rem]">
+      <div className="bg-white/90 text-black py-16">
+        {" "}
+        {/* Removed mt-[-6rem] */}
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col space-y-8">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
               <h2 className="text-3xl font-semibold scroll-reveal text-gray-700">List of all Services</h2>
               <p className="text-sm text-gray-500">
                 Showing {displayedProducts.length} of {filteredProducts.length} services
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-4 items-center bg-gray-200/70 p-4 rounded-lg">
-              <div className="relative flex-grow max-w-md">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-4 items-center bg-gray-200/70 p-4 rounded-lg">
+              <div className="relative flex-grow w-full sm:max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
@@ -210,7 +213,7 @@ function Home() {
                 />
               </div>
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 w-full sm:w-auto justify-center">
                 <input
                   type="number"
                   value={priceRange[0]}
@@ -228,15 +231,16 @@ function Home() {
                 />
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-center">
                 {categories.map((category) => (
                   <button
                     key={category}
                     onClick={() => handleCategoryToggle(category)}
-                    className={`px-4 py-2 rounded-full text-sm transition-all ${selectedCategories.includes(category)
+                    className={`px-4 py-2 rounded-full text-sm transition-all ${
+                      selectedCategories.includes(category)
                         ? "bg-blue-500 text-white"
                         : "bg-white text-black hover:bg-gray-300 cursor-pointer"
-                      }`}
+                    }`}
                   >
                     {category}
                   </button>
@@ -246,7 +250,7 @@ function Home() {
               {(searchQuery || priceRange[0] > 0 || priceRange[1] < 50000 || selectedCategories.length > 0) && (
                 <button
                   onClick={clearFilters}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all w-full sm:w-auto justify-center"
                 >
                   <X className="h-4 w-4" />
                   Clear filters
@@ -254,11 +258,11 @@ function Home() {
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {displayedProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="group cursor-pointer bg-gray-200/70 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 scroll-reveal hover-scale"
+                  className="group cursor-pointer bg-gray-200/70 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 scroll-reveal hover-scale flex flex-col h-full"
                 >
                   <div className="relative overflow-hidden rounded-lg mb-4">
                     <img
@@ -268,8 +272,11 @@ function Home() {
                     />
                   </div>
                   <h3 className="text-lg font-medium mb-2 text-black">{product.name}</h3>
-                  <p className="text-sm text-gray-600 mb-16 line-clamp-3">{product.description}</p>
-                  <div className="absolute bottom-6 left-6 right-6 flex justify-between items-center">
+                  <p className="text-sm text-gray-600 line-clamp-3 flex-grow">{product.description}</p>{" "}
+                  {/* Removed mb-16, added flex-grow */}
+                  <div className="mt-auto flex justify-between items-center pt-4">
+                    {" "}
+                    {/* Added mt-auto, pt-4 */}
                     <span className="text-lg font-medium text-black">₱{product.price}</span>
                     <button
                       onClick={() => handleSeeMore(product.name)}
