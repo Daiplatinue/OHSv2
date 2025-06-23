@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight, Search, X, ChevronDown, ChevronUp } from "lucide-react"
 
@@ -9,7 +7,6 @@ import WorkersModal from "../sections/Styles/WorkersModal"
 import MyFloatingDockCustomer from "../sections/Styles/MyFloatingDock-Customer"
 import ServiceCategoriesModal from "../sections/Styles/ServiceCategoriesModal"
 
-import PromoBanner from "./Styles/PromoBanner"
 import ServiceBanner from "./Styles/ServiceBanner"
 
 import LegalText from "../sections/Styles/LegalText"
@@ -187,12 +184,11 @@ function Home() {
 
       <Popular />
 
-      <PromoBanner />
       <ServiceBanner />
 
       <BestCompanies />
 
-      <div className="bg-white/90 text-black py-16">
+      <div className="bg-white/90 text-black py-16 mt-[-6rem]">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col space-y-8">
             <div className="flex justify-between items-center">

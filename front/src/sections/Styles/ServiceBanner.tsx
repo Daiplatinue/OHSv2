@@ -1,63 +1,27 @@
-import image3 from "../../assets/Converging Giants_ A Symmetrical Skyscraper Ascent.jpeg"
+import { Button } from "@/components/ui/button"
 
-export default function ProductShowcase() {
+import img1 from "../../assets/Home/Pensive Male Portrait.jpeg"
+
+export default function ServiceBanner() {
   return (
-    <div className="flex flex-col md:flex-row gap-4 max-w-6xl mx-auto p-4">
-      <div
-        className="flex-1 rounded-lg overflow-hidden bg-black p-6 relative min-h-[300px] before:content-[''] before:absolute before:inset-0 before:bg-black before:opacity-30 before:z-0"
-        style={{
-          backgroundImage: `url('https://cdn.pixabay.com/photo/2017/04/25/22/28/despaired-2261021_1280.jpg')` ,
-          backgroundPosition: "center",
-          backgroundSize: "cover",
-          position: "relative",
-        }}
-      >
-        <div className="z-10 relative">
-          <h2 className="text-3xl font-bold text-gray-100 mb-1">
-            Home Cleaning
-            <br />
-            Services
-          </h2>
-          <p className="text-gray-200 mb-2">Starting at ₱12,000</p>
-        </div>
-      </div>
+    <section
+      className="relative w-full h-[500px] flex items-center justify-center text-center px-4 py-12 md:py-24 lg:py-32 bg-cover bg-center"
+      style={{ backgroundImage: `url(${img1})` }}
+    >
+      {/* Overlay for text readability */}
+      <div className="absolute inset-0 bg-black opacity-50"></div>
 
-      <div
-        className="flex-1 rounded-lg overflow-hidden bg-black p-6 relative min-h-[300px] before:content-[''] before:absolute before:inset-0 before:bg-black before:opacity-40 before:z-0"
-        style={{
-          backgroundImage: `url('https://cdn.pixabay.com/photo/2018/03/27/21/43/startup-3267505_1280.jpg')`,
-          backgroundSize: "cover",
-          backgroundPosition: "bottom",
-          position: "relative",
-        }}
-      >
-        <div className="z-10 relative">
-          <h2 className="text-3xl font-bold text-gray-100 mb-1">Handyman 
-            <br />
-            Services
-          </h2>
-          <p className="text-gray-200 mb-2">Starting at ₱5,499</p>
-        </div>
+      <div className="relative z-10 max-w-3xl mx-auto space-y-4">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-gray-200 leading-tight">Online Home Services</h1>
+        <p className="text-lg md:text-xl text-white opacity-90">
+          Your trusted partner for all home service needs. Quality, reliability, and convenience at your fingertips.
+        </p>
+        <Button
+          className="mt-6 p-5 text-sm rounded-full border-1 border-gray-200 text-gray-200 bg-transparent"
+        >
+          Book Now
+        </Button>
       </div>
-
-      <div
-        className="flex-1 rounded-lg overflow-hidden bg-black p-6 relative min-h-[300px] before:content-[''] before:absolute before:inset-0 before:bg-black before:opacity-10 before:z-0"
-        style={{
-          backgroundImage: `url(${image3})`,
-          backgroundSize: "cover",
-          backgroundPosition: "bottom",
-          position: "relative",
-        }}
-      >
-        <div className="z-10 relative">
-          <h2 className="text-3xl font-bold text-gray-100 mb-1">
-            Plumbling
-            <br />
-            Services
-          </h2>
-          <p className="text-gray-200 mb-2">Starting at ₱8,000</p>
-        </div>
-      </div>
-    </div>
+    </section>
   )
 }
