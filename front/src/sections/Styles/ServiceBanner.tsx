@@ -12,8 +12,8 @@ export default function ServiceBanner() {
       <div className="absolute inset-0 bg-black opacity-50"></div>
 
       <div className="relative z-10 max-w-3xl mx-auto space-y-4">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-gray-200 leading-tight">Online Home Services</h1>
-        <p className="text-lg md:text-xl text-white opacity-90">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-extralight text-gray-200 leading-tight">Online Home Services</h1>
+        <p className="text-lg md:text-xl text-gray-100 opacity-90">
           Your trusted partner for all home service needs. Quality, reliability, and convenience at your fingertips.
         </p>
         <Button

@@ -16,7 +16,7 @@ const LegalText: React.FC = () => {
       </p>
 
       <p className="mb-4">
-        <strong>Handy Go+ Membership:</strong> Enjoy priority booking, exclusive discounts, and faster service responses 
+        <strong className="text-black font-semibold">Handy Go+ Membership:</strong> Enjoy priority booking, exclusive discounts, and faster service responses 
         with Handy Go+ for just $9.99/month after a free trial. Members also benefit from extended customer support, 
         no cancellation fees, and premium service options. Only one offer per Handy Go Account and one per family 
         if you're part of a Family Sharing group. Offer valid for 3 months after activation. Plan automatically renews
@@ -24,12 +24,12 @@ const LegalText: React.FC = () => {
       </p>
 
       <p className="mb-4">
-        <strong>Special Pricing:</strong> We offer exclusive discounts for first-time users, senior citizens, and
+        <strong className="text-black font-semibold">Special Pricing:</strong> We offer exclusive discounts for first-time users, senior citizens, and
         community programs. To learn more about how to qualify, talk to a Handy Go specialist or contact our support team.
       </p>
 
       <p className="mb-4">
-        <strong>Booking Management:</strong> With Handy Go, you can easily schedule, reschedule, or cancel bookings
+        <strong className="text-black font-semibold">Booking Management:</strong> With Handy Go, you can easily schedule, reschedule, or cancel bookings
         directly through our platform. Real-time notifications keep you informed every step of the way, ensuring
         seamless communication with service providers.
       </p>

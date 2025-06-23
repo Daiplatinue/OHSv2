@@ -8,7 +8,7 @@ function Footer() {
                 <div className="max-w-7xl mx-auto px-4">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-12 border-b border-gray-300">
                         <div>
-                            <h4 className="font-semibold mb-4">Services</h4>
+                            <h4 className="font-extralight mb-4 text-lg text-gray-900">Services</h4>
                             <ul className="space-y-3 text-sm text-gray-700">
                                 <li><a href="#" className="hover:underline">Plumbling</a></li>
                                 <li><a href="#" className="hover:underline">Handyman</a></li>
@@ -21,7 +21,7 @@ function Footer() {
                             </ul>
                         </div>
                         <div>
-                            <h4 className="font-semibold mb-4">Sponsors</h4>
+                            <h4 className="font-extralight mb-4 text-lg text-gray-900">Sponsors</h4>
                             <ul className="space-y-3 text-sm text-gray-700">
                                 <li><a href="#" className="hover:underline">Pueblo de Oro</a></li>
                                 <li><a href="#" className="hover:underline">DMCI Homes</a></li>
@@ -35,7 +35,7 @@ function Footer() {
                             </ul>
                         </div>
                         <div>
-                            <h4 className="font-semibold mb-4">Team Members</h4>
+                            <h4 className="font-extralight mb-4 text-lg text-gray-900">Team Members</h4>
                             <ul className="space-y-3 text-sm text-gray-700">
                                 <li><a href="#" className="hover:underline">Kimberly Cañon <span className="text-gray-400">| Project Manager</span></a></li>
                                 <li><a href="#" className="hover:underline">Kathleen Repunte <span className="text-gray-400">| Documentor</span></a></li>
@@ -45,7 +45,7 @@ function Footer() {
                             </ul>
                         </div>
                         <div>
-                            <h4 className="font-semibold mb-4">Special Thanks</h4>
+                            <h4 className="font-extralight mb-4 text-lg text-gray-900">Special Thanks</h4>
                             <ul className="space-y-3 text-sm text-gray-700">
                                 <li><a href="#" className="hover:underline">Jonathan Reyes</a></li>
                                 <li><a href="#" className="hover:underline">Michael Cruz</a></li>

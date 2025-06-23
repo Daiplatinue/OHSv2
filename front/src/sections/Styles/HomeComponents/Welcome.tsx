@@ -21,7 +21,7 @@ export default function Dashboard() {
         <div className="absolute inset-0 z-10 bg-gradient-to-b from-transparent via-transparent to-gray-50"></div>
         <div className="absolute inset-0 z-10 bg-gradient-to-b from-transparent via-transparent to-gray-50"></div>
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20 text-white">
-          <h1 className="text-3xl font-semibold text-white mb-20">
+          <h1 className="text-3xl font-extralight text-gray-100 mb-20">
             Good Afternoon, User
           </h1>
         </div>
@@ -38,19 +38,19 @@ export default function Dashboard() {
             {" "}
             {/* Added flex-1 to make card stretch */}
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Daily Summary</CardTitle>
+              <CardTitle className="text-lg font-extralight text-gray-700">Daily Summary</CardTitle>
               <p className="text-sm text-gray-500">Here&apos;s your daily summary for managing online home services.</p>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-md font-medium mb-2">Service Request Overview</h3>
+                <h3 className="text-lg font-extralight text-gray-700 mb-2">Service Request Overview</h3>
                 <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
                   <li>
-                    <span className="font-bold">23</span> new service requests, <span className="font-bold">9</span>{" "}
+                    <span className="font-extralight">23</span> new service requests, <span className="font-extralight">9</span>{" "}
                     require your attention
                   </li>
                   <li>
-                    <span className="font-bold">Priority:</span> Urgent plumbing repair request from client #123
+                    <span className="font-extralight">Priority:</span> Urgent plumbing repair request from client #123
                   </li>
                   <li>Client #456 requesting status update on HVAC installation</li>
                   <li>New lead for electrical services needs follow-up by Friday</li>
@@ -58,7 +58,7 @@ export default function Dashboard() {
               </div>
 
               <div>
-                <h3 className="text-md font-medium mb-2">Service Tasks Due Today:</h3>
+                <h3 className="text-lg font-extralight mb-2 text-gray-700">Service Tasks Due Today:</h3>
                 <ul className="space-y-2 text-sm text-gray-700">
                   <li className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center">
@@ -82,7 +82,7 @@ export default function Dashboard() {
               </div>
 
               <div>
-                <h3 className="text-md font-medium mb-2">Service Notes</h3>
+                <h3 className="text-lg font-extralight mb-2 text-gray-700">Service Notes</h3>
                 <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
                   <li>Call customer for service feedback</li>
                   <li>Record and upload service completion videos</li>
@@ -97,7 +97,7 @@ export default function Dashboard() {
             {" "}
             {/* Added flex-1 to make card stretch */}
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Industry Highlights</CardTitle>
+              <CardTitle className="text-lg font-extralight text-gray-700">Industry Highlights</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-4">
@@ -167,7 +167,7 @@ export default function Dashboard() {
             {" "}
             {/* Added flex-1 to make card stretch */}
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Important Communications</CardTitle>
+              <CardTitle className="text-lg text-gray-700 font-extralight">Important Communications</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-4">
@@ -205,7 +205,7 @@ export default function Dashboard() {
             {" "}
             {/* Added flex-1 to make card stretch */}
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Upcoming Engagements</CardTitle>
+              <CardTitle className="text-lg font-extralight text-gray-700">Upcoming Engagements</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
@@ -276,7 +276,7 @@ export default function Dashboard() {
             {" "}
             {/* Added flex-1 to make card stretch */}
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">New Connections</CardTitle>
+              <CardTitle className="text-lg font-extralight text-gray-700">New Connections</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">

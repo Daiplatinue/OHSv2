@@ -390,7 +390,7 @@ export default function Popular() {
                           className="rounded-full border border-gray-200 object-cover"
                         />
                         <div>
-                          <div className="font-semibold text-gray-900">{service.providerName}</div>
+                          <div className="font-semibold text-gray-700">{service.providerName}</div>
                           <div className="text-xs text-gray-500">{service.tag}</div>
                         </div>
                       </div>

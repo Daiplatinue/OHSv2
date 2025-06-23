@@ -6,8 +6,8 @@ import qimg5 from "../../../assets/Hands Holding Pill.jpeg"
 
 function MoreFeatures() {
   return (
-    <div className="max-w-7xl mx-auto">
-      <h2 className="text-2xl font-semibold mb-6">More Features</h2>
+    <div className="max-w-7xl mx-auto mt-15">
+      <h2 className="text-2xl font-extralight mb-6 text-gray-700">More Features</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         <div className="relative rounded-xl overflow-hidden h-40 group cursor-pointer hover:shadow-lg transition-all duration-300">
           <img

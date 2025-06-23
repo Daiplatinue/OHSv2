@@ -1,23 +1,17 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight, Search, X, ChevronDown, ChevronUp } from "lucide-react"
-
 import Footer from "../sections/Styles/Footer"
-
 import WorkersModal from "../sections/Styles/WorkersModal"
 import MyFloatingDockCustomer from "../sections/Styles/MyFloatingDock-Customer"
 import ServiceCategoriesModal from "../sections/Styles/ServiceCategoriesModal"
-
 import ServiceBanner from "./Styles/ServiceBanner"
-
 import LegalText from "../sections/Styles/LegalText"
 import MoreFeatures from "../sections/Styles/HomeComponents/MoreFeatures"
 import Welcome from "../sections/Styles/HomeComponents/Welcome"
 import Popular from "../sections/Styles/HomeComponents/Popular"
 import BestCompanies from "./Styles/HomeComponents/BestCompanies"
-
 import { serviceSubcategories, sellers, carouselItems, products } from "../sections/Home-data"
+import WelcomeModal from "../sections/Styles/HomeComponents/WelcomeMsg" // Add this import
 
 function useScrollReveal() {
   useEffect(() => {
@@ -53,6 +47,7 @@ function Home() {
   const [, setSelectedSubcategory] = useState<string>("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [showAllServices, setShowAllServices] = useState(false)
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false) // New state for welcome modal
 
   useScrollReveal()
 
@@ -69,6 +64,13 @@ function Home() {
       nextSlide()
     }, 5000)
     return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    const hasSeenWelcomeModal = localStorage.getItem("hasSeenWelcomeModal")
+    if (!hasSeenWelcomeModal) {
+      setShowWelcomeModal(true)
+    }
   }, [])
 
   const categories = Array.from(new Set(products.map((product) => product.category)))
@@ -129,8 +131,17 @@ function Home() {
     setShowAllServices((prev) => !prev)
   }
 
+  const handleWelcomeModalClose = () => {
+    setShowWelcomeModal(false)
+  }
+
+  const handleDoNotShowWelcomeAgain = () => {
+    localStorage.setItem("hasSeenWelcomeModal", "true")
+    setShowWelcomeModal(false)
+  }
+
   return (
-    <div className="min-h-screen bg-white/90">
+    <div className="min-h-screen bg-white/90 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
       <div className="z-40 flex">
         <MyFloatingDockCustomer />
       </div>
@@ -195,7 +206,7 @@ function Home() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col space-y-8">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <h2 className="text-3xl font-semibold scroll-reveal text-gray-700">List of all Services</h2>
+              <h2 className="text-3xl font-medium scroll-reveal text-gray-700">List of all Services</h2>
               <p className="text-sm text-gray-500">
                 Showing {displayedProducts.length} of {filteredProducts.length} services
               </p>
@@ -213,7 +224,7 @@ function Home() {
                 />
               </div>
 
-              <div className="flex items-center gap-4 w-full sm:w-auto justify-center">
+              <div className="flex items-center gap-4 w-full sm:w-auto justify-center text-gray-700">
                 <input
                   type="number"
                   value={priceRange[0]}
@@ -231,7 +242,7 @@ function Home() {
                 />
               </div>
 
-              <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-center">
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-center text-gray-700">
                 {categories.map((category) => (
                   <button
                     key={category}
@@ -271,13 +282,13 @@ function Home() {
                       className="w-full h-64 object-cover transform transition duration-500 group-hover:scale-105"
                     />
                   </div>
-                  <h3 className="text-lg font-medium mb-2 text-black">{product.name}</h3>
+                  <h3 className="text-lg font-medium mb-2 text-gray-800">{product.name}</h3>
                   <p className="text-sm text-gray-600 line-clamp-3 flex-grow">{product.description}</p>{" "}
                   {/* Removed mb-16, added flex-grow */}
                   <div className="mt-auto flex justify-between items-center pt-4">
                     {" "}
                     {/* Added mt-auto, pt-4 */}
-                    <span className="text-lg font-medium text-black">₱{product.price}</span>
+                    <span className="text-lg font-medium text-gray-900">₱{product.price}</span>
                     <button
                       onClick={() => handleSeeMore(product.name)}
                       className="text-sky-500 flex items-center transition-all duration-300 hover:text-blue-600 hover:translate-x-1"
@@ -326,6 +337,12 @@ function Home() {
         onClose={() => setIsModalOpen(false)}
         productName={selectedProduct}
         sellers={sellers[selectedProduct as keyof typeof sellers] || []}
+      />
+
+      <WelcomeModal
+        isOpen={showWelcomeModal}
+        onClose={handleWelcomeModalClose}
+        onDoNotShowAgain={handleDoNotShowWelcomeAgain}
       />
 
       <LegalText />
