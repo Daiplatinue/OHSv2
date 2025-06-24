@@ -20,9 +20,10 @@ export default function Dashboard() {
         {/* Gradient Overlay - fades to the background color (gray-100) */}
         <div className="absolute inset-0 z-10 bg-gradient-to-b from-transparent via-transparent to-gray-50"></div>
         <div className="absolute inset-0 z-10 bg-gradient-to-b from-transparent via-transparent to-gray-50"></div>
-        <div className="absolute inset-0 flex flex-col items-center justify-center z-20 text-white">
+        <div className="absolute inset-0 flex flex-col items-center text-center justify-center z-20 text-white">
           <h1 className="text-3xl font-extralight text-gray-100 mb-20">
-            Good Afternoon, User
+            Good Afternoon, User <br />
+            <span className="text-[17px]">akolangito@gmail.com</span>
           </h1>
         </div>
       </div>

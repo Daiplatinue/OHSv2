@@ -11,7 +11,7 @@ import Welcome from "../sections/Styles/HomeComponents/Welcome"
 import Popular from "../sections/Styles/HomeComponents/Popular"
 import BestCompanies from "./Styles/HomeComponents/BestCompanies"
 import { serviceSubcategories, sellers, carouselItems, products } from "../sections/Home-data"
-import WelcomeModal from "../sections/Styles/HomeComponents/WelcomeMsg" // Add this import
+import WelcomeModal from "../sections/Styles/HomeComponents/WelcomeMsg"
 
 function useScrollReveal() {
   useEffect(() => {
@@ -149,7 +149,7 @@ function Home() {
 
       <div className="relative">
         {/* Carousel */}
-        <div className="relative aspect-video max-h-[600px] overflow-hidden mx-auto max-w-7xl mt-10 rounded-2xl group">
+        <div className="relative aspect-video max-h-[600px] w-[80rem] max-w-[80rem] overflow-hidden mx-auto mt-10 rounded-2xl group">
           {carouselItems.map((item, index) => (
             <div
               key={index}

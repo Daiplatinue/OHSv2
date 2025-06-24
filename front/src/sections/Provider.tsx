@@ -1,10 +1,37 @@
-import { useState } from "react"
+import type React from "react"
+import { useState, useEffect } from "react"
 import MyFloatingDockProvider from "../sections/Styles/MyFloatingDock-Provider"
-import { CircleIcon, Calendar, Clock, MapPin, AlertCircle, Check, X, CheckCircle2, Users } from "lucide-react"
+import {
+  CalendarIcon,
+  Clock,
+  MapPin,
+  AlertCircle,
+  Check,
+  X,
+  CheckCircle2,
+  Users,
+  Search,
+  Mail,
+  Bell,
+  ChevronRight,
+  MoreVertical,
+  User,
+  Plus,
+  Star,
+  Award,
+  MessageSquareText,
+  Target,
+} from "lucide-react"
 import { Dialog } from "@headlessui/react"
 import ProviderSimulation from "../sections/Styles/CustomerTrackingMap"
+// import Chart from "react-apexcharts" // Removed ApexCharts import
 
-import Footer from "../sections/Styles/Footer"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Calendar } from "@/components/ui/calendar" // Shadcn Calendar component
+import { format } from "date-fns" // For date formatting
 
 interface Service {
   id: number
@@ -23,9 +50,24 @@ interface Service {
   completedDate?: string
   workersRequired?: number
   workersAssigned?: number
+  shortDescription?: string
+  review?: string // Added review field
+  rating?: number // Added rating field
+}
+
+interface RecentCustomer {
+  id: number
+  name: string
+  avatar: string
+  serviceName: string
+  review: string
+  totalPayment: number
+  rating: number
 }
 
 const keyframes = `
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -44,8 +86,8 @@ const keyframes = `
   
   @keyframes shakeX {
     0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-    20%, 40%, 60%, 80% { transform: translateX(10px); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(10px); }
+    20%, 40%, 60%, 80% { transform: translateX(-10px); }
   }
   
   @keyframes countdown {
@@ -67,6 +109,7 @@ function ProviderDashboard() {
   const [showMapSimulation, setShowMapSimulation] = useState(false)
   const [serviceBeingTracked, setServiceBeingTracked] = useState<Service | null>(null)
   const [showWorkersWaitingModal, setShowWorkersWaitingModal] = useState(false)
+  const [isDetailedStatsModalOpen, setIsDetailedStatsModalOpen] = useState(false) // New state for detailed stats modal
 
   const [pendingServices, setPendingServices] = useState<Service[]>([
     {
@@ -85,6 +128,7 @@ function ProviderDashboard() {
       status: "pending",
       workersRequired: 2,
       workersAssigned: 0,
+      shortDescription: "Fixing leaky pipes and installing new fixtures.",
     },
     {
       id: 202,
@@ -102,6 +146,7 @@ function ProviderDashboard() {
       status: "pending",
       workersRequired: 1,
       workersAssigned: 0,
+      shortDescription: "Troubleshooting wiring issues and outlet repairs.",
     },
     {
       id: 203,
@@ -119,6 +164,7 @@ function ProviderDashboard() {
       status: "pending",
       workersRequired: 3,
       workersAssigned: 0,
+      shortDescription: "Deep cleaning of a 3-bedroom apartment.",
     },
     {
       id: 204,
@@ -136,10 +182,10 @@ function ProviderDashboard() {
       status: "pending",
       workersRequired: 4,
       workersAssigned: 0,
+      shortDescription: "Kitchen and bathroom remodeling project.",
     },
   ])
 
-  // Sample data for ongoing services
   const [ongoingServices, setOngoingServices] = useState<Service[]>([
     {
       id: 101,
@@ -157,6 +203,7 @@ function ProviderDashboard() {
       status: "ongoing",
       workersRequired: 2,
       workersAssigned: 2,
+      shortDescription: "Weekly lawn mowing and garden care.",
     },
     {
       id: 102,
@@ -174,6 +221,7 @@ function ProviderDashboard() {
       status: "ongoing",
       workersRequired: 3,
       workersAssigned: 3,
+      shortDescription: "Consultation and design for living room.",
     },
   ])
 
@@ -195,6 +243,9 @@ function ProviderDashboard() {
       completedDate: "05/01/2025",
       workersRequired: 3,
       workersAssigned: 3,
+      shortDescription: "Repair of damaged roof tiles and sealing.",
+      review: "The roof repair was done quickly and efficiently. Very satisfied with the results!",
+      rating: 5,
     },
     {
       id: 2,
@@ -213,15 +264,31 @@ function ProviderDashboard() {
       completedDate: "05/03/2025",
       workersRequired: 2,
       workersAssigned: 2,
+      shortDescription: "Interior painting for two rooms.",
+      review: "Fantastic paint job! The team was very professional and paid great attention to detail.",
+      rating: 4,
     },
   ])
+
+  // Derived data for Recent Customers
+  const recentCustomers: RecentCustomer[] = completedServices.map((service) => ({
+    id: service.id,
+    name: service.customerName,
+    avatar: "/placeholder.svg?height=40&width=40", // Placeholder avatar
+    serviceName: service.serviceName,
+    review: service.review || "",
+    totalPayment: service.total,
+    rating: service.rating || 0,
+  }))
+
+  // Filter services for "Accepted Services" section: ongoing services or pending services with at least one worker assigned
+  const acceptedServices = [...pendingServices.filter((s) => (s.workersAssigned || 0) > 0), ...ongoingServices]
 
   const handleServiceClick = (service: Service) => {
     setSelectedService(service)
     setIsModalOpen(true)
   }
 
-  // Update the handleAcceptService function to ensure the modal shows the correct worker count
   const handleAcceptService = (serviceId: number) => {
     setIsLoading(true)
 
@@ -229,17 +296,14 @@ function ProviderDashboard() {
       const serviceToUpdate = pendingServices.find((service) => service.id === serviceId)
 
       if (serviceToUpdate) {
-        // Increment the workers assigned count
-        const workersAssigned = (serviceToUpdate.workersAssigned || 1) + 1
+        const workersAssigned = (serviceToUpdate.workersAssigned || 0) + 1
         const workersRequired = serviceToUpdate.workersRequired || 1
 
-        // Check if all required workers are now assigned
         if (workersAssigned >= workersRequired) {
-          // Move to ongoing services if all workers are assigned
           const updatedService = {
             ...serviceToUpdate,
             status: "ongoing" as const,
-            workersAssigned: workersRequired, // Ensure we don't exceed the required count
+            workersAssigned: workersRequired,
           }
 
           setPendingServices((prev) => prev.filter((service) => service.id !== serviceId))
@@ -247,14 +311,12 @@ function ProviderDashboard() {
 
           setSuccessMessage("Service accepted successfully! All required workers are now assigned.")
         } else {
-          // Update the pending service with the new worker count
           setPendingServices((prev) =>
             prev.map((service) =>
               service.id === serviceId ? { ...service, workersAssigned: workersAssigned } : service,
             ),
           )
 
-          // Show the waiting for more workers modal
           setShowWorkersWaitingModal(true)
           setSuccessMessage(
             `Worker assigned successfully! Waiting for ${workersRequired - workersAssigned} more worker(s).`,
@@ -263,7 +325,6 @@ function ProviderDashboard() {
 
         setIsSuccessModalOpen(true)
 
-        // Don't automatically close the workers waiting modal
         setTimeout(() => {
           setIsSuccessModalOpen(false)
         }, 5000)
@@ -274,7 +335,6 @@ function ProviderDashboard() {
     }, 1500)
   }
 
-  // Update the handleCancelService and confirmCancelService functions to handle worker count decrements
   const handleCancelService = (serviceId: number) => {
     setShowCancelReminder(true)
     setSelectedService(ongoingServices.find((service) => service.id === serviceId) || null)
@@ -286,19 +346,14 @@ function ProviderDashboard() {
 
     setTimeout(() => {
       if (selectedService) {
-        // Get the current worker count
         const workersAssigned = selectedService.workersAssigned || 0
         const workersRequired = selectedService.workersRequired || 1
 
-        // Decrement the worker count by 1 (minimum 0)
         const newWorkerCount = Math.max(0, workersAssigned - 1)
 
-        // If this was the last worker, remove from ongoing
         if (newWorkerCount === 0) {
-          // Remove from ongoing services
           setOngoingServices((prev) => prev.filter((service) => service.id !== selectedService.id))
 
-          // Add back to pending services with decremented worker count
           setPendingServices((prev) => [
             ...prev,
             {
@@ -308,10 +363,8 @@ function ProviderDashboard() {
             },
           ])
         } else if (newWorkerCount < workersRequired) {
-          // If we still have some workers but not enough, move back to pending
           setOngoingServices((prev) => prev.filter((service) => service.id !== selectedService.id))
 
-          // Add back to pending services with decremented worker count
           setPendingServices((prev) => [
             ...prev,
             {
@@ -321,7 +374,6 @@ function ProviderDashboard() {
             },
           ])
         } else {
-          // Just update the worker count in ongoing services
           setOngoingServices((prev) =>
             prev.map((service) =>
               service.id === selectedService.id ? { ...service, workersAssigned: newWorkerCount } : service,
@@ -329,17 +381,14 @@ function ProviderDashboard() {
           )
         }
 
-        // Increment cancel count
         const newCancelCount = cancelCount + 1
         setCancelCount(newCancelCount)
 
-        // Check if provider has reached 3 cancellations
         if (newCancelCount >= 3) {
           setShowSuspensionWarning(true)
 
-          // Redirect after 30 seconds
           setTimeout(() => {
-            window.location.href = "/login-alt"
+            window.location.href = "/login"
           }, 30000)
         } else {
           setSuccessMessage("Service has been cancelled. Worker count has been updated.")
@@ -379,596 +428,477 @@ function ProviderDashboard() {
     }, 5000)
   }
 
-  const renderPendingServicesTable = () => {
-    return (
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-          <h2 className="font-bold text-sm">PENDING SERVICES</h2>
-          <div className="text-xs text-gray-600">Auto-cancellation in 2 days if not accepted</div>
-        </div>
+  const ServiceCard: React.FC<{ service: Service }> = ({ service }) => {
+    const isPending = service.status === "pending"
+    const isOngoing = service.status === "ongoing"
+    const isCompleted = service.status === "completed"
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Customer
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Service
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Date & Time
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Location
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Total
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Workers
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Auto-Cancel
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {pendingServices.length > 0 ? (
-                pendingServices.map((service) => (
-                  <tr
-                    key={service.id}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => handleServiceClick(service)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{service.customerName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{service.serviceName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <Calendar className="h-4 w-4 mr-1 text-gray-400" />
-                        {service.date}
-                        <Clock className="h-4 w-4 ml-2 mr-1 text-gray-400" />
-                        {service.time}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <MapPin className="h-4 w-4 mr-1 text-gray-400" />
-                        {service.location}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">₱{service.total.toLocaleString()}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                          ${(service.workersAssigned || 0) === 0
-                              ? "bg-gray-100 text-gray-800"
-                              : (service.workersAssigned || 0) < (service.workersRequired || 1)
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-green-100 text-green-800"
-                            }`}
-                        >
-                          <Users className="h-3 w-3 mr-1" />
-                          {service.workersAssigned || 0}/{service.workersRequired || 1}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {getDaysRemaining(service.autoCancelDate) <= 1 ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            <AlertCircle className="h-3 w-3 mr-1" />
-                            {service.autoCancelDate}
-                          </span>
-                        ) : (
-                          <span className="text-sm text-gray-900">{service.autoCancelDate}</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-500">
-                    No pending services found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+    return (
+      <Card className="rounded-xl shadow-sm overflow-hidden flex flex-col h-full">
+        <div className="relative h-40 w-full">
+          <img
+            src={service.image || "/placeholder.svg"}
+            alt={service.serviceName}
+            className="w-full h-full object-cover rounded-t-xl"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+          <span
+            className={`absolute bottom-2 left-2 text-xs font-medium px-2 py-1 rounded-full
+            ${isPending ? "bg-yellow-100 text-yellow-800" : ""}
+            ${isOngoing ? "bg-sky-100 text-sky-800" : ""}
+            ${isCompleted ? "bg-green-100 text-green-800" : ""}
+            `}
+          >
+            {isPending && "Pending"}
+            {isOngoing && "In Progress"}
+            {isCompleted && "Completed"}
+          </span>
         </div>
+        <CardContent className="p-4 flex flex-col flex-1">
+          <h3 className="font-semibold text-lg text-gray-900 line-clamp-2">{service.serviceName}</h3>
+          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{service.shortDescription}</p>
+
+          <div className="grid grid-cols-2 gap-y-2 gap-x-4 mt-4 text-sm text-gray-700">
+            <div className="flex items-center">
+              <CalendarIcon className="h-4 w-4 mr-2 text-gray-400" />
+              <span>{service.date}</span>
+            </div>
+            <div className="flex items-center">
+              <Clock className="h-4 w-4 mr-2 text-gray-400" />
+              <span>{service.time}</span>
+            </div>
+            <div className="flex items-center col-span-2">
+              <MapPin className="h-4 w-4 mr-2 text-gray-400" />
+              <span className="line-clamp-1">{service.location}</span>
+            </div>
+            <div className="flex items-center col-span-2">
+              <Users className="h-4 w-4 mr-2 text-gray-400" />
+              <span>
+                Workers: {service.workersAssigned || 0}/{service.workersRequired || 1}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center">
+            <span className="text-lg font-bold text-sky-600">₱{service.total.toLocaleString()}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full text-gray-400 hover:bg-gray-100"
+              onClick={() => handleServiceClick(service)}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {isPending && (
+            <div className="mt-4 flex flex-col gap-2">
+              <Button
+                onClick={() => handleAcceptService(service.id)}
+                disabled={isLoading}
+                className="w-full bg-sky-500 text-white hover:bg-sky-600 rounded-full"
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    <Check className="h-4 w-4 mr-2" />
+                    {(service.workersAssigned || 0) === 0
+                      ? "Accept Service"
+                      : `Assign Worker (${service.workersAssigned}/${service.workersRequired})`}
+                  </span>
+                )}
+              </Button>
+              <p className="text-xs text-gray-500 text-center mt-1">
+                Auto-cancel: {service.autoCancelDate} ({getDaysRemaining(service.autoCancelDate)} days left)
+              </p>
+            </div>
+          )}
+
+          {isOngoing && (
+            <div className="mt-4 flex flex-col gap-2">
+              <Button
+                onClick={() => handleTrackService(service)}
+                className="w-full bg-black text-white hover:bg-gray-800 rounded-full"
+              >
+                <MapPin className="h-4 w-4 mr-2" /> Track Customer
+              </Button>
+              <Button
+                onClick={() => handleCancelService(service.id)}
+                variant="outline"
+                className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 rounded-full"
+              >
+                Cancel Service
+              </Button>
+            </div>
+          )}
+
+          {isCompleted && service.completedDate && (
+            <div className="mt-4 flex items-center justify-center text-green-600 font-medium text-sm">
+              <CheckCircle2 className="h-4 w-4 mr-2" /> Completed on {service.completedDate}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const renderServiceCards = (services: Service[]) => {
+    if (services.length === 0) {
+      return <div className="text-center py-10 text-gray-500">No {activeTab} services found.</div>
+    }
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        {services.map((service) => (
+          <ServiceCard key={service.id} service={service} />
+        ))}
       </div>
     )
   }
 
-  const renderOngoingServicesTable = () => {
-    return (
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-          <h2 className="font-bold text-sm">ONGOING SERVICES</h2>
-          <div className="text-xs text-gray-600">Services currently in progress</div>
-        </div>
+  // Statistic Card Data
+  const totalServicesCompleted = completedServices.length
+  const totalReviews = completedServices.filter((s) => s.review).length
+  const averageRating =
+    totalReviews > 0
+      ? (completedServices.reduce((sum, s) => sum + (s.rating || 0), 0) / totalReviews).toFixed(1)
+      : "N/A"
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Customer
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Service
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Date & Time
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Location
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Total
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Workers
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Status
-                </th>
-                {/* No Action column needed */}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {ongoingServices.length > 0 ? (
-                ongoingServices.map((service) => (
-                  <tr
-                    key={service.id}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => handleServiceClick(service)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{service.customerName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{service.serviceName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <Calendar className="h-4 w-4 mr-1 text-gray-400" />
-                        {service.date}
-                        <Clock className="h-4 w-4 ml-2 mr-1 text-gray-400" />
-                        {service.time}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <MapPin className="h-4 w-4 mr-1 text-gray-400" />
-                        {service.location}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">₱{service.total.toLocaleString()}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          <Users className="h-3 w-3 mr-1" />
-                          {service.workersAssigned || 0}/{service.workersRequired || 1}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-800">
-                        In Progress
-                      </span>
-                    </td>
-                    {/* No Action column needed */}
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-500">
-                    No ongoing services found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    )
+  const dailyQuota = {
+    target: 5,
+    completed: completedServices.filter(
+      (s) => new Date(s.completedDate || "").toDateString() === new Date().toDateString(),
+    ).length,
   }
+  const dailyQuotaProgress = (dailyQuota.completed / dailyQuota.target) * 100
 
-  const renderCompletedServicesTable = () => {
-    return (
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-          <h2 className="font-bold text-sm">COMPLETED SERVICES</h2>
-          <div className="text-xs text-gray-600">Service history</div>
-        </div>
+  // Calendar Card Data
+  const [currentTime, setCurrentTime] = useState(new Date())
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Customer
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Service
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Date & Time
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Location
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Total
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Workers
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Completed On
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {completedServices.length > 0 ? (
-                completedServices.map((service) => (
-                  <tr
-                    key={service.id}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => handleServiceClick(service)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{service.customerName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{service.serviceName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <Calendar className="h-4 w-4 mr-1 text-gray-400" />
-                        {service.date}
-                        <Clock className="h-4 w-4 ml-2 mr-1 text-gray-400" />
-                        {service.time}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <MapPin className="h-4 w-4 mr-1 text-gray-400" />
-                        {service.location}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">₱{service.total.toLocaleString()}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          <Users className="h-3 w-3 mr-1" />
-                          {service.workersAssigned || 0}/{service.workersRequired || 1}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <Check className="h-3 w-3 mr-1" />
-                        {service.completedDate}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-500">
-                    No completed services found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    )
-  }
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   return (
-    <div className="min-h-screen px-5 bg-white text-gray-800">
+    <div className="min-h-screen bg-gray-100 text-gray-800 font-sans">
       <style>{keyframes}</style>
-      {/* Main Dashboard Container with Margin */}
-      <div className="m-4 border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-        {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
-          <div className="font-bold text-sm">PROVIDER DASHBOARD</div>
-          <div className="flex items-center gap-4 text-xs text-gray-600">
-            <div>PID - 1001</div>
-            <div>EMAIL - Providersamalamang@gmail.com</div>
-            <div>COMPANY - We Are The World</div>
+
+      {/* Header */}
+      <header className="flex flex-col sm:flex-row items-center justify-between p-4 bg-white shadow-sm">
+        <div className="relative flex-1 w-full sm:max-w-md sm:mr-4 mb-4 sm:mb-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search your service..."
+            className="w-full pl-10 pr-4 py-2 rounded-full bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-200"
+          />
+        </div>
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100">
+            <Mail className="h-6 w-6 text-gray-500" />
+          </Button>
+          <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100">
+            <Bell className="h-6 w-6 text-gray-500" />
+          </Button>
+          <div className="flex items-center space-x-2">
+            <Avatar className="h-9 w-9">
+              <AvatarImage src="/placeholder.svg?height=36&width=36" alt="Jason Ranti" />
+              <AvatarFallback>JR</AvatarFallback>
+            </Avatar>
+            <span className="font-medium text-gray-800 hidden sm:inline">Jason Ranti</span>
           </div>
         </div>
+      </header>
 
-        {/* Dashboard Content */}
-        <div className="relative">
-          <div className="absolute inset-0 h-48 z-0">
-            <div className="h-full w-full bg-blue-50 relative">
-              <img
-                src="https://cdn.pixabay.com/photo/2020/03/25/16/55/spain-4967963_1280.jpg"
-                alt="City skyline"
-                className="w-full h-full object-cover"
-              />
+      {/* Main Content Area */}
+      <main className="p-4 md:p-6 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 md:gap-6">
+        {/* Left Column - Accepted Services & Service Cards */}
+        <div className="space-y-4 md:space-y-6">
+          {/* Hero Section */}
+          <div className="relative bg-gradient-to-br from-sky-600 to-sky-800 text-white p-6 md:p-8 rounded-2xl overflow-hidden shadow-lg">
+            {/* Background Image */}
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: "url('/placeholder.svg?height=800&width=1600')" }}
+            ></div>
+            {/* Dark Overlay */}
+            <div className="absolute inset-0 bg-black/40"></div>
+            {/* Simple star/sparkle pattern for background */}
+            <div className="absolute inset-0 opacity-20">
+              <svg className="w-full h-full" fill="currentColor" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <circle cx="10" cy="10" r="3" />
+                <circle cx="90" cy="20" r="4" />
+                <circle cx="30" cy="80" r="2" />
+                <circle cx="70" cy="90" r="5" />
+                <path
+                  d="M50 0 L55 10 L65 10 L60 15 L65 25 L55 20 L50 30 L45 20 L35 25 L40 15 L35 10 L45 10 Z"
+                  transform="translate(10 10) scale(0.5)"
+                />
+                <path
+                  d="M50 0 L55 10 L65 10 L60 15 L65 25 L55 20 L50 30 L45 20 L35 25 L40 15 L35 10 L45 10 Z"
+                  transform="translate(70 60) scale(0.7)"
+                />
+              </svg>
+            </div>
+            <div className="relative z-10">
+              <span className="text-sm font-semibold uppercase tracking-wider opacity-80">Service Provider</span>
+              <h2 className="text-2xl md:text-4xl font-bold mt-2 leading-tight">
+                Manage Your Services and Track Progress
+              </h2>
+              <Button className="mt-4 md:mt-6 bg-white text-sky-700 hover:bg-gray-100 rounded-full px-6 py-3 shadow-md">
+                Learn More About Online Home Services <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
             </div>
           </div>
 
-          <div className="grid grid-cols-5 gap-6 p-6 relative z-10">
-            <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col h-64 mt-50">
-              <div className="text-xs font-semibold mb-auto">TOTAL PENDINGS</div>
-              <div className="flex flex-col items-center justify-end h-full pb-4">
-                <div className="relative w-28 h-28 flex items-center justify-center">
-                  <svg className="w-full h-full" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="transparent" stroke="#e5e7eb" strokeWidth="10" />
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="45"
-                      fill="transparent"
-                      stroke="#f97316"
-                      strokeWidth="10"
-                      strokeDasharray="283"
-                      strokeDashoffset="85"
-                      transform="rotate(-90 50 50)"
-                    />
-                  </svg>
-                  <div className="absolute flex flex-col items-center">
-                    <span className="text-3xl font-bold">413</span>
-                    <span className="text-xs text-gray-500">BOOKED</span>
-                  </div>
-                </div>
-                <div className="flex gap-4 mt-2 text-xs">
-                  <div className="flex items-center gap-1">
-                    <CircleIcon className="w-2 h-2 text-purple-600 fill-purple-600" />
-                    <span>Last 24H - 125</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <CircleIcon className="w-2 h-2 text-orange-500 fill-orange-500" />
-                    <span>Average - 400</span>
-                  </div>
-                </div>
+          {/* Accepted Services Cards */}
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Accepted Services</h2>
+            {acceptedServices.length === 0 ? (
+              <div className="text-center py-10 text-gray-500">No accepted services found.</div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {acceptedServices.map((service) => (
+                  <ServiceCard key={service.id} service={service} />
+                ))}
               </div>
+            )}
+          </div>
+
+          {/* Service Management Section (now with cards) */}
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Service Management</h2>
+            <div className="px-6 border-b border-gray-200 bg-white rounded-t-lg">
+              <nav className="flex -mb-px overflow-x-auto">
+                <button
+                  onClick={() => setActiveTab("pending")}
+                  className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
+                    activeTab === "pending"
+                      ? "border-sky-500 text-sky-500"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  Pending Services
+                </button>
+                <button
+                  onClick={() => setActiveTab("ongoing")}
+                  className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
+                    activeTab === "ongoing"
+                      ? "border-sky-500 text-sky-500"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  Ongoing Services
+                </button>
+                <button
+                  onClick={() => setActiveTab("completed")}
+                  className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
+                    activeTab === "completed"
+                      ? "border-sky-500 text-sky-500"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  Completed Services
+                </button>
+              </nav>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col h-64 mt-50">
-              <div className="text-xs font-semibold mb-auto">ONGOING SERVICES</div>
-              <div className="flex flex-col items-center justify-end h-full pb-4">
-                <div className="relative w-28 h-28 flex items-center justify-center">
-                  <svg className="w-full h-full" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="transparent" stroke="#e5e7eb" strokeWidth="10" />
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="45"
-                      fill="transparent"
-                      stroke="#3b82f6"
-                      strokeWidth="10"
-                      strokeDasharray="283"
-                      strokeDashoffset="170"
-                      transform="rotate(-90 50 50)"
-                    />
-                  </svg>
-                  <div className="absolute flex flex-col items-center">
-                    <span className="text-3xl font-bold">231</span>
-                    <span className="text-xs text-gray-500">SERVICES</span>
-                  </div>
-                </div>
-                <div className="flex gap-4 mt-2 text-xs">
-                  <div className="flex items-center gap-1">
-                    <CircleIcon className="w-2 h-2 text-blue-600 fill-blue-600" />
-                    <span>Last 24H - 52</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <CircleIcon className="w-2 h-2 text-gray-500 fill-gray-500" />
-                    <span>Average - 100</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col h-64 mt-50">
-              <div className="text-xs font-semibold mb-auto">TOTAL REVIEWS</div>
-              <div className="flex flex-col items-center justify-end h-full pb-4">
-                <div className="relative w-28 h-28 flex items-center justify-center">
-                  <svg className="w-full h-full" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="transparent" stroke="#e5e7eb" strokeWidth="10" />
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="45"
-                      fill="transparent"
-                      stroke="#22c55e"
-                      strokeWidth="10"
-                      strokeDasharray="283"
-                      strokeDashoffset="140"
-                      transform="rotate(-90 50 50)"
-                    />
-                  </svg>
-                  <div className="absolute flex flex-col items-center">
-                    <span className="text-3xl font-bold">1.2M</span>
-                    <span className="text-xs text-gray-500">REVIEWS</span>
-                  </div>
-                </div>
-                <div className="flex gap-4 mt-2 text-xs">
-                  <div className="flex items-center gap-1">
-                    <CircleIcon className="w-2 h-2 text-green-600 fill-green-600" />
-                    <span>Positive Review - 980K</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <CircleIcon className="w-2 h-2 text-red-600 fill-red-600" />
-                    <span>Negative Review - 40k</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col h-64 mt-50">
-              <div className="text-xs font-semibold mb-auto">COMPLETED SERVICES</div>
-              <div className="flex flex-col items-center justify-end h-full pb-4">
-                <div className="relative w-28 h-28 flex items-center justify-center">
-                  <svg className="w-full h-full" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="transparent" stroke="#e5e7eb" strokeWidth="10" />
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="45"
-                      fill="transparent"
-                      stroke="#eab308"
-                      strokeWidth="10"
-                      strokeDasharray="283"
-                      strokeDashoffset="10"
-                      transform="rotate(-90 50 50)"
-                    />
-                  </svg>
-                  <div className="absolute flex flex-col items-center">
-                    <span className="text-3xl font-bold">9825</span>
-                    <span className="text-xs text-gray-500">COMPLETED</span>
-                  </div>
-                </div>
-                <div className="flex gap-4 mt-2 text-xs">
-                  <div className="flex items-center gap-1">
-                    <CircleIcon className="w-2 h-2 text-yellow-600 fill-yellow-600" />
-                    <span>On Time - 9024</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <CircleIcon className="w-2 h-2 text-gray-500 fill-gray-500" />
-                    <span>Late - 801</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm p-4 flex flex-col h-64 mt-50">
-              <div className="text-xs font-semibold mb-auto">TOTAL BOOKINGS</div>
-              <div className="flex flex-col items-center justify-center h-full">
-                <span className="text-5xl font-bold text-blue-600">10982</span>
-                <div className="text-xs text-gray-500 mt-2">LAST 7 DAYS</div>
-              </div>
+            {/* Tab Content */}
+            <div className="p-4 md:p-6 bg-white rounded-b-lg shadow-sm">
+              {activeTab === "pending" && renderServiceCards(pendingServices)}
+              {activeTab === "ongoing" && renderServiceCards(ongoingServices)}
+              {activeTab === "completed" && renderServiceCards(completedServices)}
             </div>
           </div>
         </div>
 
-        {/* Tabs Navigation */}
-        <div className="px-6 border-b border-gray-200">
-          <nav className="flex -mb-px overflow-x-auto">
-            <button
-              onClick={() => setActiveTab("pending")}
-              className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "pending"
-                  ? "border-sky-500 text-sky-500"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-            >
-              Pending Services
-            </button>
-            <button
-              onClick={() => setActiveTab("ongoing")}
-              className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "ongoing"
-                  ? "border-sky-500 text-sky-500"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-            >
-              Ongoing Services
-            </button>
-            <button
-              onClick={() => setActiveTab("completed")}
-              className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "completed"
-                  ? "border-sky-500 text-sky-500"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-            >
-              Completed Services
-            </button>
-          </nav>
-        </div>
+        {/* Right Column - Statistics & Recent Customers */}
+        <div className="space-y-4 md:space-y-6">
+          {/* Statistic Card */}
+          <Card className="p-6 rounded-2xl shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between p-0 mb-4">
+              <CardTitle className="text-lg font-semibold text-gray-900">Statistic</CardTitle>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <MoreVertical className="h-5 w-5 text-gray-400" />
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0 flex flex-col items-center text-center">
+              <div className="relative w-32 h-32 mb-4 flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full border-4 border-gray-200 flex items-center justify-center">
+                  {/* This div simulates the filled part of the circular progress */}
+                  <div
+                    className="absolute inset-0 rounded-full border-4 border-sky-500"
+                    style={{
+                      clipPath: "polygon(50% 0%, 50% 50%, 100% 50%, 100% 0%)", // Top right quadrant
+                      transform: `rotate(${dailyQuotaProgress * 3.6}deg)`, // Dynamic rotation
+                      transformOrigin: "center center",
+                    }}
+                  ></div>
+                </div>
+                <Avatar className="w-[calc(100%-16px)] h-[calc(100%-16px)]">
+                  <AvatarImage src="/placeholder.svg?height=128&width=128" alt="Jason Ranti" />
+                  <AvatarFallback>JR</AvatarFallback>
+                </Avatar>
+                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-bold text-sky-600">
+                  {dailyQuotaProgress.toFixed(0)}%
+                </span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900">Good Morning Jason 🔥</h3>
+              <p className="text-sm text-gray-500 mt-1">Continue your learning to achieve your target!</p>
 
-        {/* Tab Content */}
-        <div className="p-6">
-          {activeTab === "pending" && renderPendingServicesTable()}
-          {activeTab === "ongoing" && renderOngoingServicesTable()}
-          {activeTab === "completed" && renderCompletedServicesTable()}
-        </div>
-      </div>
+              {/* Performance Overview Section */}
+              <div className="w-full mt-6 pt-4 border-t border-gray-100">
+                <h3 className="text-md font-semibold text-gray-900 mb-4 text-left">Your Performance Overview</h3>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Target className="h-5 w-5 text-sky-500" />
+                    <div>
+                      <p className="text-sm text-gray-500">Daily Quota</p>
+                      <p className="font-semibold text-gray-900">
+                        {dailyQuota.completed}/{dailyQuota.target}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Award className="h-5 w-5 text-sky-500" />
+                    <div>
+                      <p className="text-sm text-gray-500">Total Services</p>
+                      <p className="font-semibold text-gray-900">{totalServicesCompleted}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <MessageSquareText className="h-5 w-5 text-sky-500" />
+                    <div>
+                      <p className="text-sm text-gray-500">Total Reviews</p>
+                      <p className="font-semibold text-gray-900">{totalReviews}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                    <div>
+                      <p className="text-sm text-gray-500">Avg. Rating</p>
+                      <p className="font-semibold text-gray-900">{averageRating}</p>
+                    </div>
+                  </div>
+                </div>
+                {/* Daily Quota Progress Bar */}
+                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                  <div className="bg-sky-500 h-2.5 rounded-full" style={{ width: `${dailyQuotaProgress}%` }}></div>
+                </div>
+                <Button
+                  onClick={() => setIsDetailedStatsModalOpen(true)}
+                  variant="outline"
+                  className="w-full rounded-full border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  View Detailed Stats
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Service Details Modal */}
+          {/* Recent Customer Card */}
+          <Card className="p-6 rounded-2xl shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between p-0 mb-4">
+              <CardTitle className="text-lg font-semibold text-gray-900">Recent Customers</CardTitle>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <Plus className="h-5 w-5 text-gray-400" />
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0 space-y-4">
+              {recentCustomers.map((customer) => (
+                <div
+                  key={customer.id}
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border border-gray-100 rounded-lg"
+                >
+                  <div className="flex items-center space-x-3 mb-2 sm:mb-0">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={customer.avatar || "/placeholder.svg"} alt={customer.name} />
+                      <AvatarFallback>{customer.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-gray-900">{customer.name}</p>
+                      <p className="text-sm text-gray-500">{customer.serviceName}</p>
+                      <div className="flex items-center mt-1">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-4 w-4 ${
+                              i < customer.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                            }`}
+                          />
+                        ))}
+                        <span className="ml-2 text-xs text-gray-600 italic line-clamp-1">"{customer.review}"</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end space-y-2 sm:space-y-0 sm:ml-auto">
+                    <p className="text-sm font-semibold text-sky-600">₱{customer.totalPayment.toLocaleString()}</p>
+                    <Button
+                      variant="default"
+                      className="rounded-full px-4 py-2 text-sm bg-sky-500 text-white hover:bg-sky-600"
+                      onClick={() => {
+                        const serviceFound = completedServices.find((s) => s.id === customer.id)
+                        if (serviceFound) {
+                          handleServiceClick(serviceFound)
+                        }
+                      }}
+                    >
+                      <User className="h-4 w-4 mr-2" /> View Service
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <Button variant="default" className="w-full mt-4 rounded-full bg-sky-500 text-white hover:bg-sky-600">
+                See All
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Calendar Card */}
+          <Card className="p-6 rounded-2xl shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between p-0 mb-4">
+              <CardTitle className="text-lg font-semibold text-gray-900">Today's Schedule</CardTitle>
+              <Button variant="ghost" size="sm" className="text-sky-600 hover:text-sky-700">
+                View all
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0 flex flex-col items-center">
+              <div className="text-center mb-4">
+                <p className="text-sm text-gray-500">{format(currentTime, "EEEE, MMMM d, yyyy")}</p>
+                <p className="text-2xl font-bold text-gray-900">{format(currentTime, "hh:mm:ss a")}</p>
+              </div>
+              <Calendar mode="single" selected={currentTime} className="rounded-md border w-full max-w-sm" />
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+
+      {/* Service Details Modal (Existing) */}
       <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} className="relative z-50">
         <div className="fixed inset-0 bg-black/30 backdrop-blur-md" aria-hidden="true" />
 
@@ -990,12 +920,13 @@ function ProviderDashboard() {
                     <h3 className="text-2xl font-light text-white tracking-tight">{selectedService.serviceName}</h3>
                     <div
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 
-                      ${selectedService.status === "pending"
+                      ${
+                        selectedService.status === "pending"
                           ? "bg-yellow-100 text-yellow-800"
                           : selectedService.status === "ongoing"
                             ? "bg-sky-100 text-sky-800"
                             : "bg-green-100 text-green-800"
-                        }`}
+                      }`}
                     >
                       {selectedService.status === "pending"
                         ? "Pending"
@@ -1029,7 +960,7 @@ function ProviderDashboard() {
                       <div>
                         <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500">Date & Time</h3>
                         <p className="mt-1 text-base font-medium text-gray-900 flex items-center">
-                          <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                          <CalendarIcon className="h-4 w-4 text-gray-400 mr-2" />
                           {selectedService.date}, {selectedService.time}
                         </p>
                       </div>
@@ -1046,12 +977,13 @@ function ProviderDashboard() {
                           <Users className="h-4 w-4 text-gray-400 mr-2" />
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                            ${(selectedService.workersAssigned || 0) === 0
+                            ${
+                              (selectedService.workersAssigned || 0) === 0
                                 ? "bg-gray-100 text-gray-800"
                                 : (selectedService.workersAssigned || 0) < (selectedService.workersRequired || 1)
                                   ? "bg-yellow-100 text-yellow-800"
                                   : "bg-green-100 text-green-800"
-                              }`}
+                            }`}
                           >
                             {selectedService.workersAssigned || 0}/{selectedService.workersRequired || 1} Workers
                           </span>
@@ -1078,6 +1010,25 @@ function ProviderDashboard() {
                         </div>
                       )}
                     </div>
+
+                    {selectedService.status === "completed" && selectedService.review && selectedService.rating && (
+                      <div className="bg-gray-50/80 backdrop-blur-sm rounded-2xl p-6">
+                        <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-4">
+                          Customer Review
+                        </h3>
+                        <div className="flex items-center mb-2">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-5 w-5 ${
+                                i < selectedService.rating! ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-base text-gray-800 italic">"{selectedService.review}"</p>
+                      </div>
+                    )}
 
                     <div className="bg-gray-50/80 backdrop-blur-sm rounded-2xl p-6">
                       <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500 mb-4">
@@ -1128,10 +1079,11 @@ function ProviderDashboard() {
                         <button
                           onClick={() => handleAcceptService(selectedService.id)}
                           disabled={isLoading}
-                          className={`flex-1 px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${isLoading
+                          className={`flex-1 px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${
+                            isLoading
                               ? "bg-sky-400 cursor-wait"
                               : "bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-200"
-                            }`}
+                          }`}
                         >
                           {isLoading ? (
                             <span className="flex items-center justify-center">
@@ -1206,7 +1158,7 @@ function ProviderDashboard() {
         </div>
       </Dialog>
 
-      {/* Success/Warning Modal */}
+      {/* Success/Warning Modal (Existing) */}
       <Dialog open={isSuccessModalOpen} onClose={() => setIsSuccessModalOpen(false)} className="relative z-50">
         <div className="fixed inset-0 bg-black/30 backdrop-blur-md" aria-hidden="true" />
 
@@ -1216,29 +1168,31 @@ function ProviderDashboard() {
           >
             <div className="flex flex-col items-center text-center">
               <div
-                className={`w-20 h-20 rounded-full ${successMessage.includes("cancelled")
+                className={`w-20 h-20 rounded-full ${
+                  successMessage.includes("cancelled")
                     ? "bg-yellow-100"
                     : successMessage.includes("Waiting")
-                      ? "bg-blue-100"
+                      ? "bg-sky-100"
                       : "bg-green-100"
-                  } flex items-center justify-center mb-6 animate-[pulse_2s_ease-in-out_infinite]`}
+                } flex items-center justify-center mb-6 animate-[pulse_2s_ease-in-out_infinite]`}
               >
                 {successMessage.includes("cancelled") ? (
                   <AlertCircle className="h-10 w-10 text-yellow-500 animate-[bounceIn_0.6s_ease-out]" />
                 ) : successMessage.includes("Waiting") ? (
-                  <Users className="h-10 w-10 text-blue-500 animate-[bounceIn_0.6s_ease-out]" />
+                  <Users className="h-10 w-10 text-sky-500 animate-[bounceIn_0.6s_ease-out]" />
                 ) : (
                   <CheckCircle2 className="h-10 w-10 text-green-500 animate-[bounceIn_0.6s_ease-out]" />
                 )}
               </div>
 
               <Dialog.Title
-                className={`text-xl font-medium ${successMessage.includes("cancelled")
+                className={`text-xl font-medium ${
+                  successMessage.includes("cancelled")
                     ? "text-yellow-600"
                     : successMessage.includes("Waiting")
-                      ? "text-blue-600"
+                      ? "text-sky-600"
                       : "text-gray-900"
-                  } mb-2 animate-[slideInUp_0.4s_ease-out]`}
+                } mb-2 animate-[slideInUp_0.4s_ease-out]`}
               >
                 {successMessage.includes("cancelled")
                   ? "Warning"
@@ -1259,7 +1213,7 @@ function ProviderDashboard() {
         </div>
       </Dialog>
 
-      {/* Workers Waiting Modal */}
+      {/* Workers Waiting Modal (Updated to match image) */}
       <Dialog
         open={showWorkersWaitingModal}
         onClose={() => setShowWorkersWaitingModal(false)}
@@ -1268,75 +1222,28 @@ function ProviderDashboard() {
         <div className="fixed inset-0 bg-black/30 backdrop-blur-md" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
-          <Dialog.Panel className="mx-auto max-w-md w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-blue-200 p-6 animate-[fadeIn_0.5s_ease-out]">
+          <Dialog.Panel className="mx-auto max-w-md w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-sky-200 p-6 animate-[fadeIn_0.5s_ease-out]">
             <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mb-6 animate-[pulse_2s_ease-in-out_infinite]">
-                <Users className="h-10 w-10 text-blue-500 animate-[bounceIn_0.6s_ease-out]" />
+              <div className="w-20 h-20 rounded-full bg-sky-100 flex items-center justify-center mb-6 animate-[pulse_2s_ease-in-out_infinite]">
+                <Users className="h-10 w-10 text-sky-500 animate-[bounceIn_0.6s_ease-out]" />
               </div>
 
-              <Dialog.Title className="text-xl font-medium text-blue-600 mb-2 animate-[slideInUp_0.4s_ease-out]">
+              <Dialog.Title className="text-xl font-medium text-sky-600 mb-6 animate-[slideInUp_0.4s_ease-out]">
                 Worker Assignment Status
               </Dialog.Title>
 
-              {selectedService && (
-                <>
-                  <p className="text-gray-600 mb-4 animate-[fadeIn_0.5s_ease-out_0.2s_both]">
-                    <span className="font-medium">
-                      {selectedService.workersAssigned} of {selectedService.workersRequired} workers assigned
-                    </span>
-                  </p>
-
-                  <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                    <div
-                      className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${((selectedService.workersAssigned || 0) / (selectedService.workersRequired || 1)) * 100}%`,
-                      }}
-                    ></div>
-                  </div>
-
-                  {selectedService.workersRequired &&
-                    selectedService.workersAssigned &&
-                    selectedService.workersRequired > selectedService.workersAssigned ? (
-                    <p className="text-gray-700 font-medium mb-6 animate-[fadeIn_0.5s_ease-out_0.3s_both]">
-                      {selectedService.workersRequired - selectedService.workersAssigned} more worker(s) needed
-                    </p>
-                  ) : (
-                    <p className="text-green-700 font-medium mb-6 animate-[fadeIn_0.5s_ease-out_0.3s_both]">
-                      All required workers have been assigned!
-                    </p>
-                  )}
-                </>
-              )}
-
-              <div className="flex space-x-4 w-full">
-                <button
-                  onClick={() => setShowWorkersWaitingModal(false)}
-                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 transition-colors duration-200 font-medium text-sm"
-                >
-                  Close
-                </button>
-                {selectedService &&
-                  selectedService.workersAssigned &&
-                  selectedService.workersRequired &&
-                  selectedService.workersAssigned < selectedService.workersRequired && (
-                    <button
-                      onClick={() => {
-                        setShowWorkersWaitingModal(false)
-                        setIsModalOpen(true)
-                      }}
-                      className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors duration-200 font-medium text-sm"
-                    >
-                      Assign Another Worker
-                    </button>
-                  )}
-              </div>
+              <button
+                onClick={() => setShowWorkersWaitingModal(false)}
+                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 transition-colors duration-200 font-medium text-sm animate-[fadeIn_0.5s_ease-out_0.3s_both]"
+              >
+                Close
+              </button>
             </div>
           </Dialog.Panel>
         </div>
       </Dialog>
 
-      {/* Cancel Reminder Modal */}
+      {/* Cancel Reminder Modal (Existing) */}
       <Dialog open={showCancelReminder} onClose={() => setShowCancelReminder(false)} className="relative z-50">
         <div className="fixed inset-0 bg-black/30 backdrop-blur-md" aria-hidden="true" />
 
@@ -1373,8 +1280,8 @@ function ProviderDashboard() {
         </div>
       </Dialog>
 
-      {/* Account Suspension Warning Modal */}
-      <Dialog open={showSuspensionWarning} onClose={() => { }} className="relative z-50">
+      {/* Account Suspension Warning Modal (Existing) */}
+      <Dialog open={showSuspensionWarning} onClose={() => {}} className="relative z-50">
         <div className="fixed inset-0 bg-black/50 backdrop-blur-md" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
@@ -1398,9 +1305,9 @@ function ProviderDashboard() {
         </div>
       </Dialog>
 
-      {/* Map Simulation Modal */}
+      {/* Map Simulation Modal (Existing) */}
       {showMapSimulation && serviceBeingTracked && (
-        <Dialog open={showMapSimulation} onClose={() => { }} className="relative z-50">
+        <Dialog open={showMapSimulation} onClose={() => {}} className="relative z-50">
           <div className="fixed inset-0 bg-black/30 backdrop-blur-md" aria-hidden="true" />
 
           <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
@@ -1416,9 +1323,115 @@ function ProviderDashboard() {
         </Dialog>
       )}
 
-      <Footer />
+      {/* Detailed Stats Modal (New) */}
+      <Dialog
+        open={isDetailedStatsModalOpen}
+        onClose={() => setIsDetailedStatsModalOpen(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-md" aria-hidden="true" />
 
-      {/* Floating Dock */}
+        <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
+          <Dialog.Panel className="mx-auto max-w-3xl w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-sky-200 p-6 animate-[fadeIn_0.5s_ease-out]">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 rounded-full bg-sky-100 flex items-center justify-center mb-6 animate-[pulse_2s_ease-in-out_infinite]">
+                <Award className="h-10 w-10 text-sky-500 animate-[bounceIn_0.6s_ease-out]" />
+              </div>
+
+              <Dialog.Title className="text-xl font-medium text-sky-600 mb-6 animate-[slideInUp_0.4s_ease-out]">
+                Your Performance Summary
+              </Dialog.Title>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                {/* Left Column */}
+                <div className="flex flex-col space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                      <p className="font-medium text-gray-900">Average Rating</p>
+                    </div>
+                    <span className="font-semibold text-gray-900">{averageRating}</span>
+                  </div>
+
+                  <h3 className="text-md font-semibold text-gray-900 text-left">Customer Reviews</h3>
+                  <div className="space-y-4 w-full max-h-60 overflow-y-auto pr-2">
+                    {completedServices
+                      .filter((s) => s.review && s.rating)
+                      .map((service) => (
+                        <div key={service.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src="/placeholder.svg?height=32&width=32" alt={service.customerName} />
+                            <AvatarFallback>{service.customerName.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">{service.customerName}</p>
+                            <div className="flex items-center mt-1">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-4 w-4 ${
+                                    i < service.rating! ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <p className="text-sm text-gray-600 italic mt-1">"{service.review}"</p>
+                          </div>
+                        </div>
+                      ))}
+                    {totalReviews === 0 && <p className="text-center text-gray-500">No reviews yet.</p>}
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="flex flex-col space-y-4">
+                  <div className="flex flex-col space-y-2 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Target className="h-5 w-5 text-sky-500" />
+                      <div>
+                        <p className="font-medium text-gray-900">Daily Quota</p>
+                        <p className="text-sm text-gray-500">
+                          {dailyQuota.completed}/{dailyQuota.target} completed
+                        </p>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                      <div className="bg-sky-500 h-2.5 rounded-full" style={{ width: `${dailyQuotaProgress}%` }}></div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Award className="h-5 w-5 text-sky-500" />
+                      <p className="font-medium text-gray-900">Total Services Completed</p>
+                    </div>
+                    <span className="font-semibold text-gray-900">{totalServicesCompleted}</span>
+                  </div>
+
+                  <h3 className="text-md font-semibold text-gray-900 text-left">Completed Services</h3>
+                  <div className="space-y-4 w-full max-h-60 overflow-y-auto pr-2">
+                    {completedServices.map((service) => (
+                      <ServiceCard key={service.id} service={service} />
+                    ))}
+                    {completedServices.length === 0 && (
+                      <p className="text-center text-gray-500">No completed services yet.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsDetailedStatsModalOpen(false)}
+                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 transition-colors duration-200 font-medium text-sm animate-[fadeIn_0.5s_ease-out_0.3s_both] mt-6"
+              >
+                Close
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+
+      {/* Floating Dock (Existing) */}
       <div className="z-40 flex">
         <MyFloatingDockProvider />
       </div>
