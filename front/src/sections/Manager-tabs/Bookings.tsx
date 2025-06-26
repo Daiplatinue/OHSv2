@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect } from "react"
 import MyFloatingDockCeo from "../Styles/MyFloatingDock-Ceo"
@@ -25,6 +23,7 @@ import {
   Check,
   CheckCircle2,
   ChevronLeft,
+  Upload,
 } from "lucide-react"
 import image1 from "../../assets/No_Image_Available.jpg"
 import confetti from "canvas-confetti"
@@ -45,38 +44,38 @@ import {
 import Footer from "../Styles/Footer"
 
 const keyframes = `
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  @keyframes bounceIn {
-    0% { transform: scale(0); opacity: 0; }
-    60% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  
-  @keyframes slideInUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  
-  @keyframes shakeX {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-    20%, 40%, 60%, 80% { transform: translateX(10px); }
-  }
-  
-  @keyframes countdown {
-    from { width: 100%; }
-    to { width: 0%; }
-  }
-  
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-  }
+@keyframes fadeIn {
+from { opacity: 0; }
+to { opacity: 1; }
+}
+
+@keyframes bounceIn {
+0% { transform: scale(0); opacity: 0; }
+60% { transform: scale(1.2); }
+100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideInUp {
+from { transform: translateY(20px); opacity: 0; }
+to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes shakeX {
+0%, 100% { transform: translateX(0); }
+10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+20%, 40%, 60%, 80% { transform: translateX(10px); }
+}
+
+@keyframes countdown {
+from { width: 100%; }
+to { width: 0%; }
+}
+
+@keyframes pulse {
+0% { transform: scale(1); }
+50% { transform: scale(1.05); }
+100% { transform: scale(1); }
+}
 `
 
 function Bookings() {
@@ -117,14 +116,12 @@ function Bookings() {
   })
 
   const [requirements, setRequirements] = useState({
-    businessPermit: false,
-    validID: false,
-    certification: false,
-    backgroundCheck: false,
-    insurance: false,
-    equipmentList: false,
-    serviceAgreement: false,
-    bankAccount: false,
+    businessPermit: { met: false, previewUrl: null as string | null },
+    validID: { met: false, previewUrl: null as string | null },
+    certification: { met: false, previewUrl: null as string | null },
+    backgroundCheck: { met: false, previewUrl: null as string | null },
+    insurance: { met: false, previewUrl: null as string | null },
+    serviceAgreement: { met: false, previewUrl: null as string | null },
   })
 
   const [selectedInfo] = useState<PersonalInfo | null>(null)
@@ -307,12 +304,20 @@ function Bookings() {
     }
   }
 
-  const handleRequirementChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target
-    setRequirements({
-      ...requirements,
-      [name]: checked,
-    })
+  const handleRequirementFileChange = (e: React.ChangeEvent<HTMLInputElement>, key: keyof typeof requirements) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const previewUrl = URL.createObjectURL(file)
+      setRequirements((prev) => ({
+        ...prev,
+        [key]: { met: true, previewUrl },
+      }))
+    } else {
+      setRequirements((prev) => ({
+        ...prev,
+        [key]: { met: false, previewUrl: null },
+      }))
+    }
   }
 
   const handleBookingClick = (booking: Booking) => {
@@ -336,14 +341,12 @@ function Bookings() {
       chargePerKm: 0,
     })
     setRequirements({
-      businessPermit: false,
-      validID: false,
-      certification: false,
-      backgroundCheck: false,
-      insurance: false,
-      equipmentList: false,
-      serviceAgreement: false,
-      bankAccount: false,
+      businessPermit: { met: false, previewUrl: null as string | null },
+      validID: { met: false, previewUrl: null as string | null },
+      certification: { met: false, previewUrl: null as string | null },
+      backgroundCheck: { met: false, previewUrl: null as string | null },
+      insurance: { met: false, previewUrl: null as string | null },
+      serviceAgreement: { met: false, previewUrl: null as string | null },
     })
   }
 
@@ -365,65 +368,25 @@ function Bookings() {
     setIsProcessing(true)
 
     try {
-      // Check if we're in a development environment and use a mock token if needed
-      const token = localStorage.getItem("token")
+      // Simulate API call delay
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      // For development/testing purposes only - remove in production
-      if (!token) {
-        console.warn("No token found in localStorage, using mock authentication for development")
-        // This is a temporary solution for development/testing
-        const response = await fetch("http://localhost:3000/services", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: newService.name,
-            price: newService.price,
-            description: newService.description,
-            image: newService.image,
-            chargePerKm: newService.chargePerKm,
-            userId: "683037fa43a7823903641a6a",
-          }),
-          credentials: "include",
-        })
-
-        const data = await response.json()
-
-        // Handle the response as before
-        if (data.success) {
-          handleSuccessfulServiceCreation(data)
-        } else {
-          console.error("Error creating service:", data.message)
-        }
-      } else {
-        // Normal flow with authentication token
-        const response = await fetch("http://localhost:3000/services", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            name: newService.name,
-            price: newService.price,
-            description: newService.description,
-            image: newService.image,
-            chargePerKm: newService.chargePerKm,
-          }),
-          credentials: "include",
-        })
-
-        const data = await response.json()
-
-        if (data.success) {
-          handleSuccessfulServiceCreation(data)
-        } else {
-          console.error("Error creating service:", data.message)
-        }
+      // Simulate successful service creation by directly adding to local state
+      const createdService = {
+        _id: Date.now(), // Generate a unique ID for the simulated service
+        name: newService.name!,
+        price: newService.price!,
+        description: newService.description!,
+        image: newService.image || "/placeholder.svg?height=48&width=48", // Use a placeholder if no image
+        chargePerKm: newService.chargePerKm!,
+        hasNotification: false,
+        notificationCount: 0,
       }
+
+      handleSuccessfulServiceCreation({ service: createdService })
     } catch (error) {
-      console.error("Error creating service:", error)
+      console.error("Simulated error creating service:", error)
+      // Optionally, you could set an error message state here to display to the user
     } finally {
       setIsProcessing(false)
     }
@@ -471,7 +434,7 @@ function Bookings() {
     })
   }
 
-  const allRequirementsMet = Object.values(requirements).every((value) => value === true)
+  const allRequirementsMet = Object.values(requirements).every((req) => req.met === true)
 
   const renderCreateServiceStepContent = () => {
     switch (createServiceStep) {
@@ -607,7 +570,7 @@ function Bookings() {
             </div>
 
             <div className="bg-gray-50 rounded-xl p-6">
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                 {[
                   { key: "businessPermit", label: "Business Permit", desc: "Valid business registration or permit" },
                   { key: "validID", label: "Valid ID", desc: "Government-issued identification" },
@@ -618,27 +581,48 @@ function Bookings() {
                   },
                   { key: "backgroundCheck", label: "Background Check", desc: "Consent to background verification" },
                   { key: "insurance", label: "Liability Insurance", desc: "Professional liability coverage" },
-                  { key: "equipmentList", label: "Equipment List", desc: "Inventory of tools and equipment" },
                   {
                     key: "serviceAgreement",
                     label: "Service Agreement",
                     desc: "Acceptance of platform terms and conditions",
                   },
-                  { key: "bankAccount", label: "Bank Account", desc: "Valid bank account for payments" },
                 ].map((req) => (
-                  <div key={req.key} className="flex items-start">
-                    <input
-                      type="checkbox"
-                      id={req.key}
-                      name={req.key}
-                      checked={requirements[req.key as keyof typeof requirements]}
-                      onChange={handleRequirementChange}
-                      className="mt-1 h-4 w-4 text-sky-500 focus:ring-sky-500 rounded"
-                    />
-                    <label htmlFor={req.key} className="ml-3 block">
-                      <span className="text-sm font-medium text-gray-700">{req.label}</span>
-                      <span className="text-xs text-gray-500 block">{req.desc}</span>
+                  <div key={req.key} className="flex flex-col">
+                    <label htmlFor={`file-${req.key}`} className="block text-sm font-medium text-gray-700 mb-1">
+                      {req.label}
+                      <span className="text-red-500 ml-1">*</span>
                     </label>
+                    <p className="text-xs text-gray-500 mb-2">{req.desc}</p>
+                    <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 focus-within:ring-2 focus-within:ring-sky-500">
+                      <input
+                        type="file"
+                        id={`file-${req.key}`}
+                        name={`file-${req.key}`}
+                        onChange={(e) => handleRequirementFileChange(e, req.key as keyof typeof requirements)}
+                        className="hidden"
+                        accept="image/*" // Accept only image files
+                      />
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById(`file-${req.key}`)?.click()}
+                        className="flex items-center justify-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Choose File
+                      </button>
+                      <span className="ml-3 text-sm text-gray-500 truncate">
+                        {requirements[req.key as keyof typeof requirements].met ? "File attached" : "No file chosen"}
+                      </span>
+                    </div>
+                    {requirements[req.key as keyof typeof requirements].previewUrl && (
+                      <div className="mt-4 border border-gray-200 rounded-lg overflow-hidden">
+                        <img
+                          src={requirements[req.key as keyof typeof requirements].previewUrl || ""}
+                          alt={`Preview of ${req.label}`}
+                          className="w-full h-32 object-cover"
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -647,7 +631,7 @@ function Bookings() {
             {!allRequirementsMet && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800 text-sm">
                 <p className="font-medium">⚠️ All requirements must be met</p>
-                <p className="mt-1">Please check all boxes to confirm you meet the requirements.</p>
+                <p className="mt-1">Please attach a file for each requirement to proceed.</p>
               </div>
             )}
           </div>
@@ -1341,7 +1325,9 @@ function Bookings() {
     }, 5000)
   }
 
-  const handleSuccessfulServiceCreation = (data: { service: { _id: any; name: any; price: any; description: any; image: any; chargePerKm: any } }) => {
+  const handleSuccessfulServiceCreation = (data: {
+    service: { _id: any; name: any; price: any; description: any; image: any; chargePerKm: any }
+  }) => {
     // Add the new service to the local state
     const createdService = {
       id: data.service._id || Date.now().toString(), // Fallback ID if _id is not available
@@ -1571,13 +1557,13 @@ function Bookings() {
                     <h3 className="text-2xl font-light text-white tracking-tight">{selectedBooking.serviceName}</h3>
                     <div
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 
-                ${
-                  selectedBooking.status === "pending"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : selectedBooking.status === "ongoing"
-                      ? "bg-sky-100 text-sky-800"
-                      : "bg-green-100 text-green-800"
-                }`}
+            ${
+              selectedBooking.status === "pending"
+                ? "bg-yellow-100 text-yellow-800"
+                : selectedBooking.status === "ongoing"
+                  ? "bg-sky-100 text-sky-800"
+                  : "bg-green-100 text-green-800"
+            }`}
                     >
                       {selectedBooking.status === "pending"
                         ? "Pending"
@@ -1809,7 +1795,7 @@ function Bookings() {
         <div className="fixed inset-0 bg-black/30 backdrop-blur-md" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
-          <Dialog.Panel className="mx-auto max-w-4xl w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20">
+          <Dialog.Panel className="mx-auto max-w-6xl w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20">
             <div className="flex flex-col md:flex-row">
               {/* Preview Section - Left Side */}
               <div className="md:w-2/5 bg-gray-100/50 p-8 flex flex-col">
@@ -2565,19 +2551,23 @@ function Bookings() {
                 {subscriptionPlans.map((plan) => (
                   <div
                     key={plan.tier}
-                    className={`border rounded-xl p-5 flex flex-col ${
+                    className={`border rounded-xl p-5 flex flex-col relative ${
                       plan.tier === subscription.tier
-                        ? "border-sky-500 bg-sky-50"
+                        ? "border-sky-500 bg-sky-50 shadow-lg"
                         : "border-gray-200 hover:border-sky-300 hover:shadow-md"
                     } transition-all cursor-pointer`}
                     onClick={() => handleSelectPlan(plan.tier as SubscriptionTier)}
                   >
+                    {plan.tier === subscription.tier && (
+                      <div className="absolute top-4 right-4 bg-sky-500 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
+                        <Check className="h-3 w-3" /> Current Plan
+                      </div>
+                    )}
                     <div
                       className={`text-sm font-medium px-2 py-1 rounded-full self-start mb-2 ${plan.color} ${plan.textColor}`}
                     >
                       {plan.name}
                     </div>
-
                     <div className="mt-2 mb-4">
                       <span className="text-2xl font-bold">₱{plan.price}</span>
                       {plan.price > 0 && <span className="text-gray-500 text-sm">/month</span>}
@@ -2598,18 +2588,6 @@ function Bookings() {
                         </li>
                       ))}
                     </ul>
-
-                    <button
-                      onClick={() => handleSelectPlan(plan.tier as SubscriptionTier)}
-                      className={`w-full py-2 rounded-lg mt-auto ${
-                        plan.tier === subscription.tier
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : `${plan.textColor.replace("text", "bg")} text-white hover:opacity-90`
-                      }`}
-                      disabled={plan.tier === subscription.tier}
-                    >
-                      {plan.tier === subscription.tier ? "Current Plan" : "Select Plan"}
-                    </button>
                   </div>
                 ))}
               </div>
@@ -2623,21 +2601,30 @@ function Bookings() {
         <div className="fixed inset-0 bg-black/30 backdrop-blur-md" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
-          <Dialog.Panel className="mx-auto max-w-md w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20 p-6 animate-[fadeIn_0.5s_ease-out]">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6 animate-[pulse_2s_ease-in-out_infinite]">
+          <Dialog.Panel
+            className="mx-auto max-w-md w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20 p-6"
+            style={{ animation: "fadeIn 0.5s ease-out" }}
+          >
+            <div className="flex flex-col items-center text-center" style={{ animation: "fadeIn 0.3s ease-out" }}>
+              <div
+                className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6"
+                style={{ animation: "pulse 2s ease-in-out infinite" }}
+              >
                 {successMessage.includes("upgraded") ? (
-                  <Sparkles className="h-10 w-10 text-green-500 animate-[bounceIn_0.6s_ease-out]" />
+                  <Sparkles className="h-10 w-10 text-green-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
                 ) : (
-                  <CheckCircle2 className="h-10 w-10 text-green-500 animate-[bounceIn_0.6s_ease-out]" />
+                  <CheckCircle2 className="h-10 w-10 text-green-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
                 )}
               </div>
 
-              <Dialog.Title className="text-xl font-medium text-gray-900 mb-2 animate-[slideInUp_0.4s_ease-out]">
+              <Dialog.Title
+                className="text-xl font-medium text-gray-900 mb-2"
+                style={{ animation: "slideInUp 0.4s ease-out" }}
+              >
                 {successMessage.includes("upgraded") ? "Congratulations!" : "Success!"}
               </Dialog.Title>
 
-              <p className="text-gray-600 mb-6 animate-[fadeIn_0.5s_ease-out_0.2s_both]">
+              <p className="text-gray-600 mb-6" style={{ animation: "fadeIn 0.5s ease-out 0.2s both" }}>
                 {successMessage ||
                   (subscription.tier !== "free"
                     ? `You've successfully upgraded to the ${subscription.name} plan! You can now add up to ${subscription.maxServices === Number.POSITIVE_INFINITY ? "unlimited" : subscription.maxServices} services.`
@@ -2646,7 +2633,8 @@ function Bookings() {
 
               <button
                 onClick={() => setIsSuccessModalOpen(false)}
-                className="px-6 py-3 bg-sky-500 text-white rounded-full hover:bg-sky-600 transition-all animate-[fadeIn_0.5s_ease-out_0.3s_both]"
+                className="px-6 py-3 bg-sky-500 text-white rounded-full hover:bg-sky-600 transition-all"
+                style={{ animation: "fadeIn 0.5s ease-out 0.3s both" }}
               >
                 {successMessage.includes("upgraded") ? "Start Using Your New Plan" : "Close"}
               </button>

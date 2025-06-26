@@ -524,7 +524,7 @@ function Transaction() {
             {transactionType === "subscription" ? (
               <div className="flex justify-between items-center border-b border-gray-300 pb-4 mb-4">
                 <p className="text-gray-700">{planName} Subscription (Monthly)</p>
-                <p className="text-gray-800 font-medium">${totalAmount.toFixed(2)}</p>
+                <p className="text-gray-800 font-medium">₱{totalAmount.toFixed(2)}</p>
               </div>
             ) : bookingDetails ? (
               <>

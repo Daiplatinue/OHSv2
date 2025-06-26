@@ -1147,7 +1147,7 @@ export const products = [
     name: "Handyman Services",
     price: 5499,
     category: "Handyman",
-    image: "https://cdn.pixabay.com/photo/2018/05/12/19/00/drechsler-3394311_1280.jpg",
+    image: "https://cdn.pixabay.com/photo/2024/01/02/14/09/forestry-8483331_1280.jpg",
     description:
       "Get quality home repairs and improvements at HandyGo's discounted rates—fast, affordable, and hassle-free.",
   },
@@ -1172,7 +1172,7 @@ export const products = [
     name: "Landscaping Services",
     price: 15000,
     category: "Outdoor",
-    image: "https://cdn.pixabay.com/photo/2022/12/17/14/17/winter-7661769_1280.jpg",
+    image: "https://cdn.pixabay.com/photo/2021/03/22/21/04/house-6115719_1280.jpg",
     description: "Transform your outdoor space with professional landscaping, lawn care, and garden design services.",
   },
   {
@@ -1188,7 +1188,7 @@ export const products = [
     name: "Roofing Services",
     price: 35000,
     category: "Construction",
-    image: "https://cdn.pixabay.com/photo/2015/05/15/16/15/cottage-768889_1280.jpg",
+    image: "https://cdn.pixabay.com/photo/2017/10/26/16/51/roofers-2891664_1280.jpg",
     description:
       "Protect your home with expert roof repairs, replacements, and inspections by certified professionals.",
   },
