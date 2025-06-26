@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -663,16 +661,14 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                     </div>
 
                     {displayBooking.workerCount && (
-                      <div className="flex justify-between items-center pb-2 border-b border-gray-300">
-                        <div className="flex items-center text-gray-600">
-                          <Users className="h-4 w-4 mr-1 text-sky-500" />
-                          <span>Workers:</span>
-                        </div>
-                        <span className="font-medium">
-                          {displayBooking.workerCount} worker{displayBooking.workerCount > 1 ? "s" : ""}
-                        </span>
+                      <div className="flex items-center text-gray-600">
+                        <Users className="h-4 w-4 mr-1 text-sky-500" />
+                        <span>Workers:</span>
                       </div>
                     )}
+                    <span className="font-medium">
+                      {displayBooking.workerCount} worker{displayBooking.workerCount > 1 ? "s" : ""}
+                    </span>
 
                     {displayBooking.estimatedTime && (
                       <div className="flex justify-between items-center pb-2 border-b border-gray-300">
@@ -1019,318 +1015,8 @@ const FloatingDock: React.FC = () => {
       if (!silent) setLoading(true)
       setError("")
 
-      // Get user data from localStorage
-      const userData = localStorage.getItem("user")
-      if (!userData) {
-        setError("User not logged in")
-        if (!silent) setLoading(false)
-        return
-      }
-
-      // Parse the user data
-      const parsedData = JSON.parse(userData)
-
-      // Extract user ID - handle different possible formats
-      let userId
-
-      // Format 1: { user: { _id: "..." }, token: "..." }
-      if (parsedData.user && parsedData.user._id) {
-        userId = parsedData.user._id
-        if (!silent) console.log("Found user ID in format 1:", userId)
-      }
-      // Format 2: { _id: "...", token: "..." }
-      else if (parsedData._id) {
-        userId = parsedData._id
-        if (!silent) console.log("Found user ID in format 2:", userId)
-      }
-      // Format 3: { id: "...", token: "..." }
-      else if (parsedData.id) {
-        userId = parsedData.id
-        if (!silent) console.log("Found user ID in format 3:", userId)
-      }
-      // No valid user ID found
-      else {
-        console.error("User data structure:", parsedData)
-        setError("Could not find user ID in stored data")
-        if (!silent) setLoading(false)
-        return
-      }
-
-      if (!silent) console.log("Fetching bookings for user:", userId)
-
-      // Use the correct API URL
-      const apiUrl = `${import.meta.env.VITE_API_URL || "http://localhost:3000"}/bookings/user/${userId}`
-      if (!silent) console.log("API URL:", apiUrl)
-
-      const response = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch bookings: ${response.statusText}`)
-      }
-
-      const userBookings = await response.json()
-      if (!silent) console.log("Fetched bookings:", userBookings)
-
-      // If no bookings found, use sample data for demonstration
-      if (userBookings.length === 0) {
-        if (!silent) console.log("No bookings found, using sample data")
-
-        // Sample data for all booking statuses
-        const sampleBookings = [
-          // PENDING BOOKINGS
-          {
-            _id: "sample1",
-            userId: userId,
-            firstname: "John",
-            productName: "Plumbing Services",
-            providerName: "PipeFix Pros",
-            providerId: 1,
-            workerCount: 1,
-            bookingDate: new Date().toISOString(),
-            bookingTime: "10:00 AM",
-            location: {
-              name: "123 Main St, Cebu City",
-              lat: 10.3157,
-              lng: 123.8854,
-              distance: 3.5,
-            },
-            estimatedTime: "1-2 hours",
-            pricing: {
-              baseRate: 1200,
-              distanceCharge: 87.5,
-              totalRate: 1287.5,
-            },
-            status: "pending",
-            createdAt: new Date().toISOString(),
-          },
-          {
-            _id: "sample2",
-            userId: userId,
-            firstname: "Maria",
-            productName: "Electrical Repair",
-            providerName: "PowerFix Solutions",
-            providerId: 2,
-            workerCount: 2,
-            bookingDate: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-            bookingTime: "2:00 PM",
-            location: {
-              name: "456 Park Avenue, Makati City",
-              lat: 14.5547,
-              lng: 121.0244,
-              distance: 2.8,
-            },
-            estimatedTime: "3-4 hours",
-            pricing: {
-              baseRate: 1500,
-              distanceCharge: 70,
-              totalRate: 1570,
-            },
-            status: "pending",
-            createdAt: new Date().toISOString(),
-          },
-
-          // ONGOING BOOKINGS
-          {
-            _id: "sample3",
-            userId: userId,
-            firstname: "Carlos",
-            productName: "House Cleaning",
-            providerName: "CleanPro Services",
-            providerId: 3,
-            workerCount: 3,
-            bookingDate: new Date().toISOString(),
-            bookingTime: "9:30 AM",
-            location: {
-              name: "789 Seaside Blvd, Manila",
-              lat: 14.5995,
-              lng: 120.9842,
-              distance: 5.2,
-            },
-            estimatedTime: "4-5 hours",
-            pricing: {
-              baseRate: 2200,
-              distanceCharge: 130,
-              totalRate: 2330,
-            },
-            status: "ongoing",
-            paymentComplete: true,
-            createdAt: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-          },
-          {
-            _id: "sample4",
-            userId: userId,
-            firstname: "Elena",
-            productName: "Aircon Maintenance",
-            providerName: "CoolAir Technicians",
-            providerId: 4,
-            workerCount: 2,
-            bookingDate: new Date().toISOString(),
-            bookingTime: "11:00 AM",
-            location: {
-              name: "101 Green Hills, Pasig City",
-              lat: 14.5764,
-              lng: 121.0851,
-              distance: 4.1,
-            },
-            estimatedTime: "1-2 hours",
-            pricing: {
-              baseRate: 1800,
-              distanceCharge: 102.5,
-              totalRate: 1902.5,
-            },
-            status: "ongoing",
-            paymentComplete: false,
-            createdAt: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
-          },
-
-          // CANCELLED BOOKINGS
-          {
-            _id: "sample5",
-            userId: userId,
-            firstname: "Miguel",
-            productName: "Furniture Assembly",
-            providerName: "BuildIt Experts",
-            providerId: 5,
-            workerCount: 2,
-            bookingDate: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-            bookingTime: "3:00 PM",
-            location: {
-              name: "222 Orchard Road, Quezon City",
-              lat: 14.676,
-              lng: 121.0437,
-              distance: 3.7,
-            },
-            estimatedTime: "2-3 hours",
-            pricing: {
-              baseRate: 1350,
-              distanceCharge: 92.5,
-              totalRate: 1442.5,
-            },
-            status: "cancelled",
-            createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
-          },
-          {
-            _id: "sample6",
-            userId: userId,
-            firstname: "Isabella",
-            productName: "Pest Control",
-            providerName: "BugBusters",
-            providerId: 6,
-            workerCount: 1,
-            bookingDate: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
-            bookingTime: "10:00 AM",
-            location: {
-              name: "333 Coconut Avenue, Taguig",
-              lat: 14.5176,
-              lng: 121.0509,
-              distance: 6.3,
-            },
-            estimatedTime: "2-3 hours",
-            pricing: {
-              baseRate: 1700,
-              distanceCharge: 157.5,
-              totalRate: 1857.5,
-            },
-            status: "cancelled",
-            createdAt: new Date(Date.now() - 432000000).toISOString(), // 5 days ago
-          },
-
-          // COMPLETED BOOKINGS
-          {
-            _id: "sample7",
-            userId: userId,
-            firstname: "Rafael",
-            productName: "Lawn Mowing",
-            providerName: "GreenThumb Landscaping",
-            providerId: 7,
-            workerCount: 2,
-            bookingDate: new Date(Date.now() - 604800000).toISOString(), // 1 week ago
-            bookingTime: "8:00 AM",
-            location: {
-              name: "444 Hillside Drive, Antipolo",
-              lat: 14.5885,
-              lng: 121.1754,
-              distance: 8.2,
-            },
-            estimatedTime: "3-4 hours",
-            pricing: {
-              baseRate: 1600,
-              distanceCharge: 205,
-              totalRate: 1805,
-            },
-            status: "completed",
-            createdAt: new Date(Date.now() - 691200000).toISOString(), // 8 days ago
-          },
-          {
-            _id: "sample8",
-            userId: userId,
-            firstname: "Sofia",
-            productName: "Carpet Cleaning",
-            providerName: "FreshStart Cleaners",
-            providerId: 8,
-            workerCount: 2,
-            bookingDate: new Date(Date.now() - 1209600000).toISOString(), // 2 weeks ago
-            bookingTime: "1:00 PM",
-            location: {
-              name: "555 Beachfront Road, Parañaque",
-              lat: 14.4793,
-              lng: 120.9977,
-              distance: 4.8,
-            },
-            estimatedTime: "2-3 hours",
-            pricing: {
-              baseRate: 1900,
-              distanceCharge: 120,
-              totalRate: 2020,
-            },
-            status: "completed",
-            createdAt: new Date(Date.now() - 1296000000).toISOString(), // 15 days ago
-          },
-          {
-            _id: "sample9",
-            userId: userId,
-            firstname: "Diego",
-            productName: "Roof Repair",
-            providerName: "TopNotch Roofing",
-            providerId: 9,
-            workerCount: 3,
-            bookingDate: new Date(Date.now() - 1814400000).toISOString(), // 3 weeks ago
-            bookingTime: "9:00 AM",
-            location: {
-              name: "666 Mountain View, Tagaytay",
-              lat: 14.1153,
-              lng: 120.9621,
-              distance: 12.5,
-            },
-            estimatedTime: "5-6 hours",
-            pricing: {
-              baseRate: 3500,
-              distanceCharge: 312.5,
-              totalRate: 3812.5,
-            },
-            status: "completed",
-            createdAt: new Date(Date.now() - 1900800000).toISOString(), // 22 days ago
-          },
-        ]
-
-        setBookings(sampleBookings)
-      } else {
-        setBookings(userBookings)
-      }
-    } catch (err) {
-      console.error("Error fetching bookings:", err)
-      setError(err instanceof Error ? err.message : "Failed to fetch bookings")
-
-      // Use sample data if fetch fails
-      console.log("Using sample data due to fetch error")
-
       // Sample data for all booking statuses
-      const sampleBookings = [
+      const sampleBookings: Booking[] = [
         // PENDING BOOKINGS
         {
           _id: "sample1",
@@ -1568,6 +1254,9 @@ const FloatingDock: React.FC = () => {
       ]
 
       setBookings(sampleBookings)
+    } catch (err) {
+      console.error("Error setting sample bookings:", err)
+      setError(err instanceof Error ? err.message : "Failed to load sample bookings")
     } finally {
       if (!silent) setLoading(false)
     }

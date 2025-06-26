@@ -24,7 +24,6 @@ import {
   MapPin,
   User,
 } from "lucide-react"
-import MyFloatingDock from "../Styles/MyFloatingDock"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -40,30 +39,397 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import Footer from "../Styles/Footer"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import axios from "axios"
+import AccountReviewer from "./AccountReviewer" // Import the Service Provider reviewer
+import CustomerReviewer from "../Customer_Tabs/CustomerReviewer" // Import the Customer reviewer
+import EmployeeReviewer from "../ProviderComponents/EmployeeReviewer" // Import the new Employee/Admin reviewer
+
+interface Account {
+  id: number
+  name: string
+  email: string
+  role: string
+  status: string
+  joinDate: string
+  lastLogin: string
+  avatar: string
+  phone: string
+  location: string
+  rating: number
+  paymentMethod: string
+  verificationStatus: string
+  // New fields for Service Provider document previews
+  secRegistrationPreview?: string | null
+  businessPermitPreview?: string | null
+  birRegistrationPreview?: string | null
+  eccCertificatePreview?: string | null
+  generalLiabilityPreview?: string | null
+  workersCompPreview?: string | null
+  professionalIndemnityPreview?: string | null
+  propertyDamagePreview?: string | null
+  businessInterruptionPreview?: string | null
+  bondingInsurancePreview?: string | null
+  // New fields for Service Provider anomaly status
+  secRegistrationAnomaly?: boolean
+  businessPermitAnomaly?: boolean
+  birRegistrationAnomaly?: boolean
+  eccCertificateAnomaly?: boolean
+  generalLiabilityAnomaly?: boolean
+  workersCompAnomaly?: boolean
+  professionalIndemnityAnomaly?: boolean
+  propertyDamageAnomaly?: boolean
+  businessInterruptionAnomaly?: boolean
+  bondingInsuranceAnomaly?: boolean
+  // New fields for Customer accounts
+  gender?: string
+  bio?: string
+  frontIdPreview?: string | null
+  backIdPreview?: string | null
+  profilePicturePreview?: string | null
+  coverPhoto?: string | null // Used by both Service Provider and Customer
+  selectedLocation?: {
+    name: string
+    lat: number
+    lng: number
+    distance: number
+    zipCode?: string
+  } | null
+  // New fields for Customer document anomaly status
+  frontIdAnomaly?: boolean
+  backIdAnomaly?: boolean
+}
+
+const initialSampleAccounts: Account[] = [
+  {
+    id: 1,
+    name: "John Smith",
+    email: "john.smith@example.com",
+    role: "Customer",
+    status: "Active",
+    joinDate: "May 12, 2023",
+    lastLogin: "2 hours ago",
+    avatar: "/placeholder.svg?height=40&width=40",
+    phone: "+1 (555) 123-4567",
+    location: "New York, USA",
+    rating: 4.8,
+    paymentMethod: "Credit Card",
+    verificationStatus: "Verified",
+    gender: "male",
+    bio: "A loyal customer who frequently uses our services for home maintenance.",
+    frontIdPreview: "/placeholder.svg?height=150&width=200",
+    backIdPreview: "/placeholder.svg?height=150&width=200",
+    profilePicturePreview: "/placeholder.svg?height=100&width=100",
+    coverPhoto: "/placeholder.svg?height=200&width=800",
+    selectedLocation: {
+      name: "New York, USA",
+      lat: 40.7128,
+      lng: -74.006,
+      distance: 0,
+      zipCode: "10001",
+    },
+    frontIdAnomaly: false,
+    backIdAnomaly: false,
+  },
+  {
+    id: 2,
+    name: "Sarah Johnson",
+    email: "sarah.j@example.com",
+    role: "Customer",
+    status: "Active",
+    joinDate: "Apr 28, 2023",
+    lastLogin: "1 day ago",
+    avatar: "/placeholder.svg?height=40&width=40",
+    phone: "+1 (555) 234-5678",
+    location: "Los Angeles, USA",
+    rating: 4.5,
+    paymentMethod: "PayPal",
+    verificationStatus: "Verified",
+    gender: "female",
+    bio: "Enjoys booking various services, especially for gardening and cleaning.",
+    frontIdPreview: "/placeholder.svg?height=150&width=200",
+    backIdPreview: "/placeholder.svg?height=150&width=200",
+    profilePicturePreview: "/placeholder.svg?height=100&width=100",
+    coverPhoto: "/placeholder.svg?height=200&width=800",
+    selectedLocation: {
+      name: "Los Angeles, USA",
+      lat: 34.0522,
+      lng: -118.2437,
+      distance: 0,
+      zipCode: "90001",
+    },
+    frontIdAnomaly: false,
+    backIdAnomaly: false,
+  },
+  {
+    id: 3,
+    name: "Michael Brown",
+    email: "michael.b@example.com",
+    role: "Service Provider",
+    status: "Active",
+    joinDate: "Mar 15, 2023",
+    lastLogin: "5 hours ago",
+    avatar: "/placeholder.svg?height=40&width=40",
+    phone: "+1 (555) 345-6789",
+    location: "Chicago, USA",
+    rating: 4.9,
+    paymentMethod: "Direct Deposit",
+    verificationStatus: "Verified",
+    secRegistrationPreview: "/placeholder.svg?height=150&width=200",
+    businessPermitPreview: "/placeholder.svg?height=150&width=200",
+    birRegistrationPreview: "/placeholder.svg?height=150&width=200",
+    eccCertificatePreview: null, // Optional, so can be null
+    generalLiabilityPreview: "/placeholder.svg?height=150&width=200",
+    workersCompPreview: "/placeholder.svg?height=150&width=200",
+    professionalIndemnityPreview: null,
+    propertyDamagePreview: "/placeholder.svg?height=150&width=200",
+    businessInterruptionPreview: null,
+    bondingInsurancePreview: null,
+    coverPhoto: "/placeholder.svg?height=200&width=800", // Placeholder cover photo
+    secRegistrationAnomaly: false,
+    businessPermitAnomaly: false,
+    birRegistrationAnomaly: false,
+    eccCertificateAnomaly: false,
+    generalLiabilityAnomaly: false,
+    workersCompAnomaly: false,
+    professionalIndemnityAnomaly: false,
+    propertyDamageAnomaly: false,
+    businessInterruptionAnomaly: false,
+    bondingInsuranceAnomaly: false,
+  },
+  {
+    id: 4,
+    name: "Emily Davis",
+    email: "emily.d@example.com",
+    role: "Customer",
+    status: "Inactive",
+    joinDate: "Feb 10, 2023",
+    lastLogin: "2 weeks ago",
+    avatar: "/placeholder.svg?height=40&width=40",
+    phone: "+1 (555) 456-7890",
+    location: "Miami, USA",
+    rating: 4.2,
+    paymentMethod: "Credit Card",
+    verificationStatus: "Verified",
+    gender: "female",
+    bio: "Inactive due to relocation, but previously a frequent user of cleaning services.",
+    frontIdPreview: "/placeholder.svg?height=150&width=200",
+    backIdPreview: "/placeholder.svg?height=150&width=200",
+    profilePicturePreview: "/placeholder.svg?height=100&width=100",
+    coverPhoto: "/placeholder.svg?height=200&width=800",
+    selectedLocation: {
+      name: "Miami, USA",
+      lat: 25.7617,
+      lng: -80.1918,
+      distance: 0,
+      zipCode: "33101",
+    },
+    frontIdAnomaly: false,
+    backIdAnomaly: false,
+  },
+  {
+    id: 5,
+    name: "David Wilson",
+    email: "david.w@example.com",
+    role: "Service Provider",
+    status: "Pending",
+    joinDate: "May 5, 2023",
+    lastLogin: "3 days ago",
+    avatar: "https://cdn.pixabay.com/photo/2025/04/16/06/25/duck-9536937_1280.jpg",
+    phone: "+1 (555) 567-8901",
+    location: "Seattle, USA",
+    rating: 0,
+    paymentMethod: "Awaiting Setup",
+    verificationStatus: "Pending",
+    secRegistrationPreview: "https://cdn.pixabay.com/photo/2025/04/16/06/25/duck-9536937_1280.jpg",
+    businessPermitPreview: "/placeholder.svg?height=150&width=200",
+    birRegistrationPreview: "/placeholder.svg?height=150&width=200",
+    eccCertificatePreview: "/placeholder.svg?height=150&width=200", // Example of optional being present
+    generalLiabilityPreview: "/placeholder.svg?height=150&width=200",
+    workersCompPreview: "/placeholder.svg?height=150&width=200",
+    professionalIndemnityPreview: "/placeholder.svg?height=150&width=200",
+    propertyDamagePreview: null,
+    businessInterruptionPreview: null,
+    bondingInsurancePreview: null,
+    coverPhoto: "https://cdn.pixabay.com/photo/2025/04/16/06/25/duck-9536937_1280.jpg", // New cover photo
+    secRegistrationAnomaly: false,
+    businessPermitAnomaly: false,
+    birRegistrationAnomaly: false,
+    eccCertificateAnomaly: false,
+    generalLiabilityAnomaly: false,
+    workersCompAnomaly: false,
+    professionalIndemnityAnomaly: false,
+    propertyDamageAnomaly: false,
+    businessInterruptionAnomaly: false,
+    bondingInsuranceAnomaly: false,
+  },
+  {
+    id: 6,
+    name: "Jennifer Martinez",
+    email: "jennifer.m@example.com",
+    role: "Admin",
+    status: "Active",
+    joinDate: "Jan 8, 2023",
+    lastLogin: "Just now",
+    avatar: "/placeholder.svg?height=40&width=40",
+    phone: "+1 (555) 678-9012",
+    location: "Boston, USA",
+    rating: 5.0,
+    paymentMethod: "N/A",
+    verificationStatus: "Verified",
+    coverPhoto: "/placeholder.svg?height=200&width=800",
+    profilePicturePreview: "/placeholder.svg?height=100&width=100",
+  },
+  {
+    id: 7,
+    name: "Robert Taylor",
+    email: "robert.t@example.com",
+    role: "Customer",
+    status: "Suspended",
+    joinDate: "Apr 2, 2023",
+    lastLogin: "1 month ago",
+    avatar: "/placeholder.svg?height=40&width=40",
+    phone: "+1 (555) 789-0123",
+    location: "Denver, USA",
+    rating: 2.1,
+    paymentMethod: "Credit Card (Expired)",
+    verificationStatus: "Verified",
+    gender: "male",
+    bio: "Account suspended due to multiple policy violations.",
+    frontIdPreview: "/placeholder.svg?height=150&width=200",
+    backIdPreview: "/placeholder.svg?height=150&width=200",
+    profilePicturePreview: "/placeholder.svg?height=100&width=100",
+    coverPhoto: "/placeholder.svg?height=200&width=800",
+    selectedLocation: {
+      name: "Denver, USA",
+      lat: 39.7392,
+      lng: -104.9903,
+      distance: 0,
+      zipCode: "80202",
+    },
+    frontIdAnomaly: true, // Example of an anomaly
+    backIdAnomaly: false,
+  },
+  {
+    id: 8,
+    name: "Olivia White",
+    email: "olivia.w@example.com",
+    role: "Customer",
+    status: "Pending",
+    joinDate: "Jun 20, 2024",
+    lastLogin: "N/A",
+    avatar: "/placeholder.svg?height=40&width=40",
+    phone: "+1 (555) 987-6543",
+    location: "San Francisco, USA",
+    rating: 0,
+    paymentMethod: "N/A",
+    verificationStatus: "Pending",
+    gender: "female",
+    bio: "New customer awaiting profile verification.",
+    frontIdPreview: "/placeholder.svg?height=150&width=200",
+    backIdPreview: "/placeholder.svg?height=150&width=200",
+    profilePicturePreview: "/placeholder.svg?height=100&width=100",
+    coverPhoto: "/placeholder.svg?height=200&width=800",
+    selectedLocation: {
+      name: "San Francisco, USA",
+      lat: 37.7749,
+      lng: -122.4194,
+      distance: 0,
+      zipCode: "94102",
+    },
+    frontIdAnomaly: false,
+    backIdAnomaly: false,
+  },
+  {
+    id: 9,
+    name: "James Green",
+    email: "james.g@example.com",
+    role: "Customer",
+    status: "Pending",
+    joinDate: "Jun 18, 2024",
+    lastLogin: "N/A",
+    avatar: "/placeholder.svg?height=40&width=40",
+    phone: "+1 (555) 876-5432",
+    location: "Austin, USA",
+    rating: 0,
+    paymentMethod: "Awaiting Setup",
+    verificationStatus: "Pending",
+    gender: "male",
+    bio: "Recently registered, looking for handyman services.",
+    frontIdPreview: "/placeholder.svg?height=150&width=200",
+    backIdPreview: "/placeholder.svg?height=150&width=200",
+    profilePicturePreview: "/placeholder.svg?height=100&width=100",
+    coverPhoto: "/placeholder.svg?height=200&width=800",
+    selectedLocation: {
+      name: "Austin, USA",
+      lat: 30.2672,
+      lng: -97.7431,
+      distance: 0,
+      zipCode: "78701",
+    },
+    frontIdAnomaly: false,
+    backIdAnomaly: false,
+  },
+  {
+    id: 10,
+    name: "Sophia Blue",
+    email: "sophia.b@example.com",
+    role: "Service Provider",
+    status: "Pending",
+    joinDate: "Jun 15, 2024",
+    lastLogin: "N/A",
+    avatar: "/placeholder.svg?height=40&width=40",
+    phone: "+1 (555) 765-4321",
+    location: "Portland, USA",
+    rating: 0,
+    paymentMethod: "Awaiting Setup",
+    verificationStatus: "Pending",
+    secRegistrationPreview: "/placeholder.svg?height=150&width=200",
+    businessPermitPreview: "/placeholder.svg?height=150&width=200",
+    birRegistrationPreview: "/placeholder.svg?height=150&width=200",
+    eccCertificatePreview: null,
+    generalLiabilityPreview: "/placeholder.svg?height=150&width=200",
+    workersCompPreview: "/placeholder.svg?height=150&width=200",
+    professionalIndemnityPreview: null,
+    propertyDamagePreview: null,
+    businessInterruptionPreview: null,
+    bondingInsurancePreview: null,
+    coverPhoto: "/placeholder.svg?height=200&width=800", // Placeholder cover photo
+    secRegistrationAnomaly: false,
+    businessPermitAnomaly: false,
+    birRegistrationAnomaly: false,
+    eccCertificateAnomaly: false,
+    generalLiabilityAnomaly: false,
+    workersCompAnomaly: false,
+    professionalIndemnityAnomaly: false,
+    propertyDamageAnomaly: false,
+    businessInterruptionAnomaly: false,
+    bondingInsuranceAnomaly: false,
+  },
+  {
+    id: 11,
+    name: "Alex Chen",
+    email: "alex.c@example.com",
+    role: "Employee",
+    status: "Active",
+    joinDate: "Mar 1, 2024",
+    lastLogin: "1 hour ago",
+    avatar: "/placeholder.svg?height=40&width=40",
+    phone: "+1 (555) 111-2222",
+    location: "San Jose, USA",
+    rating: 0,
+    paymentMethod: "N/A",
+    verificationStatus: "Verified",
+    coverPhoto: "/placeholder.svg?height=200&width=800",
+    profilePicturePreview: "/placeholder.svg?height=100&width=100",
+  },
+]
 
 function AccountsTab() {
   const [activeTab, setActiveTab] = useState("all")
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [selectedAccount, setSelectedAccount] = useState<{
-    id: number
-    name: string
-    email: string
-    role: string
-    status: string
-    joinDate: string
-    lastLogin: string
-    avatar: string
-    phone: string
-    location: string
-    rating: number
-    paymentMethod: string
-    verificationStatus: string
-  } | null>(null)
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null)
 
   const [newAccountFirstName, setNewAccountFirstName] = useState("")
   const [newAccountLastName, setNewAccountLastName] = useState("")
@@ -76,23 +442,20 @@ function AccountsTab() {
   const [newAccountType, setNewAccountType] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [newAccountData, setNewAccountData] = useState<any>(null)
-  interface Account {
-    id: number;
-    name: string;
-    email: string;
-    role: string;
-    status: string;
-    joinDate: string;
-    lastLogin: string;
-    avatar: string;
-    phone: string;
-    location: string;
-    rating: number;
-    paymentMethod: string;
-    verificationStatus: string;
-  }
 
-  const [accounts, setAccounts] = useState<Account[]>([])
+  const [accounts, setAccounts] = useState<Account[]>(initialSampleAccounts)
+
+  // New state for AccountReviewer (Service Provider)
+  const [showAccountReviewer, setShowAccountReviewer] = useState(false)
+  const [accountToReview, setAccountToReview] = useState<Account | null>(null)
+
+  // New state for CustomerReviewer
+  const [showCustomerReviewer, setShowCustomerReviewer] = useState(false)
+  const [customerToReview, setCustomerToReview] = useState<Account | null>(null)
+
+  // New state for EmployeeReviewer
+  const [showEmployeeReviewer, setShowEmployeeReviewer] = useState(false)
+  const [employeeToReview, setEmployeeToReview] = useState<Account | null>(null)
 
   // Animation keyframes
   const keyframes = `
@@ -128,276 +491,84 @@ function AccountsTab() {
     return () => clearInterval(timer)
   }, [])
 
-  // Fetch users from the backend
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await axios.get("http://localhost:3000/users")
-        if (response.data) {
-          // Transform the user data to match the expected format
-          interface User {
-            _id?: string;
-            firstname: string;
-            lastname: string;
-            email: string;
-            type: string;
-            status: string;
-            createdAt: string;
-            profilePicture?: string;
-            contact?: string;
-            location?: {
-              name: string;
-            };
-            verification: string;
-          }
-
-          const formattedUsers: Account[] = response.data.map((user: User, index: number) => ({
-            id: typeof user._id === 'string' ? parseInt(user._id, 16) % Number.MAX_SAFE_INTEGER : index + 1,
-            name: `${user.firstname} ${user.lastname}`,
-            email: user.email,
-            role: user.type === "manager" ? "Service Provider" : user.type === "admin" ? "Admin" : "Customer",
-            status: user.status.charAt(0).toUpperCase() + user.status.slice(1),
-            joinDate: new Date(user.createdAt).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            }),
-            lastLogin: "N/A",
-            avatar: user.profilePicture || "/placeholder.svg?height=40&width=40",
-            phone: user.contact || "N/A",
-            location: user.location?.name || "N/A",
-            rating: 0,
-            paymentMethod: "N/A",
-            verificationStatus: user.verification.charAt(0).toUpperCase() + user.verification.slice(1),
-          }))
-
-          // Replace the sample accounts with the fetched users
-          setAccounts(formattedUsers)
-        }
-      } catch (error) {
-        console.error("Error fetching users:", error)
-        toast(
-          <div>
-            <div className="font-semibold">Failed to load accounts</div>
-            <div className="text-sm text-gray-600">Please try again later</div>
-          </div>,
-          { className: "bg-red-50 text-red-700 border-red-200", duration: 4000 },
-        )
-      }
-    }
-
-    fetchUsers()
-  }, [])
-
   // Format current time
   const timeString = currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   const dateString = currentTime.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })
 
-  // Sample account data
-  // const accounts = [
-  //   {
-  //     id: 1,
-  //     name: "John Smith",
-  //     email: "john.smith@example.com",
-  //     role: "Customer",
-  //     status: "Active",
-  //     joinDate: "May 12, 2023",
-  //     lastLogin: "2 hours ago",
-  //     avatar: "/placeholder.svg?height=40&width=40",
-  //     phone: "+1 (555) 123-4567",
-  //     location: "New York, USA",
-  //     rating: 4.8,
-  //     paymentMethod: "Credit Card",
-  //     verificationStatus: "Verified",
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Sarah Johnson",
-  //     email: "sarah.j@example.com",
-  //     role: "Customer",
-  //     status: "Active",
-  //     joinDate: "Apr 28, 2023",
-  //     lastLogin: "1 day ago",
-  //     avatar: "/placeholder.svg?height=40&width=40",
-  //     phone: "+1 (555) 234-5678",
-  //     location: "Los Angeles, USA",
-  //     rating: 4.5,
-  //     paymentMethod: "PayPal",
-  //     verificationStatus: "Verified",
-  //   },
-  //   {
-  //     id: 3,
-  //     name: "Michael Brown",
-  //     email: "michael.b@example.com",
-  //     role: "Service Provider",
-  //     status: "Active",
-  //     joinDate: "Mar 15, 2023",
-  //     lastLogin: "5 hours ago",
-  //     avatar: "/placeholder.svg?height=40&width=40",
-  //     phone: "+1 (555) 345-6789",
-  //     location: "Chicago, USA",
-  //     rating: 4.9,
-  //     paymentMethod: "Direct Deposit",
-  //     verificationStatus: "Verified",
-  //   },
-  //   {
-  //     id: 4,
-  //     name: "Emily Davis",
-  //     email: "emily.d@example.com",
-  //     role: "Customer",
-  //     status: "Inactive",
-  //     joinDate: "Feb 10, 2023",
-  //     lastLogin: "2 weeks ago",
-  //     avatar: "/placeholder.svg?height=40&width=40",
-  //     phone: "+1 (555) 456-7890",
-  //     location: "Miami, USA",
-  //     rating: 4.2,
-  //     paymentMethod: "Credit Card",
-  //     verificationStatus: "Verified",
-  //   },
-  //   {
-  //     id: 5,
-  //     name: "David Wilson",
-  //     email: "david.w@example.com",
-  //     role: "Service Provider",
-  //     status: "Pending",
-  //     joinDate: "May 5, 2023",
-  //     lastLogin: "3 days ago",
-  //     avatar: "/placeholder.svg?height=40&width=40",
-  //     phone: "+1 (555) 567-8901",
-  //     location: "Seattle, USA",
-  //     rating: 0,
-  //     paymentMethod: "Awaiting Setup",
-  //     verificationStatus: "Pending",
-  //   },
-  //   {
-  //     id: 6,
-  //     name: "Jennifer Martinez",
-  //     email: "jennifer.m@example.com",
-  //     role: "Admin",
-  //     status: "Active",
-  //     joinDate: "Jan 8, 2023",
-  //     lastLogin: "Just now",
-  //     avatar: "/placeholder.svg?height=40&width=40",
-  //     phone: "+1 (555) 678-9012",
-  //     location: "Boston, USA",
-  //     rating: 5.0,
-  //     paymentMethod: "N/A",
-  //     verificationStatus: "Verified",
-  //   },
-  //   {
-  //     id: 7,
-  //     name: "Robert Taylor",
-  //     email: "robert.t@example.com",
-  //     role: "Customer",
-  //     status: "Suspended",
-  //     joinDate: "Apr 2, 2023",
-  //     lastLogin: "1 month ago",
-  //     avatar: "/placeholder.svg?height=40&width=40",
-  //     phone: "+1 (555) 789-0123",
-  //     location: "Denver, USA",
-  //     rating: 2.1,
-  //     paymentMethod: "Credit Card (Expired)",
-  //     verificationStatus: "Verified",
-  //   },
-  //   {
-  //     id: 8,
-  //     name: "Robert Taylor",
-  //     email: "robert.t@example.com",
-  //     role: "Customer",
-  //     status: "Suspended",
-  //     joinDate: "Apr 2, 2023",
-  //     lastLogin: "1 month ago",
-  //     avatar: "/placeholder.svg?height=40&width=40",
-  //     phone: "+1 (555) 789-0123",
-  //     location: "Denver, USA",
-  //     rating: 2.1,
-  //     paymentMethod: "Credit Card (Expired)",
-  //     verificationStatus: "Verified",
-  //   },
-  //   {
-  //     id: 9,
-  //     name: "Robert Taylor",
-  //     email: "robert.t@example.com",
-  //     role: "Customer",
-  //     status: "Suspended",
-  //     joinDate: "Apr 2, 2023",
-  //     lastLogin: "1 month ago",
-  //     avatar: "/placeholder.svg?height=40&width=40",
-  //     phone: "+1 (555) 789-0123",
-  //     location: "Denver, USA",
-  //     rating: 2.1,
-  //     paymentMethod: "Credit Card (Expired)",
-  //     verificationStatus: "Verified",
-  //   },
-  //   {
-  //     id: 10,
-  //     name: "Robert Taylor",
-  //     email: "robert.t@example.com",
-  //     role: "Customer",
-  //     status: "Suspended",
-  //     joinDate: "Apr 2, 2023",
-  //     lastLogin: "1 month ago",
-  //     avatar: "/placeholder.svg?height=40&width=40",
-  //     phone: "+1 (555) 789-0123",
-  //     location: "Denver, USA",
-  //     rating: 2.1,
-  //     paymentMethod: "Credit Card (Expired)",
-  //     verificationStatus: "Verified",
-  //   },
-  //   {
-  //     id: 11,
-  //     name: "Robert Taylor",
-  //     email: "robert.t@example.com",
-  //     role: "Customer",
-  //     status: "Suspended",
-  //     joinDate: "Apr 2, 2023",
-  //     lastLogin: "1 month ago",
-  //     avatar: "/placeholder.svg?height=40&width=40",
-  //     phone: "+1 (555) 789-0123",
-  //     location: "Denver, USA",
-  //     rating: 2.1,
-  //     paymentMethod: "Credit Card (Expired)",
-  //     verificationStatus: "Verified",
-  //   },
-  //   {
-  //     id: 12,
-  //     name: "Robert Taylor",
-  //     email: "robert.t@example.com",
-  //     role: "Customer",
-  //     status: "Suspended",
-  //     joinDate: "Apr 2, 2023",
-  //     lastLogin: "1 month ago",
-  //     avatar: "/placeholder.svg?height=40&width=40",
-  //     phone: "+1 (555) 789-0123",
-  //     location: "Denver, USA",
-  //     rating: 2.1,
-  //     paymentMethod: "Credit Card (Expired)",
-  //     verificationStatus: "Verified",
-  //   },
-  // ]
+  // Account statistics (now dynamic)
+  const totalAccounts = accounts.length
+  const activeUsers = accounts.filter((acc) => acc.status === "Active").length
+  const newThisMonth = accounts.filter((acc) => {
+    const joinDate = new Date(acc.joinDate)
+    const currentMonth = new Date().getMonth()
+    const currentYear = new Date().getFullYear()
+    return joinDate.getMonth() === currentMonth && joinDate.getFullYear() === currentYear
+  }).length
+  const conversionRate = totalAccounts > 0 ? Math.round((activeUsers / totalAccounts) * 100) : 0
 
-  // Account statistics
   const accountStats = {
-    totalAccounts: 842,
-    activeUsers: 685,
-    newThisMonth: 48,
-    conversionRate: 68,
+    totalAccounts,
+    activeUsers,
+    newThisMonth,
+    conversionRate,
   }
 
-  // Account distribution data
+  // Account distribution data (now dynamic)
+  const customerCount = accounts.filter((acc) => acc.role === "Customer").length
+  const serviceProviderCount = accounts.filter((acc) => acc.role === "Service Provider").length
+  const adminCount = accounts.filter((acc) => acc.role === "Admin").length
+  const employeeCount = accounts.filter((acc) => acc.role === "Employee").length // New
+
   const accountDistribution = [
-    { role: "Customers", percentage: 68, count: 573 },
-    { role: "Service Providers", percentage: 24, count: 202 },
-    { role: "Administrators", percentage: 8, count: 67 },
+    {
+      role: "Customers",
+      percentage: totalAccounts > 0 ? Math.round((customerCount / totalAccounts) * 100) : 0,
+      count: customerCount,
+    },
+    {
+      role: "Service Providers",
+      percentage: totalAccounts > 0 ? Math.round((serviceProviderCount / totalAccounts) * 100) : 0,
+      count: serviceProviderCount,
+    },
+    {
+      role: "Administrators",
+      percentage: totalAccounts > 0 ? Math.round((adminCount / totalAccounts) * 100) : 0,
+      count: adminCount,
+    },
+    {
+      role: "Employees", // New
+      percentage: totalAccounts > 0 ? Math.round((employeeCount / totalAccounts) * 100) : 0,
+      count: employeeCount,
+    },
   ]
 
-  // Account status data
+  // Account status data (now dynamic)
+  const activeCount = accounts.filter((acc) => acc.status === "Active").length
+  const inactiveCount = accounts.filter((acc) => acc.status === "Inactive").length
+  const pendingCount = accounts.filter((acc) => acc.status === "Pending").length
+  const suspendedCount = accounts.filter((acc) => acc.status === "Suspended").length
+
   const accountStatus = [
-    { status: "Active", count: 685, percentage: 81 },
-    { status: "Inactive", count: 98, percentage: 12 },
-    { status: "Pending", count: 42, percentage: 5 },
-    { status: "Suspended", count: 17, percentage: 2 },
+    {
+      status: "Active",
+      count: activeCount,
+      percentage: totalAccounts > 0 ? Math.round((activeCount / totalAccounts) * 100) : 0,
+    },
+    {
+      status: "Inactive",
+      count: inactiveCount,
+      percentage: totalAccounts > 0 ? Math.round((inactiveCount / totalAccounts) * 100) : 0,
+    },
+    {
+      status: "Pending",
+      count: pendingCount,
+      percentage: totalAccounts > 0 ? Math.round((pendingCount / totalAccounts) * 100) : 0,
+    },
+    {
+      status: "Suspended",
+      count: suspendedCount,
+      percentage: totalAccounts > 0 ? Math.round((suspendedCount / totalAccounts) * 100) : 0,
+    },
   ]
 
   // Filter accounts based on active tab
@@ -406,7 +577,9 @@ function AccountsTab() {
     if (activeTab === "customers") return account.role === "Customer"
     if (activeTab === "providers") return account.role === "Service Provider"
     if (activeTab === "admins") return account.role === "Admin"
-    if (activeTab === "inactive") return account.status !== "Active"
+    if (activeTab === "employees") return account.role === "Employee" // New
+    if (activeTab === "inactive") return account.status === "Inactive"
+    if (activeTab === "pending") return account.status === "Pending"
     return true
   })
 
@@ -435,6 +608,8 @@ function AccountsTab() {
         return <Badge className="bg-[#F2EBFF] text-[#5E5CE6] hover:bg-[#F2EBFF]">{role}</Badge>
       case "Admin":
         return <Badge className="bg-[#E9F6FF] text-[#5AC8FA] hover:bg-[#E9F6FF]">{role}</Badge>
+      case "Employee": // New
+        return <Badge className="bg-[#E6F7FF] text-[#007AFF] hover:bg-[#E6F7FF]">{role}</Badge>
       default:
         return <Badge className="bg-[#F2F2F7] text-[#8E8E93] hover:bg-[#F2F2F7]">{role}</Badge>
     }
@@ -467,62 +642,74 @@ function AccountsTab() {
     setIsSubmitting(true)
 
     try {
-      // Create account data object
-      const accountData = {
+      // Simulate API call success
+      await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate network delay
+
+      const newId = Math.max(...accounts.map((a) => a.id)) + 1
+      const newAccountRole =
+        newAccountType === "manager" || newAccountType === "provider"
+          ? "Service Provider"
+          : newAccountType === "admin"
+            ? "Admin"
+            : newAccountType === "employee" // New
+              ? "Employee"
+              : "Customer"
+      const newAccountStatus = newAccountType === "admin" || newAccountType === "employee" ? "Active" : "Pending" // New
+
+      const newAccount: Account = {
+        id: newId,
+        name: `${newAccountFirstName} ${newAccountLastName}`,
         email: newAccountEmail,
-        password: newAccountPassword,
-        type: newAccountType,
-        firstname: newAccountFirstName,
-        lastname: newAccountLastName,
-        contact: newAccountContact,
-        status: newAccountType === "admin" ? "active" : "pending",
+        role: newAccountRole,
+        status: newAccountStatus,
+        joinDate: new Date().toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
+        lastLogin: "Just now",
+        avatar: "/placeholder.svg?height=40&width=40",
+        phone: newAccountContact,
+        location: "N/A", // Default location
+        rating: 0, // Default rating
+        paymentMethod: "N/A", // Default payment method
+        verificationStatus: newAccountStatus === "Active" ? "Verified" : "Pending",
+        // Default placeholder for new document fields (for both types)
+        secRegistrationPreview: null,
+        businessPermitPreview: null,
+        birRegistrationPreview: null,
+        eccCertificatePreview: null,
+        generalLiabilityPreview: null,
+        workersCompPreview: null,
+        professionalIndemnityPreview: null,
+        propertyDamagePreview: null,
+        businessInterruptionPreview: null,
+        bondingInsurancePreview: null,
+        coverPhoto: null, // Default cover photo
+        secRegistrationAnomaly: false,
+        businessPermitAnomaly: false,
+        birRegistrationAnomaly: false,
+        eccCertificateAnomaly: false,
+        generalLiabilityAnomaly: false,
+        workersCompAnomaly: false,
+        professionalIndemnityAnomaly: false,
+        propertyDamageAnomaly: false,
+        businessInterruptionAnomaly: false,
+        bondingInsuranceAnomaly: false,
+        frontIdPreview: null,
+        backIdPreview: null,
+        profilePicturePreview: null,
+        selectedLocation: null,
+        gender: "prefer-not-to-say", // Default gender
+        bio: "", // Default bio
+        frontIdAnomaly: false,
+        backIdAnomaly: false,
       }
 
-      // Determine which endpoint to use based on account type
-      let endpoint = "register"
-      if (newAccountType === "customer") {
-        endpoint = "register-customer"
-      } else if (newAccountType === "manager" || newAccountType === "provider") {
-        endpoint = "register-manager"
-      }
-
-      // Make API request
-      const response = await axios.post(`http://localhost:3000/${endpoint}`, accountData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-
-      // Handle success
-      setNewAccountData(response.data)
+      setAccounts((prevAccounts) => [...prevAccounts, newAccount])
+      setNewAccountData(newAccount) // Set new account data for success modal
       setIsAddAccountModalOpen(false)
       setIsSuccessModalOpen(true)
-
-      // Refresh the accounts list
-      const fetchUsers = await axios.get("http://localhost:3000/users")
-      if (fetchUsers.data) {
-        const formattedUsers = fetchUsers.data.map((user: { _id: any; firstname: any; lastname: any; email: any; type: string; status: string; createdAt: string | number | Date; profilePicture: any; contact: any; location: { name: any }; verification: string }, index: number) => ({
-          id: user._id || index + 1,
-          name: `${user.firstname} ${user.lastname}`,
-          email: user.email,
-          role: user.type === "manager" ? "Service Provider" : user.type === "admin" ? "Admin" : "Customer",
-          status: user.status.charAt(0).toUpperCase() + user.status.slice(1),
-          joinDate: new Date(user.createdAt).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          }),
-          lastLogin: "N/A",
-          avatar: user.profilePicture || "/placeholder.svg?height=40&width=40",
-          phone: user.contact || "N/A",
-          location: user.location?.name || "N/A",
-          rating: 0,
-          paymentMethod: "N/A",
-          verificationStatus: user.verification.charAt(0).toUpperCase() + user.verification.slice(1),
-        }))
-
-        setAccounts(formattedUsers)
-      }
 
       // Reset form
       setNewAccountEmail("")
@@ -536,9 +723,7 @@ function AccountsTab() {
       toast(
         <div>
           <div className="font-semibold">Account creation failed</div>
-          <div className="text-sm text-gray-600">
-            {error instanceof Error ? error.message : "An error occurred while creating the account"}
-          </div>
+          <div className="text-sm text-gray-600">An unexpected error occurred.</div>
         </div>,
         { className: "bg-red-50 text-red-700 border-red-200" },
       )
@@ -547,15 +732,120 @@ function AccountsTab() {
     }
   }
 
+  // Function to handle opening the appropriate reviewer
+  const handleViewFullDetails = (account: Account) => {
+    if (account.role === "Service Provider") {
+      setAccountToReview(account)
+      setShowAccountReviewer(true)
+      setShowCustomerReviewer(false)
+      setShowEmployeeReviewer(false)
+    } else if (account.role === "Customer") {
+      setCustomerToReview(account)
+      setShowCustomerReviewer(true)
+      setShowAccountReviewer(false)
+      setShowEmployeeReviewer(false)
+    } else if (account.role === "Admin" || account.role === "Employee") {
+      setEmployeeToReview(account)
+      setShowEmployeeReviewer(true)
+      setShowAccountReviewer(false)
+      setShowCustomerReviewer(false)
+    } else {
+      // For other roles, just close the details panel if open
+      setSelectedAccount(null)
+      toast(
+        <div>
+          <div className="font-semibold">Details not available</div>
+          <div className="text-sm text-gray-600">
+            Full details view is only available for Service Providers, Customers, Admins, and Employees.
+          </div>
+        </div>,
+        { className: "bg-blue-50 text-blue-700 border-blue-200", duration: 3000 },
+      )
+    }
+  }
+
+  // Function to update account status from any reviewer
+  const handleAccountAction = (
+    accountId: number,
+    newStatus: string,
+    newVerificationStatus: string,
+    updatedAnomalies: { [key: string]: boolean },
+    declineReasons?: string[],
+    declineMessage?: string,
+  ) => {
+    setAccounts((prevAccounts) =>
+      prevAccounts.map((acc) =>
+        acc.id === accountId
+          ? {
+              ...acc,
+              status: newStatus,
+              verificationStatus: newVerificationStatus,
+              ...updatedAnomalies, // Apply updated anomaly states
+            }
+          : acc,
+      ),
+    )
+    setShowAccountReviewer(false) // Close all reviewers after action
+    setShowCustomerReviewer(false)
+    setShowEmployeeReviewer(false)
+
+    if (newStatus === "Declined") {
+      toast(
+        <div>
+          <div className="font-semibold">Application Declined</div>
+          <div className="text-sm text-gray-600">
+            Account {accountId} has been declined. Reasons: {declineReasons?.join(", ")}. Message: "{declineMessage}"
+          </div>
+        </div>,
+        { className: "bg-red-50 text-red-700 border-red-200", duration: 5000 },
+      )
+    } else {
+      toast(
+        <div>
+          <div className="font-semibold">Account Updated</div>
+          <div className="text-sm text-gray-600">
+            Account {accountId} status changed to {newStatus}.
+          </div>
+        </div>,
+        { className: "bg-green-50 text-green-700 border-green-200", duration: 3000 },
+      )
+    }
+  }
+
+  if (showAccountReviewer && accountToReview) {
+    return (
+      <AccountReviewer
+        account={accountToReview}
+        onClose={() => setShowAccountReviewer(false)}
+        onAccountAction={handleAccountAction}
+      />
+    )
+  }
+
+  if (showCustomerReviewer && customerToReview) {
+    return (
+      <CustomerReviewer
+        account={customerToReview}
+        onClose={() => setShowCustomerReviewer(false)}
+        onAccountAction={handleAccountAction}
+      />
+    )
+  }
+
+  if (showEmployeeReviewer && employeeToReview) {
+    return (
+      <EmployeeReviewer
+        account={employeeToReview}
+        onClose={() => setShowEmployeeReviewer(false)}
+        onAccountAction={handleAccountAction}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F5F7] pb-20 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
       {/* Include animation keyframes */}
       <style>{keyframes}</style>
-
-      {/* Floating Dock */}
-      <div className="sticky z-40 flex">
-        <MyFloatingDock />
-      </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-16">
         {/* Header with Time and Date */}
@@ -677,6 +967,7 @@ function AccountsTab() {
                         <SelectItem value="customer">Customers</SelectItem>
                         <SelectItem value="provider">Service Providers</SelectItem>
                         <SelectItem value="admin">Administrators</SelectItem>
+                        <SelectItem value="employee">Employees</SelectItem> {/* New */}
                       </SelectContent>
                     </Select>
                     <Button variant="outline" className="bg-[#F2F2F7] border-0">
@@ -701,8 +992,14 @@ function AccountsTab() {
                     <TabsTrigger value="admins" className="text-xs data-[state=active]:bg-white">
                       Admins
                     </TabsTrigger>
+                    <TabsTrigger value="employees" className="text-xs data-[state=active]:bg-white">
+                      Employees
+                    </TabsTrigger>
                     <TabsTrigger value="inactive" className="text-xs data-[state=active]:bg-white">
                       Inactive
+                    </TabsTrigger>
+                    <TabsTrigger value="pending" className="text-xs data-[state=active]:bg-white">
+                      Pending
                     </TabsTrigger>
                   </TabsList>
 
@@ -755,7 +1052,7 @@ function AccountsTab() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleViewFullDetails(account)}>
                                   <Eye className="mr-2 h-4 w-4" />
                                   View Details
                                 </DropdownMenuItem>
@@ -808,17 +1105,15 @@ function AccountsTab() {
                             <div className="space-y-3">
                               <h4 className="font-medium text-sm text-gray-700">Account Details</h4>
                               <div className="space-y-2">
-                                <div className="flex items-center justify-between text-sm">
-                                  <div className="flex items-center gap-2">
-                                    <Shield className="h-4 w-4 text-[#0A84FF]" />
-                                    <span className="font-light">Verification</span>
-                                  </div>
-                                  <span
-                                    className={`font-medium ${account.verificationStatus === "Verified" ? "text-[#30D158]" : "text-[#FF9500]"}`}
-                                  >
-                                    {account.verificationStatus}
-                                  </span>
+                                <div className="flex items-center gap-2">
+                                  <Shield className="h-4 w-4 text-[#0A84FF]" />
+                                  <span className="font-light">Verification</span>
                                 </div>
+                                <span
+                                  className={`font-medium ${account.verificationStatus === "Verified" ? "text-[#30D158]" : "text-[#FF9500]"}`}
+                                >
+                                  {account.verificationStatus}
+                                </span>
                               </div>
                             </div>
 
@@ -826,9 +1121,10 @@ function AccountsTab() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-[#0A84FF] border-[#0A84FF]/20 hover:bg-[#E9F6FF]"
+                                className="text-[#0A84FF] border-[#0A84FF]/20 hover:bg-[#E9F6FF] bg-transparent"
+                                onClick={() => handleViewFullDetails(account)} // Updated onClick
                               >
-                                View Full Profile
+                                View Full Details
                                 <ChevronRight className="ml-1 h-3 w-3" />
                               </Button>
                             </div>
@@ -871,8 +1167,9 @@ function AccountsTab() {
                 <CardContent className="p-5">
                   <div className="flex items-center justify-center mb-6">
                     <div className="relative w-36 h-36">
-                      {/* Circular chart */}
+                      {/* Circular chart - simplified for display */}
                       <div className="absolute inset-0 rounded-full bg-[#F2F2F7]"></div>
+                      {/* These clipPath styles are illustrative and would need dynamic calculation for accuracy */}
                       <div
                         className="absolute inset-0 rounded-full bg-[#0A84FF]"
                         style={{ clipPath: "polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 50% 0%)" }}
@@ -899,17 +1196,31 @@ function AccountsTab() {
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
                             <div
-                              className={`w-3 h-3 rounded-full ${index === 0 ? "bg-[#0A84FF]" : index === 1 ? "bg-[#5E5CE6]" : "bg-[#5AC8FA]"
-                                }`}
+                              className={`w-3 h-3 rounded-full ${
+                                index === 0
+                                  ? "bg-[#0A84FF]"
+                                  : index === 1
+                                    ? "bg-[#5E5CE6]"
+                                    : index === 2
+                                      ? "bg-[#5AC8FA]"
+                                      : "bg-[#007AFF]" // New color for Employees
+                              }`}
                             ></div>
-                            <span className="text-sm text-gray-700 font-light">{item.role}</span>
+                            <span className="text-sm font-light">{item.role}</span>
                           </div>
                           <div className="text-sm font-medium">{item.count}</div>
                         </div>
                         <div className="h-1.5 bg-[#F2F2F7] rounded-full">
                           <div
-                            className={`h-full rounded-full ${index === 0 ? "bg-[#0A84FF]" : index === 1 ? "bg-[#5E5CE6]" : "bg-[#5AC8FA]"
-                              }`}
+                            className={`h-full rounded-full ${
+                              index === 0
+                                ? "bg-[#0A84FF]"
+                                : index === 1
+                                  ? "bg-[#5E5CE6]"
+                                  : index === 2
+                                    ? "bg-[#5AC8FA]"
+                                    : "bg-[#007AFF]" // New color for Employees
+                            }`}
                             style={{ width: `${item.percentage}%` }}
                           ></div>
                         </div>
@@ -934,14 +1245,15 @@ function AccountsTab() {
                         <div className="text-xs text-gray-500 font-light">{status.status}</div>
                         <div className="text-lg font-medium text-gray-800">{status.count}</div>
                         <div
-                          className={`text-xs ${status.status === "Active"
+                          className={`text-xs ${
+                            status.status === "Active"
                               ? "text-[#30D158]"
                               : status.status === "Inactive"
                                 ? "text-[#8E8E93]"
                                 : status.status === "Pending"
                                   ? "text-[#FF9500]"
                                   : "text-[#FF453A]"
-                            }`}
+                          }`}
                         >
                           {status.percentage}%
                         </div>
@@ -955,29 +1267,31 @@ function AccountsTab() {
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
                             <div
-                              className={`w-3 h-3 rounded-full ${status.status === "Active"
+                              className={`w-3 h-3 rounded-full ${
+                                status.status === "Active"
                                   ? "bg-[#30D158]"
                                   : status.status === "Inactive"
                                     ? "bg-[#8E8E93]"
                                     : status.status === "Pending"
                                       ? "bg-[#FF9500]"
                                       : "bg-[#FF453A]"
-                                }`}
+                              }`}
                             ></div>
-                            <span className="text-sm text-gray-700 font-light">{status.status}</span>
+                            <span className="text-sm font-light">{status.status}</span>
                           </div>
                           <div className="text-sm font-medium">{status.percentage}%</div>
                         </div>
                         <div className="h-1.5 bg-[#F2F2F7] rounded-full">
                           <div
-                            className={`h-full rounded-full ${status.status === "Active"
+                            className={`h-full rounded-full ${
+                              status.status === "Active"
                                 ? "bg-[#30D158]"
                                 : status.status === "Inactive"
                                   ? "bg-[#8E8E93]"
                                   : status.status === "Pending"
                                     ? "bg-[#FF9500]"
                                     : "bg-[#FF453A]"
-                              }`}
+                            }`}
                             style={{ width: `${status.percentage}%` }}
                           ></div>
                         </div>
@@ -990,7 +1304,6 @@ function AccountsTab() {
           </div>
         </div>
       </main>
-      <Footer />
 
       {/* Add Account Modal */}
       <Dialog open={isAddAccountModalOpen} onOpenChange={setIsAddAccountModalOpen}>
@@ -1078,6 +1391,7 @@ function AccountsTab() {
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="provider">Provider</SelectItem>
                       <SelectItem value="customer">Customer</SelectItem>
+                      <SelectItem value="employee">Employee</SelectItem> {/* New */}
                       <SelectItem value="manager">Manager</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1162,6 +1476,15 @@ function AccountsTab() {
                       <div>
                         <div className="text-sm font-medium text-gray-700">Customer</div>
                         <div className="text-xs text-gray-500">Can browse services and make requests</div>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 bg-[#E6F7FF] p-1.5 rounded-full">
+                        <User className="h-3.5 w-3.5 text-[#007AFF]" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-700">Employee</div>
+                        <div className="text-xs text-gray-500">Internal staff with specific operational roles</div>
                       </div>
                     </div>
                   </div>

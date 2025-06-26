@@ -11,16 +11,16 @@ export default function ImagePopup({ imageUrl, isOpen, onClose }: ImagePopupProp
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
       style={{ animation: "fadeIn 0.3s ease-out" }}
-      onClick={onClose}
+      // Removed onClick={onClose} from here
     >
       <div
         className="relative max-w-4xl max-h-[90vh] w-full rounded-lg overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()} // This prevents clicks on the image itself from closing it
       >
         <button
-          onClick={onClose}
+          onClick={onClose} // Now, only this button will close the popup
           className="absolute top-2 right-2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70 transition-colors"
         >
           <X className="h-6 w-6" />
