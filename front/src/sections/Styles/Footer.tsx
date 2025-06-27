@@ -40,8 +40,9 @@ function Footer() {
                                 <li><a href="#" className="hover:underline">Kimberly Cañon <span className="text-gray-400">| Project Manager</span></a></li>
                                 <li><a href="#" className="hover:underline">Kathleen Repunte <span className="text-gray-400">| Documentor</span></a></li>
                                 <li><a href="#" className="hover:underline">Vince Edward Mañacap <span className="text-gray-400">| Developer</span></a></li>
-                                <li><a href="#" className="hover:underline">Kyle Sellote <span className="text-gray-400">| Developer</span></a></li>
-                                <li><a href="#" className="hover:underline">Bart Juarez <span className="text-gray-400">| Analyst</span></a></li>
+                                <li><a href="#" className="hover:underline">Kyle Sellote <span className="text-gray-400">| Analyst</span></a></li>
+                                <li><a href="#" className="hover:underline">Bart Juarez <span className="text-gray-400">| Client Liason</span></a></li>
+                                <li><a href="#" className="hover:underline">JV Almendras <span className="text-gray-400">| Documentor</span></a></li>
                             </ul>
                         </div>
                         <div>
