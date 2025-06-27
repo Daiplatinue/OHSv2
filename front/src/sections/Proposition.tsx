@@ -78,7 +78,7 @@ function Proposition() {
           // Set opacity to 50% after 10 seconds of being idle
           setIsFloatingIndicatorIdle(true);
         }, 5000);
-      }, 1000); // Show indicator after 5 second
+      }, 2000); // Show indicator after 5 second
 
       return () => clearTimeout(timer);
     }

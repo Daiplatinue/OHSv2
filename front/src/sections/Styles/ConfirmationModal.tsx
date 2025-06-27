@@ -31,7 +31,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 bg-black/30 backdrop-blur-md z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/30 backdrop-blur-md z-50 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]"
       style={{ animation: "fadeIn 0.3s ease-out" }}
     >
       {!isWarningModalOpen ? (
@@ -47,7 +47,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               <AlertTriangle className="h-10 w-10 text-blue-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
             </div>
             
-            <h3 className="text-xl font-medium text-gray-900 mb-2" style={{ animation: "slideInUp 0.4s ease-out" }}>
+            <h3 className="text-xl font-medium text-gray-700 mb-2" style={{ animation: "slideInUp 0.4s ease-out" }}>
               Verification Requirements
             </h3>
             
@@ -138,7 +138,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               <AlertCircle className="h-10 w-10 text-amber-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
             </div>
             
-            <h3 className="text-xl font-medium text-gray-900 mb-2" style={{ animation: "slideInUp 0.4s ease-out" }}>
+            <h3 className="text-xl font-medium text-gray-700 mb-2" style={{ animation: "slideInUp 0.4s ease-out" }}>
               Warning: Unverified Account Limitations
             </h3>
             

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { AlertTriangle, X, CheckCircle2 } from "lucide-react"
+import { AlertTriangle, CheckCircle2 } from "lucide-react"
 import ImagePopup from "./ImagePopup"
 
 interface Account {
@@ -188,9 +188,9 @@ export default function DeclineModal({ isOpen, onClose, account, anomalies, onCo
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-2xl lg:max-w-4xl rounded-xl p-6 bg-white shadow-lg border border-gray-100">
+        <DialogContent className="sm:max-w-2xl lg:max-w-4xl rounded-xl p-6 bg-white shadow-lg border border-gray-100 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
           <DialogHeader className="relative pb-4 border-b border-gray-200">
-            <DialogTitle className="flex items-center gap-3 text-2xl font-bold text-gray-800">
+            <DialogTitle className="flex items-center gap-3 text-2xl font-medium text-gray-700">
               <AlertTriangle className="h-7 w-7 text-red-500" />
               Decline Application
             </DialogTitle>
@@ -203,7 +203,6 @@ export default function DeclineModal({ isOpen, onClose, account, anomalies, onCo
               className="absolute top-0 right-0 h-8 w-8 text-gray-500 hover:bg-gray-100"
               onClick={onClose}
             >
-              <X className="h-5 w-5" />
               <span className="sr-only">Close</span>
             </Button>
           </DialogHeader>
@@ -213,9 +212,9 @@ export default function DeclineModal({ isOpen, onClose, account, anomalies, onCo
             <div>
               {anomalousDocuments.length > 0 ? (
                 <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg h-full">
-                  <h4 className="font-semibold text-base mb-2 flex items-center gap-2">
+                  <h4 className="font-medium text-base mb-2 flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4" />
-                    Documents Marked with Anomalies:
+                    Documents Marked with Anomalies
                   </h4>
                   <div className="grid grid-cols-2 gap-4 mt-4">
                     {anomalousDocuments.map((key) => {
@@ -255,14 +254,14 @@ export default function DeclineModal({ isOpen, onClose, account, anomalies, onCo
                 </div>
               ) : (
                 <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg h-full flex items-center justify-center text-center">
-                  <p className="font-semibold text-sm">No anomalies marked for this application.</p>
+                  <p className="font-medium text-sm">No anomalies marked for this application</p>
                 </div>
               )}
             </div>
             {/* Right Column: Decline Reasons and Custom Message */}
             <div className="space-y-6">
               <div className="space-y-3">
-                <Label className="text-gray-800 font-semibold text-base">Select Decline Reasons:</Label>
+                <Label className="text-gray-800 font-medium text-base">Select Decline Reasons:</Label>
                 <div className="grid grid-cols-1 gap-3">
                   {declineReasonsOptions.map((reason) => (
                     <div key={reason} className="flex items-center space-x-2">
@@ -270,7 +269,7 @@ export default function DeclineModal({ isOpen, onClose, account, anomalies, onCo
                         id={`reason-${reason.replace(/\s/g, "-").toLowerCase()}`}
                         checked={selectedReasons.includes(reason)}
                         onCheckedChange={(checked) => handleReasonChange(reason, checked as boolean)}
-                        className="border-gray-300 data-[state=checked]:bg-red-500 data-[state=checked]:text-white"
+                        className="border-gray-300 data-[state=checked]:bg-red-500 data-[state=checked]:border-transparent data-[state=checked]:text-white"
                       />
                       <label
                         htmlFor={`reason-${reason.replace(/\s/g, "-").toLowerCase()}`}
@@ -284,7 +283,7 @@ export default function DeclineModal({ isOpen, onClose, account, anomalies, onCo
               </div>
 
               <div className="space-y-3">
-                <Label htmlFor="custom-message" className="text-gray-800 font-semibold text-base">
+                <Label htmlFor="custom-message" className="text-gray-700 font-medium text-base">
                   Custom Message to Service Provider (Optional):
                 </Label>
                 <Textarea

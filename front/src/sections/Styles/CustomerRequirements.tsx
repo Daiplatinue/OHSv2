@@ -235,7 +235,7 @@ export default function CustomerRequirements({
   }
 
   return (
-    <div className="py-4 px-2">
+    <div className="py-4 px-2 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
       {/* Include animation keyframes */}
       <style>{`
         @keyframes fadeIn {
@@ -261,8 +261,8 @@ export default function CustomerRequirements({
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold mb-1">HandyGo</h1>
-          <h2 className="text-3xl font-bold text-sky-400">Create Your Account</h2>
+          <h1 className="text-2xl font-medium text-gray-700 mb-1">HandyGo</h1>
+          <h2 className="text-3xl font-medium text-sky-400">Create Your Account</h2>
         </div>
 
         {/* Success message */}
@@ -385,7 +385,7 @@ export default function CustomerRequirements({
                   disabled={loading || !firstName || !lastName || !email || !password || !confirmPassword}
                   className={`px-5 py-2 rounded-full transition-all duration-300 hover:shadow-md flex items-center justify-center w-full ${
                     loading || !firstName || !lastName || !email || !password || !confirmPassword
-                      ? "bg-gray-400 cursor-not-allowed"
+                      ? "bg-gray-400 cursor-not-allowed text-white"
                       : "bg-sky-500 hover:bg-sky-600 text-white"
                   }`}
                 >
@@ -478,7 +478,7 @@ export default function CustomerRequirements({
                     <div className="grid md:grid-cols-2 gap-6">
                       {/* Left side - ID upload */}
                       <div>
-                        <h3 className="text-lg font-medium mb-4">Valid ID Submission</h3>
+                        <h3 className="text-lg font-medium mb-4 text-gray-700">Valid ID Submission</h3>
 
                         {/* Front ID */}
                         <div className="mb-4">
@@ -586,7 +586,7 @@ export default function CustomerRequirements({
 
                       {/* Right side - Personal information */}
                       <div>
-                        <h3 className="text-lg font-medium mb-4">Personal Information</h3>
+                        <h3 className="text-lg font-medium mb-4 text-gray-700">Personal Information</h3>
 
                         <div className="space-y-4">
                           <div>

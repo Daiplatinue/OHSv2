@@ -227,21 +227,19 @@ export default function CustomerReviewer({ account, onClose, onAccountAction }: 
   }
 
   return (
-    <div className="py-4 px-2 min-h-screen bg-[#F5F5F7] font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
+    <div className="py-4 px-2 min-h-screen bg-[#F5F5F7] font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] mt-10">
       <style>{keyframes}</style>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold mb-1">Account Details</h1>
-          <h2 className="text-3xl font-bold text-sky-400">Customer Profile Review</h2>
+          <h1 className="text-2xl font-medium mb-1 text-gray-700">Account Details</h1>
+          <h2 className="text-3xl font-medium text-sky-500">Customer Profile Review</h2>
         </div>
 
         {/* Form content */}
-        <div className="bg-white rounded-xl shadow-sm">
+        <div className="bg-white rounded-xl text-gray-700">
           <div className="p-6">
             <div>
-              <h3 className="text-xl font-semibold mb-6">Review Customer Profile</h3>
-
               {/* Profile Header - Similar to CustomerRequirements.tsx Step 4 */}
               <div className="bg-white rounded-xl overflow-hidden mb-6 border border-gray-100">
                 {/* Cover Photo */}
@@ -287,7 +285,7 @@ export default function CustomerReviewer({ account, onClose, onAccountAction }: 
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h1 className="text-2xl font-bold text-gray-900">{account.name}</h1>
+                          <h1 className="text-2xl font-medium text-gray-700">{account.name}</h1>
                           <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
                             {account.role}
                           </span>
@@ -322,7 +320,7 @@ export default function CustomerReviewer({ account, onClose, onAccountAction }: 
               {/* Personal Information Section */}
               <div className="bg-white rounded-xl p-6 mb-6 border border-gray-100">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold">Personal Information</h2>
+                  <h2 className="text-xl font-medium">Personal Information</h2>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -376,7 +374,7 @@ export default function CustomerReviewer({ account, onClose, onAccountAction }: 
 
               {/* ID Documents */}
               <div className="bg-white rounded-xl p-6 border">
-                <h4 className="text-lg font-semibold mb-4">ID Documents</h4>
+                <h4 className="text-lg font-medium mb-4">ID Documents</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>{renderDocumentPreview(account.frontIdPreview, "Front of ID", "frontIdAnomaly")}</div>
                   <div>{renderDocumentPreview(account.backIdPreview, "Back of ID", "backIdAnomaly")}</div>
@@ -391,9 +389,9 @@ export default function CustomerReviewer({ account, onClose, onAccountAction }: 
                   <div className="ml-3">
                     <h5 className="text-sm font-medium text-blue-800">Account Status</h5>
                     <p className="mt-1 text-sm text-blue-700">
-                      This account is currently <span className="font-semibold">{account.status.toLowerCase()}</span>{" "}
+                      This account is currently <span className="font-medium">{account.status.toLowerCase()}</span>{" "}
                       with a verification status of{" "}
-                      <span className="font-semibold">{account.verificationStatus.toLowerCase()}</span>.
+                      <span className="font-medium">{account.verificationStatus.toLowerCase()}</span>.
                     </p>
                   </div>
                 </div>
@@ -414,14 +412,14 @@ export default function CustomerReviewer({ account, onClose, onAccountAction }: 
                 <>
                   <Button
                     onClick={handleDeclineApplicationClick}
-                    className="px-4 py-2 flex items-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-300 hover:shadow-sm"
+                    className="px-4 py-2 flex items-center rounded-full bg-red-500/90 text-white"
                   >
                     <X className="mr-1 h-4 w-4" />
                     Decline Application
                   </Button>
                   <Button
                     onClick={handleAcceptApplication}
-                    className="px-4 py-2 flex items-center rounded-full bg-green-500 text-white hover:bg-green-600 transition-all duration-300 hover:shadow-sm"
+                    className="px-4 py-2 flex items-center rounded-full bg-green-500/90 text-white"
                   >
                     <CheckCircle className="mr-1 h-4 w-4" />
                     Accept Application

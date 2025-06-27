@@ -369,10 +369,10 @@ function LoginAlt() {
       </div>
 
       {/* Right side with login form */}
-      <div className="w-full md:w-1/2 p-8 flex flex-col justify-center max-w-md mx-auto">
+      <div className="w-full md:w-1/2 p-8 flex flex-col justify-center max-w-md mx-auto font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
         <div className="mb-10">
-          <h1 className="text-lg font-medium mb-1">HandyGo</h1>
-          <h2 className="text-3xl font-bold text-sky-400">Welcome Back!</h2>
+          <h1 className="text-lg font-medium mb-1 text-gray-700">HandyGo</h1>
+          <h2 className="text-3xl font-medium text-sky-500">Welcome Back!</h2>
         </div>
 
         <div className="bg-white p-6 rounded-lg space-y-6">
@@ -542,8 +542,8 @@ function LoginAlt() {
             </button>
 
             {registrationStep === "type" ? (
-              <div className="py-8 px-4">
-                <h2 className="text-2xl font-bold text-center mb-8">Select Account Type</h2>
+              <div className="py-8 px-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
+                <h2 className="text-2xl font-medium text-gray-700 text-center mb-8">Select Account Type</h2>
                 <div className="flex justify-center gap-6 mx-auto">
                   <button
                     onClick={() => {
@@ -578,7 +578,7 @@ function LoginAlt() {
                         <circle cx="12" cy="7" r="4"></circle>
                       </svg>
                     </div>
-                    <h3 className="font-medium text-lg">Customer</h3>
+                    <h3 className="font-medium text-lg text-gray-700">Customer</h3>
                     <p className="text-sm text-gray-500 text-center mt-2">Sign up to hire service providers</p>
                   </button>
 
@@ -614,7 +614,7 @@ function LoginAlt() {
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                       </svg>
                     </div>
-                    <h3 className="font-medium text-lg">Manager</h3>
+                    <h3 className="font-medium text-lg text-gray-700">Manager</h3>
                     <p className="text-sm text-gray-500 text-center mt-2">Sign up to offer services</p>
                   </button>
                 </div>
@@ -806,7 +806,7 @@ function LoginAlt() {
       {/* New: Fill All Requirements Prompt Modal */}
       {showFillAllPrompt && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]"
           style={{ animation: "fadeIn 0.3s ease-out" }}
         >
           <div
@@ -816,7 +816,7 @@ function LoginAlt() {
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center">
                 <AlertTriangle className="h-6 w-6 text-sky-500 mr-2" />
-                <h3 className="text-lg font-semibold">Account Setup Options</h3>
+                <h3 className="text-lg font-medium text-gray-700">Account Setup Options</h3>
               </div>
               <button
                 onClick={() => {

@@ -176,7 +176,7 @@ function OTP({ email, onClose, onVerify, visible }: OTPProps) {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${visible ? "visible" : "invisible"}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] ${visible ? "visible" : "invisible"}`}
       onClick={handleBackdropClick}
     >
       <div
@@ -208,7 +208,7 @@ function OTP({ email, onClose, onVerify, visible }: OTPProps) {
             </div>
           ) : showRecaptcha ? (
             <div className="text-center">
-              <h3 className="text-xl font-semibold text-center mb-4">Complete Security Check</h3>
+              <h3 className="text-xl font-medium text-gray-700 text-center mb-4">Complete Security Check</h3>
               <p className="text-center text-gray-600 mb-6">Please complete the reCAPTCHA challenge.</p>
               <ReCAPTCHA
                 siteKey="6LctwGgrAAAAAG01jljZ3VSgB7BsYJ6l25QSpLmI" // Your reCAPTCHA site key
@@ -224,7 +224,7 @@ function OTP({ email, onClose, onVerify, visible }: OTPProps) {
             </div>
           ) : (
             <>
-              <h3 className="text-xl font-semibold text-center mb-2">Verification Code</h3>
+              <h3 className="text-xl font-medium text-gray-700 text-center mb-2">Verification Code</h3>
               <p className="text-center text-gray-600 mb-6">
                 We've sent a 6-digit code to <span className="font-medium">{email}</span>
               </p>

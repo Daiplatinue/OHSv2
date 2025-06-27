@@ -42,9 +42,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import AccountReviewer from "./AccountReviewer" // Import the Service Provider reviewer
-import CustomerReviewer from "../Customer_Tabs/CustomerReviewer" // Import the Customer reviewer
-import EmployeeReviewer from "../ProviderComponents/EmployeeReviewer" // Import the new Employee/Admin reviewer
+import AccountReviewer from "./AccountReviewer"
+import CustomerReviewer from "../Customer_Tabs/CustomerReviewer"
+import EmployeeReviewer from "../ProviderComponents/EmployeeReviewer"
+import MyFloatingDock from "../Styles/MyFloatingDock"
 
 interface Account {
   id: number
@@ -777,11 +778,11 @@ function AccountsTab() {
       prevAccounts.map((acc) =>
         acc.id === accountId
           ? {
-              ...acc,
-              status: newStatus,
-              verificationStatus: newVerificationStatus,
-              ...updatedAnomalies, // Apply updated anomaly states
-            }
+            ...acc,
+            status: newStatus,
+            verificationStatus: newVerificationStatus,
+            ...updatedAnomalies, // Apply updated anomaly states
+          }
           : acc,
       ),
     )
@@ -847,11 +848,16 @@ function AccountsTab() {
       {/* Include animation keyframes */}
       <style>{keyframes}</style>
 
+      {/* Floating Dock */}
+      <div className="sticky z-40 flex">
+        <MyFloatingDock />
+      </div>
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-16">
         {/* Header with Time and Date */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-800">Accounts Management</h1>
+            <h1 className="text-2xl font-medium text-gray-700">Accounts Management</h1>
             <p className="text-gray-500 text-sm font-light">View and manage all user accounts in your system</p>
           </div>
           <div className="mt-4 md:mt-0 flex flex-col items-end">
@@ -866,7 +872,7 @@ function AccountsTab() {
             <div className="p-6 text-white">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
                 <div>
-                  <h2 className="text-xl font-semibold">Account Overview</h2>
+                  <h2 className="text-xl font-medium">Account Overview</h2>
                   <p className="text-white/90 font-light">Manage and monitor all registered accounts</p>
                 </div>
                 <div className="mt-4 md:mt-0 flex gap-2">
@@ -959,7 +965,7 @@ function AccountsTab() {
                       <Input placeholder="Search accounts..." className="pl-9 bg-[#F2F2F7] border-0" />
                     </div>
                     <Select defaultValue="all">
-                      <SelectTrigger className="w-full sm:w-[180px] bg-[#F2F2F7] border-0">
+                      <SelectTrigger className="w-full sm:w-[180px] bg-[#F2F2F7] border-0 font-medium text-gray-700">
                         <SelectValue placeholder="Filter by role" />
                       </SelectTrigger>
                       <SelectContent>
@@ -970,7 +976,7 @@ function AccountsTab() {
                         <SelectItem value="employee">Employees</SelectItem> {/* New */}
                       </SelectContent>
                     </Select>
-                    <Button variant="outline" className="bg-[#F2F2F7] border-0">
+                    <Button variant="outline" className="bg-[#F2F2F7] border-0 text-gray-700">
                       <Filter className="h-4 w-4" />
                     </Button>
                   </div>
@@ -1160,7 +1166,7 @@ function AccountsTab() {
               <Card className="border-none rounded-2xl shadow-sm overflow-hidden">
                 <div className="bg-gradient-to-r from-[#E9F6FF] to-[#F2EBFF] p-4 border-b border-gray-100">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-gray-800">Account Distribution</h3>
+                    <h3 className="font-medium text-gray-700">Account Distribution</h3>
                     <PieChart className="h-4 w-4 text-[#0A84FF]" />
                   </div>
                 </div>
@@ -1196,31 +1202,29 @@ function AccountsTab() {
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
                             <div
-                              className={`w-3 h-3 rounded-full ${
-                                index === 0
+                              className={`w-3 h-3 rounded-full ${index === 0
                                   ? "bg-[#0A84FF]"
                                   : index === 1
                                     ? "bg-[#5E5CE6]"
                                     : index === 2
                                       ? "bg-[#5AC8FA]"
                                       : "bg-[#007AFF]" // New color for Employees
-                              }`}
+                                }`}
                             ></div>
-                            <span className="text-sm font-light">{item.role}</span>
+                            <span className="text-sm font-medium">{item.role}</span>
                           </div>
                           <div className="text-sm font-medium">{item.count}</div>
                         </div>
                         <div className="h-1.5 bg-[#F2F2F7] rounded-full">
                           <div
-                            className={`h-full rounded-full ${
-                              index === 0
+                            className={`h-full rounded-full ${index === 0
                                 ? "bg-[#0A84FF]"
                                 : index === 1
                                   ? "bg-[#5E5CE6]"
                                   : index === 2
                                     ? "bg-[#5AC8FA]"
                                     : "bg-[#007AFF]" // New color for Employees
-                            }`}
+                              }`}
                             style={{ width: `${item.percentage}%` }}
                           ></div>
                         </div>
@@ -1234,7 +1238,7 @@ function AccountsTab() {
               <Card className="border-none rounded-2xl shadow-sm overflow-hidden">
                 <div className="bg-gradient-to-r from-[#E8F8EF] to-[#E9F6FF] p-4 border-b border-gray-100">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-gray-800">Account Status</h3>
+                    <h3 className="font-medium text-gray-700">Account Status</h3>
                     <BarChart3 className="h-4 w-4 text-[#30D158]" />
                   </div>
                 </div>
@@ -1245,15 +1249,14 @@ function AccountsTab() {
                         <div className="text-xs text-gray-500 font-light">{status.status}</div>
                         <div className="text-lg font-medium text-gray-800">{status.count}</div>
                         <div
-                          className={`text-xs ${
-                            status.status === "Active"
+                          className={`text-xs ${status.status === "Active"
                               ? "text-[#30D158]"
                               : status.status === "Inactive"
                                 ? "text-[#8E8E93]"
                                 : status.status === "Pending"
                                   ? "text-[#FF9500]"
                                   : "text-[#FF453A]"
-                          }`}
+                            }`}
                         >
                           {status.percentage}%
                         </div>
@@ -1267,31 +1270,29 @@ function AccountsTab() {
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
                             <div
-                              className={`w-3 h-3 rounded-full ${
-                                status.status === "Active"
+                              className={`w-3 h-3 rounded-full ${status.status === "Active"
                                   ? "bg-[#30D158]"
                                   : status.status === "Inactive"
                                     ? "bg-[#8E8E93]"
                                     : status.status === "Pending"
                                       ? "bg-[#FF9500]"
                                       : "bg-[#FF453A]"
-                              }`}
+                                }`}
                             ></div>
-                            <span className="text-sm font-light">{status.status}</span>
+                            <span className="text-sm font-medium">{status.status}</span>
                           </div>
                           <div className="text-sm font-medium">{status.percentage}%</div>
                         </div>
                         <div className="h-1.5 bg-[#F2F2F7] rounded-full">
                           <div
-                            className={`h-full rounded-full ${
-                              status.status === "Active"
+                            className={`h-full rounded-full ${status.status === "Active"
                                 ? "bg-[#30D158]"
                                 : status.status === "Inactive"
                                   ? "bg-[#8E8E93]"
                                   : status.status === "Pending"
                                     ? "bg-[#FF9500]"
                                     : "bg-[#FF453A]"
-                            }`}
+                              }`}
                             style={{ width: `${status.percentage}%` }}
                           ></div>
                         </div>

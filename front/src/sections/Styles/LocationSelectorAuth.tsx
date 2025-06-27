@@ -568,11 +568,11 @@ export default function LocationSelector({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
       <div className="bg-white rounded-xl w-full max-w-5xl h-[645px] overflow-hidden flex flex-col shadow-xl">
         {/* Header */}
         <div className="p-4 flex justify-between items-center border-b border-gray-100">
-          <h2 className="text-xl font-semibold text-gray-800">Select your service location</h2>
+          <h2 className="text-xl font-medium text-gray-700">Select your service location</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <X className="h-5 w-5" />
           </button>

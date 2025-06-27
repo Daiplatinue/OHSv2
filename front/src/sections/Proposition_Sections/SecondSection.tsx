@@ -45,7 +45,7 @@ function SecondSection({
                   </p>
 
                   <p className="text-[13px] tracking-[0.02em] leading-[1.6] uppercase mt-6 w-[25rem]">
-                    HANDY GO WAS DEVELOPED BY A DEDICATED TEAM OF FIVE MEMBERS:{" "}
+                    HANDY GO WAS DEVELOPED BY A DEDICATED TEAM OF SIX MEMBERS:{" "}
                     <span
                       className="cursor-pointer hover:text-sky-600 transition-colors duration-300 text-sky-500"
                       onMouseEnter={() => handleTeamMemberHover("KIMBERLY BARON CAÑON AS PROJECT MANAGER")}
@@ -65,21 +65,29 @@ function SecondSection({
                       onMouseEnter={() => handleTeamMemberHover("VINCE EDWARD CAÑEDO MAÑACAP AS DEVELOPER")}
                       onMouseLeave={handleTeamMemberLeave}
                     >
-                      VINCE EDWARD CAÑEDO MAÑACAP AS DEVELOPER
+                      VINCE EDWARD MAÑACAP AS DEVELOPER
                     </span>,{" "}
                     <span
                       className="cursor-pointer hover:text-sky-600 transition-colors duration-300 text-sky-500"
                       onMouseEnter={() => handleTeamMemberHover("KYLE SELLOTE AS DEVELOPER")}
                       onMouseLeave={handleTeamMemberLeave}
                     >
-                      KYLE SELLOTE AS DEVELOPER
-                    </span>, AND{" "}
+                      KYLE SELLOTE AS SYSTEM ANALYST
+                    </span>, {" "}
                     <span
                       className="cursor-pointer hover:text-sky-600 transition-colors duration-300 text-sky-500"
                       onMouseEnter={() => handleTeamMemberHover("BART JUAREZ AS SYSTEM ANALYST")}
                       onMouseLeave={handleTeamMemberLeave}
                     >
-                      BART JUAREZ AS SYSTEM ANALYST.
+                      BART JUAREZ AS CLIENT LIAISON
+                      
+                    </span>, AND {" "}
+                      <span
+                      className="cursor-pointer hover:text-sky-600 transition-colors duration-300 text-sky-500"
+                      onMouseEnter={() => handleTeamMemberHover("BART JUAREZ AS SYSTEM ANALYST")}
+                      onMouseLeave={handleTeamMemberLeave}
+                    >
+                      JV ALMENDRAS AS DOCUMENTOR.
                     </span>
                   </p>
 

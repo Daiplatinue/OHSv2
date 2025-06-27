@@ -46,7 +46,7 @@ export const benefits: Benefit[] = [
     title: "Verified Professionals",
     subtitle: "Trusted Service",
     description: "All our service providers are thoroughly vetted and verified. Work with confidence knowing you're getting quality service.",
-    image: "https://images.pexels.com/photos/5691659/pexels-photo-5691659.jpeg"
+    image: "https://cdn.pixabay.com/photo/2024/02/16/11/47/people-8577398_1280.jpg"
   },
   {
     id: 3,
@@ -74,7 +74,7 @@ export const benefits: Benefit[] = [
     title: "Quality Guarantee",
     subtitle: "Satisfaction Assured",
     description: "We guarantee the quality of our services. If you're not satisfied, we'll make it right or refund your money.",
-    image: "https://images.pexels.com/photos/5691658/pexels-photo-5691658.jpeg"
+    image: "https://cdn.pixabay.com/photo/2021/11/21/06/28/quality-6813293_1280.jpg"
   }
 ];
 

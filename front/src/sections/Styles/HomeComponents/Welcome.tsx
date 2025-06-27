@@ -29,7 +29,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content Grid - Pulled up to overlap the header */}
-      <div className="container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 -mt-40 relative z-30">
+      <div className="container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 -mt-40 relative z-30 max-w-[80rem]">
         {/* Left Column */}
         <div className="space-y-6 flex flex-col">
           {" "}

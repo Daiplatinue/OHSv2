@@ -291,20 +291,19 @@ export default function AccountReviewer({ account, onClose, onAccountAction }: A
   }
 
   return (
-    <div className="py-4 px-2 min-h-screen bg-[#F5F5F7] font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
+    <div className="py-4 px-2 min-h-screen bg-[#F5F5F7] font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] mb-10">
       <style>{keyframes}</style>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold mb-1">Account Details</h1>
-          <h2 className="text-3xl font-bold text-sky-400">Service Provider Profile Review</h2>
+        <div className="mb-6 text-center mt-10">
+          <h1 className="text-2xl font-medium mb-1 text-gray-700">Account Details</h1>
+          <h2 className="text-3xl font-medium text-sky-500">Service Provider Profile Review</h2>
         </div>
 
         {/* Form content */}
-        <div className="bg-white rounded-xl shadow-sm">
+        <div className="bg-white rounded-xl">
           <div className="p-6">
             <div>
-              <h3 className="text-xl font-semibold mb-6">Review Service Provider Profile</h3>
 
               {/* Business Profile Header */}
               <div className="bg-white rounded-xl overflow-hidden mb-6 border">
@@ -345,7 +344,7 @@ export default function AccountReviewer({ account, onClose, onAccountAction }: A
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h1 className="text-2xl font-bold text-gray-900">{businessName}</h1>
+                          <h1 className="text-2xl font-medium text-gray-700">{businessName}</h1>
                           <span className="px-2 py-0.5 bg-sky-100 text-sky-800 text-xs font-medium rounded-full">
                             {account.role}
                           </span>
@@ -375,35 +374,35 @@ export default function AccountReviewer({ account, onClose, onAccountAction }: A
               </div>
 
               {/* Business Information Section */}
-              <div className="space-y-8">
+              <div className="space-y-8 text-gray-700">
                 {/* Basic Information */}
-                <div className="bg-white rounded-xl p-6 border">
-                  <h4 className="text-lg font-semibold mb-4">Basic Information</h4>
+                <div className="bg-white rounded-xl p-6 border ">
+                  <h4 className="text-lg font-medium mb-4 ">Basic Information</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <h5 className="text-sm font-medium text-gray-500 mb-1">Business Name</h5>
-                      <p className="text-gray-900">{businessName}</p>
+                      <p className="text-gray-700">{businessName}</p>
                     </div>
                     <div>
                       <h5 className="text-sm font-medium text-gray-500 mb-1">Business Email</h5>
-                      <p className="text-gray-900">{businessEmail}</p>
+                      <p className="text-gray-700">{businessEmail}</p>
                     </div>
                     <div>
                       <h5 className="text-sm font-medium text-gray-500 mb-1">Founded Date</h5>
-                      <p className="text-gray-900">{foundedDate}</p>
+                      <p className="text-gray-700">{foundedDate}</p>
                     </div>
                     <div>
                       <h5 className="text-sm font-medium text-gray-500 mb-1">Contact Number</h5>
-                      <p className="text-gray-900">{companyNumber}</p>
+                      <p className="text-gray-700">{companyNumber}</p>
                     </div>
                     <div>
                       <h5 className="text-sm font-medium text-gray-500 mb-1">Team Size</h5>
-                      <p className="text-gray-900">{teamSize}</p>
+                      <p className="text-gray-700">{teamSize}</p>
                     </div>
                     <div>
                       <h5 className="text-sm font-medium text-gray-500 mb-1">TIN Number</h5>
                       <div className="flex items-center gap-2">
-                        <p className="text-gray-900">{showTin ? tinNumber : "***********"}</p>
+                        <p className="text-gray-700">{showTin ? tinNumber : "***********"}</p>
                         <button
                           onClick={() => setShowTin(!showTin)}
                           className="text-gray-500 hover:text-gray-700"
@@ -416,18 +415,18 @@ export default function AccountReviewer({ account, onClose, onAccountAction }: A
                   </div>
                   <div className="mt-4">
                     <h5 className="text-sm font-medium text-gray-500 mb-1">About the Company</h5>
-                    <p className="text-gray-900">{aboutCompany}</p>
+                    <p className="text-gray-700">{aboutCompany}</p>
                   </div>
                 </div>
 
                 {/* Location Information */}
                 <div className="bg-white rounded-xl p-6 border">
-                  <h4 className="text-lg font-semibold mb-4">Location Information</h4>
+                  <h4 className="text-lg font-medium mb-4">Location Information</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {account.location && (
                       <div>
                         <h5 className="text-sm font-medium text-gray-500 mb-1">Company Location</h5>
-                        <p className="text-gray-900">{account.location}</p>
+                        <p className="text-gray-700">{account.location}</p>
                         <p className="text-sm text-gray-500">
                           Lat: N/A, Lng: N/A {/* Placeholder as lat/lng not in Account */}
                         </p>
@@ -451,7 +450,7 @@ export default function AccountReviewer({ account, onClose, onAccountAction }: A
 
                 {/* Permits and Documents */}
                 <div className="bg-white rounded-xl p-6 border">
-                  <h4 className="text-lg font-semibold mb-4">Permits and Documents</h4>
+                  <h4 className="text-lg font-medium mb-4">Permits and Documents</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       {renderDocumentPreview(
@@ -482,7 +481,7 @@ export default function AccountReviewer({ account, onClose, onAccountAction }: A
 
                 {/* Insurance Information */}
                 <div className="bg-white rounded-xl p-6 border">
-                  <h4 className="text-lg font-semibold mb-4">Insurance Coverage</h4>
+                  <h4 className="text-lg font-medium mb-4">Insurance Coverage</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       {renderDocumentPreview(
@@ -534,9 +533,9 @@ export default function AccountReviewer({ account, onClose, onAccountAction }: A
                   <div className="ml-3">
                     <h5 className="text-sm font-medium text-blue-800">Account Status</h5>
                     <p className="mt-1 text-sm text-blue-700">
-                      This account is currently <span className="font-semibold">{account.status.toLowerCase()}</span>{" "}
+                      This account is currently <span className="font-medium">{account.status.toLowerCase()}</span>{" "}
                       with a verification status of{" "}
-                      <span className="font-semibold">{account.verificationStatus.toLowerCase()}</span>.
+                      <span className="font-medium">{account.verificationStatus.toLowerCase()}</span>.
                     </p>
                   </div>
                 </div>
@@ -550,21 +549,21 @@ export default function AccountReviewer({ account, onClose, onAccountAction }: A
                 onClick={onClose}
                 className={`group px-4 py-2 flex items-center rounded-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-300 hover:shadow-sm`}
               >
-                <ChevronLeft className="mr-1 h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
+                <ChevronLeft className="mr-1 h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5 " />
                 <span>Close Details</span>
               </Button>
               {account.status === "Pending" ? (
                 <>
                   <Button
                     onClick={handleDeclineApplicationClick}
-                    className="px-4 py-2 flex items-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-300 hover:shadow-sm"
+                    className="px-4 py-2 flex items-center rounded-full bg-red-500/90 text-white hover:bg-red-600 transition-all duration-300 hover:shadow-sm"
                   >
                     <XCircle className="mr-1 h-4 w-4" />
                     Decline Application
                   </Button>
                   <Button
                     onClick={handleAcceptApplication}
-                    className="px-4 py-2 flex items-center rounded-full bg-green-500 text-white hover:bg-green-600 transition-all duration-300 hover:shadow-sm"
+                    className="px-4 py-2 flex items-center rounded-full bg-green-500/90 text-white hover:bg-green-600 transition-all duration-300 hover:shadow-sm"
                   >
                     <CheckCircle className="mr-1 h-4 w-4" />
                     Accept Application
@@ -575,15 +574,14 @@ export default function AccountReviewer({ account, onClose, onAccountAction }: A
                   <Button
                     variant="outline"
                     onClick={handleUpdateAccount}
-                    className="px-4 py-2 flex items-center rounded-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-300 hover:shadow-sm"
+                    className="px-4 py-2 flex items-center rounded-full bg-white border border-gray-300 text-gray-700 "
                   >
                     <Edit className="mr-1 h-4 w-4" />
                     Update Account
                   </Button>
                   <Button
-                    variant="outline"
                     onClick={handleSuspendAccount}
-                    className="px-4 py-2 flex items-center rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-all duration-300 hover:shadow-sm"
+                    className="px-4 py-2 flex items-center rounded-full bg-yellow-500/50 text-yellow-700 "
                   >
                     <XCircle className="mr-1 h-4 w-4" />
                     Suspend Account
@@ -591,14 +589,14 @@ export default function AccountReviewer({ account, onClose, onAccountAction }: A
                   <Button
                     variant="outline"
                     onClick={handleDeleteAccount}
-                    className="px-4 py-2 flex items-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-300 hover:shadow-sm"
+                    className="px-4 py-2 flex items-center rounded-full bg-red-500/50 text-red-700 "
                   >
                     <Trash2 className="mr-1 h-4 w-4" />
                     Delete Account
                   </Button>
                   <Button
                     onClick={handleEmailAccount}
-                    className="px-4 py-2 flex items-center rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-all duration-300 hover:shadow-sm"
+                    className="px-4 py-2 flex items-center rounded-full bg-blue-500/50 text-blue-700 "
                   >
                     <Mail className="mr-1 h-4 w-4" />
                     Email Account

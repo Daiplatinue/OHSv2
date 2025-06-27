@@ -16,7 +16,6 @@ import {
   RotateCcw,
   ChevronDown,
   ChevronUp,
-  LayoutDashboard,
   CheckCircle2,
   AlertCircle,
   XCircleIcon,
@@ -28,6 +27,7 @@ import {
   Users,
   FileText,
   PowerOff,
+  Album,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import ProviderTrackingMap from "./ProviderTrackingMap"
@@ -551,7 +551,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
       <div className="w-full sm:w-2/3 p-4">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="font-semibold text-base">{displayBooking.companyName}</h3>
+            <h3 className="font-medium text-gray-700 text-base">{displayBooking.companyName}</h3>
             <p className="text-gray-600 text-sm mt-1">{displayBooking.service}</p>
 
             {/* Worker count information */}
@@ -1618,10 +1618,10 @@ const FloatingDock: React.FC = () => {
               <div className="bg-white p-4 border-b border-gray-200 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                    <LayoutDashboard className="w-5 h-5" />
+                    <Album className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold">Booking Dashboard</h2>
+                    <h2 className="text-lg font-medium text-gray-700">Booking Dashboard</h2>
                     <div className="flex items-center text-xs text-gray-500 mt-1">
                       <Clock className="w-3 h-3 mr-1" />
                       <span>{formattedTime}</span>
@@ -1658,7 +1658,7 @@ const FloatingDock: React.FC = () => {
                   <button
                     onClick={() => setActiveTab("all")}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                      activeTab === "all" ? "bg-primary text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      activeTab === "all" ? "bg-gray-200 text-gray-700" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >
                     All Bookings
@@ -1668,7 +1668,7 @@ const FloatingDock: React.FC = () => {
                     className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
                       activeTab === "pending"
                         ? "bg-amber-500 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
                     Pending
@@ -1678,7 +1678,7 @@ const FloatingDock: React.FC = () => {
                     className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
                       activeTab === "ongoing"
                         ? "bg-emerald-500 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
                     Ongoing
@@ -1688,7 +1688,7 @@ const FloatingDock: React.FC = () => {
                     className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
                       activeTab === "cancelled"
                         ? "bg-rose-500 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
                     Cancelled
@@ -1698,7 +1698,7 @@ const FloatingDock: React.FC = () => {
                     className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
                       activeTab === "completed"
                         ? "bg-sky-500 text-white"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
                     Completed
@@ -1707,7 +1707,7 @@ const FloatingDock: React.FC = () => {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4 text-gray-700">
                 <StatCard
                   title="Total"
                   count={totalBookings}
