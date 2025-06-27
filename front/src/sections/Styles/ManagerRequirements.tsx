@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
@@ -25,6 +27,7 @@ import {
 import LocationSelector from "./LocationSelectorAuth"
 import ImagePopup from "../Styles/ImagePopup"
 import ConfirmationModal from "./ConfirmationModal"
+import { isPointInCircle, forwardGeocode } from "../LocationUtils/LocationUtil" // Import new utility functions
 
 interface Location {
   name: string
@@ -58,6 +61,12 @@ export default function ManagerRequirements() {
   const [tinNumber, setTinNumber] = useState("")
   const [cityCoverage, setCityCoverage] = useState<string[]>([])
   const [newCity, setNewCity] = useState("")
+  const [cityCoverageError, setCityCoverageError] = useState<string | null>(null) // New state for error
+
+  // Define Cebu City boundary parameters (same as in LocationSelectorAuth)
+  const cebuCityCenterLat = 10.3178 // Approx. Ayala Center Cebu
+  const cebuCityCenterLng = 123.9054
+  const cebuCityRadiusMeters = 7000 // Approx. 7km radius
 
   // Step 3 - Business Permits
   const [secRegistration, setSecRegistration] = useState<File | null>(null)
@@ -239,11 +248,59 @@ export default function ManagerRequirements() {
     }
   }
 
+  // Handle TIN number input change
+  const handleTinNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, "") // Remove all non-digit characters
+    let formattedValue = ""
+
+    for (let i = 0; i < value.length; i++) {
+      if (i > 0 && i % 3 === 0 && i < 9) {
+        // Add hyphen after every 3 digits, up to 9 digits
+        formattedValue += "-"
+      }
+      formattedValue += value[i]
+    }
+
+    // Limit to 11 characters (9 digits + 2 hyphens)
+    if (formattedValue.length > 11) {
+      formattedValue = formattedValue.substring(0, 11)
+    }
+    setTinNumber(formattedValue)
+  }
+
   // Handle city coverage
-  const handleAddCity = () => {
-    if (newCity.trim() !== "" && !cityCoverage.includes(newCity.trim())) {
+  const handleAddCity = async () => {
+    if (newCity.trim() === "") {
+      setCityCoverageError("Please enter a city name.")
+      return
+    }
+    if (cityCoverage.includes(newCity.trim())) {
+      setCityCoverageError("This city is already added.")
+      return
+    }
+
+    setCityCoverageError(null) // Clear previous errors
+    const geocodedLocation = await forwardGeocode(newCity.trim() + ", Cebu, Philippines") // Add context for better results
+
+    if (!geocodedLocation) {
+      setCityCoverageError("Could not find coordinates for this city. Please try a more specific name.")
+      return
+    }
+
+    const isWithinCebuBoundary = isPointInCircle(
+      geocodedLocation.lat,
+      geocodedLocation.lng,
+      cebuCityCenterLat,
+      cebuCityCenterLng,
+      cebuCityRadiusMeters,
+    )
+
+    if (isWithinCebuBoundary) {
       setCityCoverage([...cityCoverage, newCity.trim()])
       setNewCity("")
+      setCityCoverageError(null)
+    } else {
+      setCityCoverageError("This location is outside the Cebu City service boundary.")
     }
   }
 
@@ -329,7 +386,9 @@ export default function ManagerRequirements() {
   }
 
   const isStep2Valid = () => {
-    return companyLocation !== null && tinNumber.trim() !== "" && cityCoverage.length > 0
+    // Validate TIN number format: XXX-XXX-XXX
+    const tinRegex = /^\d{3}-\d{3}-\d{3}$/
+    return companyLocation !== null && tinRegex.test(tinNumber) && cityCoverage.length > 0
   }
 
   const isStep3Valid = () => {
@@ -477,10 +536,10 @@ export default function ManagerRequirements() {
   }
 
   const handleSkipVerification = () => {
-    setIsConfirmationModalOpen(false);
+    setIsConfirmationModalOpen(false)
     // Skip to profile setup instead of review
-    animateStepChange("next", 5);
-  };
+    animateStepChange("next", 5)
+  }
 
   return (
     <div className="py-4 px-2 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
@@ -497,12 +556,13 @@ export default function ManagerRequirements() {
             {[1, 2, 3, 4, 5, 6].map((step) => (
               <div key={step} className="flex flex-1 items-center">
                 <div
-                  className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center transition-all duration-300 ${currentStep === step
+                  className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    currentStep === step
                       ? "bg-sky-500 text-white scale-110 shadow-md"
                       : currentStep > step
                         ? "bg-sky-500 text-white"
                         : "bg-gray-100 text-gray-400"
-                    }`}
+                  }`}
                 >
                   {currentStep > step ? (
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -514,8 +574,9 @@ export default function ManagerRequirements() {
                 </div>
                 {step < 6 && (
                   <div
-                    className={`flex-1 h-1 transition-all duration-500 ${currentStep > step ? "bg-sky-500" : "bg-gray-200"
-                      }`}
+                    className={`flex-1 h-1 transition-all duration-500 ${
+                      currentStep > step ? "bg-sky-500" : "bg-gray-200"
+                    }`}
                   ></div>
                 )}
               </div>
@@ -536,12 +597,13 @@ export default function ManagerRequirements() {
           <div className="p-6">
             <form onSubmit={handleSubmit}>
               <div
-                className={`transition-all duration-300 ${isAnimating
+                className={`transition-all duration-300 ${
+                  isAnimating
                     ? animationDirection === "next"
                       ? "opacity-0 translate-x-10"
                       : "opacity-0 -translate-x-10"
                     : "opacity-100 translate-x-0"
-                  }`}
+                }`}
               >
                 {/* Step 1: Business Information */}
                 {currentStep === 1 && (
@@ -726,12 +788,13 @@ export default function ManagerRequirements() {
                             id="tin-number"
                             type="text"
                             value={tinNumber}
-                            onChange={(e) => setTinNumber(e.target.value)}
+                            onChange={handleTinNumberChange}
                             placeholder="Enter your TIN number"
                             required
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            maxLength={11} // Max length for XXX-XXX-XXX
                           />
-                          <p className="text-xs text-gray-500 mt-1">Format: XXX-XXX-XXX-XXX</p>
+                          <p className="text-xs text-gray-500 mt-1">Format: XXX-XXX-XXX</p>
                         </div>
                       </div>
 
@@ -755,6 +818,8 @@ export default function ManagerRequirements() {
                               Add
                             </button>
                           </div>
+
+                          {cityCoverageError && <p className="text-red-500 text-sm mt-1 mb-2">{cityCoverageError}</p>}
 
                           <div className="p-4 bg-gray-50 rounded-lg">
                             <p className="text-sm text-gray-500 mb-2">
@@ -802,8 +867,9 @@ export default function ManagerRequirements() {
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">SEC Registration</label>
                           <div
-                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${secRegistration ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
-                              }`}
+                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                              secRegistration ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
+                            }`}
                             onClick={() => handleUploadClick("sec")}
                           >
                             {secRegistrationPreview ? (
@@ -848,8 +914,9 @@ export default function ManagerRequirements() {
                             Mayor's Permit / Business Permit
                           </label>
                           <div
-                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${businessPermit ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
-                              }`}
+                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                              businessPermit ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
+                            }`}
                             onClick={() => handleUploadClick("business")}
                           >
                             {businessPermitPreview ? (
@@ -897,8 +964,9 @@ export default function ManagerRequirements() {
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">BIR Registration</label>
                           <div
-                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${birRegistration ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
-                              }`}
+                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                              birRegistration ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
+                            }`}
                             onClick={() => handleUploadClick("bir")}
                           >
                             {birRegistrationPreview ? (
@@ -945,8 +1013,9 @@ export default function ManagerRequirements() {
                             Environmental Compliance Certificate (ECC)
                           </label>
                           <div
-                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${eccCertificate ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
-                              }`}
+                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                              eccCertificate ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
+                            }`}
                             onClick={() => handleUploadClick("ecc")}
                           >
                             {eccCertificatePreview ? (
@@ -1028,10 +1097,11 @@ export default function ManagerRequirements() {
                           </p>
 
                           <div
-                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors mb-3 ${generalLiability.file
+                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors mb-3 ${
+                              generalLiability.file
                                 ? "border-green-500 bg-green-50"
                                 : "border-gray-300 hover:border-gray-400"
-                              }`}
+                            }`}
                             onClick={() => handleUploadClick("generalLiability")}
                           >
                             {generalLiability.preview ? (
@@ -1081,10 +1151,11 @@ export default function ManagerRequirements() {
                           <p className="text-xs text-gray-500 mb-3">Covers employees in case of injury while on duty</p>
 
                           <div
-                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors mb-3 ${workersComp.file
+                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors mb-3 ${
+                              workersComp.file
                                 ? "border-green-500 bg-green-50"
                                 : "border-gray-300 hover:border-gray-400"
-                              }`}
+                            }`}
                             onClick={() => handleUploadClick("workersComp")}
                           >
                             {workersComp.preview ? (
@@ -1136,10 +1207,11 @@ export default function ManagerRequirements() {
                           </p>
 
                           <div
-                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors mb-3 ${professionalIndemnity.file
+                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors mb-3 ${
+                              professionalIndemnity.file
                                 ? "border-green-500 bg-green-50"
                                 : "border-gray-300 hover:border-gray-400"
-                              }`}
+                            }`}
                             onClick={() => handleUploadClick("professionalIndemnity")}
                           >
                             {professionalIndemnity.preview ? (
@@ -1194,10 +1266,11 @@ export default function ManagerRequirements() {
                           </p>
 
                           <div
-                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors mb-3 ${propertyDamage.file
+                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors mb-3 ${
+                              propertyDamage.file
                                 ? "border-green-500 bg-green-50"
                                 : "border-gray-300 hover:border-gray-400"
-                              }`}
+                            }`}
                             onClick={() => handleUploadClick("propertyDamage")}
                           >
                             {propertyDamage.preview ? (
@@ -1249,10 +1322,11 @@ export default function ManagerRequirements() {
                           </p>
 
                           <div
-                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors mb-3 ${businessInterruption.file
+                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors mb-3 ${
+                              businessInterruption.file
                                 ? "border-green-500 bg-green-50"
                                 : "border-gray-300 hover:border-gray-400"
-                              }`}
+                            }`}
                             onClick={() => handleUploadClick("businessInterruption")}
                           >
                             {businessInterruption.preview ? (
@@ -1304,10 +1378,11 @@ export default function ManagerRequirements() {
                           </p>
 
                           <div
-                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors mb-3 ${bondingInsurance.file
+                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors mb-3 ${
+                              bondingInsurance.file
                                 ? "border-green-500 bg-green-50"
                                 : "border-gray-300 hover:border-gray-400"
-                              }`}
+                            }`}
                             onClick={() => handleUploadClick("bondingInsurance")}
                           >
                             {bondingInsurance.preview ? (
@@ -1377,8 +1452,9 @@ export default function ManagerRequirements() {
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Company Cover Photo</label>
                           <div
-                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors h-40 ${coverPhoto ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
-                              }`}
+                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors h-40 ${
+                              coverPhoto ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
+                            }`}
                             onClick={() => coverPhotoRef.current?.click()}
                           >
                             {coverPhotoPreview ? (
@@ -1414,8 +1490,9 @@ export default function ManagerRequirements() {
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Company Logo</label>
                           <div
-                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${profilePicture ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
-                              }`}
+                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                              profilePicture ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
+                            }`}
                             onClick={() => profilePictureRef.current?.click()}
                           >
                             {profilePicturePreview ? (
@@ -1829,8 +1906,9 @@ export default function ManagerRequirements() {
                   type="button"
                   onClick={goToPreviousStep}
                   disabled={currentStep === 1}
-                  className={`group px-4 py-2 flex items-center rounded-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-300 ${currentStep === 1 ? "opacity-0 pointer-events-none" : "hover:shadow-sm"
-                    }`}
+                  className={`group px-4 py-2 flex items-center rounded-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-300 ${
+                    currentStep === 1 ? "opacity-0 pointer-events-none" : "hover:shadow-sm"
+                  }`}
                 >
                   <ChevronLeft className="mr-1 h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
                   <span>Back</span>
@@ -1847,14 +1925,15 @@ export default function ManagerRequirements() {
                       (currentStep === 4 && !isStep4Valid()) ||
                       (currentStep === 5 && !isStep5Valid())
                     }
-                    className={`group px-4 py-2 flex items-center rounded-full text-white transition-all duration-300 ${(currentStep === 1 && !isStep1Valid()) ||
-                        (currentStep === 2 && !isStep2Valid()) ||
-                        (currentStep === 3 && !isStep3Valid()) ||
-                        (currentStep === 4 && !isStep4Valid()) ||
-                        (currentStep === 5 && !isStep5Valid())
+                    className={`group px-4 py-2 flex items-center rounded-full text-white transition-all duration-300 ${
+                      (currentStep === 1 && !isStep1Valid()) ||
+                      (currentStep === 2 && !isStep2Valid()) ||
+                      (currentStep === 3 && !isStep3Valid()) ||
+                      (currentStep === 4 && !isStep4Valid()) ||
+                      (currentStep === 5 && !isStep5Valid())
                         ? "bg-sky-300 cursor-not-allowed"
                         : "bg-sky-500 hover:bg-sky-600 hover:shadow-md"
-                      }`}
+                    }`}
                   >
                     <span>Next</span>
                     <ChevronRight className="ml-1 h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />

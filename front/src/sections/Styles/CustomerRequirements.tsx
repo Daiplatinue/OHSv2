@@ -1,7 +1,11 @@
+"use client"
+
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Upload, ChevronLeft, ChevronRight, Camera, ImageIcon, Check, CheckCircle2 } from "lucide-react"
 import LocationSelector from "./LocationSelectorAuth"
+
+const initialSavedLocations: Location[] = []
 
 interface Location {
   name: string
@@ -17,6 +21,12 @@ interface CustomerRequirementsProps {
   onClose?: () => void
   parentModal?: boolean
   minimalMode?: boolean // New prop
+}
+
+// Define companyLocation outside the component to ensure a stable reference
+const companyLocation = {
+  lat: 10.3125,
+  lng: 123.8924,
 }
 
 export default function CustomerRequirements({
@@ -63,12 +73,6 @@ export default function CustomerRequirements({
   const backIdRef = useRef<HTMLInputElement>(null)
   const profilePictureRef = useRef<HTMLInputElement>(null)
   const coverPhotoRef = useRef<HTMLInputElement>(null)
-
-  // Company location (for location selector)
-  const companyLocation = {
-    lat: 10.243343,
-    lng: 123.796293,
-  }
 
   // Reset form after successful submission
   useEffect(() => {
@@ -983,7 +987,7 @@ export default function CustomerRequirements({
                                     </svg>
                                     <span>{selectedLocation.name}</span>
                                     {selectedLocation.zipCode && (
-                                      <span className="text-sky-600 text-sm">({selectedLocation.zipCode})</span>
+                                      <span className="ml-1 text-sky-600">({selectedLocation.zipCode})</span>
                                     )}
                                   </div>
                                 )}
@@ -1251,13 +1255,14 @@ export default function CustomerRequirements({
             <div className="absolute inset-0 bg-black/20" onClick={() => setShowLocationModal(false)}></div>
             <div className="relative bg-white rounded-xl w-full max-w-3xl max-h-[80vh] overflow-auto p-4 z-10">
               <LocationSelector
-                isOpen={showLocationModal}
-                onClose={() => setShowLocationModal(false)}
+                isOpen={showLocationModal} // Corrected: Bind to showLocationModal state
+                onClose={() => setShowLocationModal(false)} // Corrected: Close modal
                 onSelectLocation={(location) => {
                   handleLocationSelect(location)
-                  setShowLocationModal(false)
+                  setShowLocationModal(false) // Corrected: Close modal after selection
                 }}
                 companyLocation={companyLocation}
+                savedLocations={initialSavedLocations} // Use the stable reference
                 previousLocation={selectedLocation}
               />
             </div>
@@ -1270,13 +1275,14 @@ export default function CustomerRequirements({
             <div className="absolute inset-0 bg-black/20" onClick={() => setShowLocationModal(false)}></div>
             <div className="relative bg-white rounded-xl w-full max-w-3xl max-h-[80vh] overflow-auto p-4 z-10">
               <LocationSelector
-                isOpen={showLocationModal}
-                onClose={() => setShowLocationModal(false)}
+                isOpen={showLocationModal} // Corrected: Bind to showLocationModal state
+                onClose={() => setShowLocationModal(false)} // Corrected: Close modal
                 onSelectLocation={(location) => {
                   handleLocationSelect(location)
-                  setShowLocationModal(false)
+                  setShowLocationModal(false) // Corrected: Close modal after selection
                 }}
                 companyLocation={companyLocation}
+                savedLocations={initialSavedLocations} // Use the stable reference
                 previousLocation={selectedLocation}
               />
             </div>
