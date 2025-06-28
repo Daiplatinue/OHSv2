@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
@@ -27,7 +25,7 @@ import {
 import LocationSelector from "./LocationSelectorAuth"
 import ImagePopup from "../Styles/ImagePopup"
 import ConfirmationModal from "./ConfirmationModal"
-import { isPointInCircle, forwardGeocode } from "../LocationUtils/LocationUtil" // Import new utility functions
+import { isPointInCircle, forwardGeocode } from "../LocationUtils/LocationUtil"
 
 interface Location {
   name: string

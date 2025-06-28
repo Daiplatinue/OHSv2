@@ -1,6 +1,4 @@
-"use client"
-
-import { AlertTriangle } from "lucide-react" // Using AlertTriangle for warning
+import { AlertTriangle } from "lucide-react" 
 
 interface OutOfBoundaryModalProps {
   isOpen: boolean

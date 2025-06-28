@@ -1,9 +1,18 @@
-"use client"
-
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
-import { Upload, ChevronLeft, ChevronRight, Camera, ImageIcon, Check, CheckCircle2 } from "lucide-react"
+import {
+  Upload,
+  ChevronLeft,
+  ChevronRight,
+  Camera,
+  ImageIcon,
+  Check,
+  CheckCircle2,
+  AlertTriangle,
+  X,
+} from "lucide-react"
 import LocationSelector from "./LocationSelectorAuth"
+import ImagePopup from "../Styles/ImagePopup"
 
 const initialSavedLocations: Location[] = []
 
@@ -31,7 +40,6 @@ const companyLocation = {
 
 export default function CustomerRequirements({
   onClose,
-  parentModal = false,
   minimalMode = false,
 }: CustomerRequirementsProps) {
   // Form state
@@ -52,6 +60,10 @@ export default function CustomerRequirements({
   const [success, setSuccess] = useState(false)
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
 
+  const [showWarningModal, setShowWarningModal] = useState(false)
+  const [currentFileInputRef, setCurrentFileInputRef] = useState<HTMLInputElement | null>(null)
+  const [hasWarningBeenShownOnce, setHasWarningBeenShownOnce] = useState(false)
+
   // ID document state (only for full mode)
   const [frontId, setFrontId] = useState<File | null>(null)
   const [backId, setBackId] = useState<File | null>(null)
@@ -68,11 +80,19 @@ export default function CustomerRequirements({
   const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null)
   const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(null)
 
+  const [secretQuestion, setSecretQuestion] = useState("")
+  const [secretAnswer, setSecretAnswer] = useState("")
+  const [secretCode, setSecretCode] = useState<string | null>(null)
+
   // Refs for file inputs (only for full mode)
   const frontIdRef = useRef<HTMLInputElement>(null)
   const backIdRef = useRef<HTMLInputElement>(null)
   const profilePictureRef = useRef<HTMLInputElement>(null)
   const coverPhotoRef = useRef<HTMLInputElement>(null)
+
+  // States for image popup
+  const [popupImage, setPopupImage] = useState<string | null>(null)
+  const [isImagePopupOpen, setIsImagePopupOpen] = useState(false)
 
   // Reset form after successful submission
   useEffect(() => {
@@ -102,8 +122,34 @@ export default function CustomerRequirements({
     }
   }, [success])
 
-  // Handle file selection and preview (only for full mode)
-  const handleFileChange = (
+  // Load warning status from localStorage on mount
+  useEffect(() => {
+    const warningStatus = localStorage.getItem("v0_id_upload_warning_shown")
+    if (warningStatus === "true") {
+      setHasWarningBeenShownOnce(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    const generateSecretCode = async () => {
+      if (secretQuestion.trim() !== "" && secretAnswer.trim() !== "") {
+        const combinedString = secretQuestion.trim() + secretAnswer.trim()
+        const textEncoder = new TextEncoder()
+        const data = textEncoder.encode(combinedString)
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data)
+        const hashArray = Array.from(new Uint8Array(hashBuffer))
+        const hexHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("")
+        setSecretCode(hexHash.substring(0, 10)) // Use first 10 characters of the hash
+      } else {
+        setSecretCode(null) // Clear code if inputs are empty
+      }
+    }
+
+    generateSecretCode()
+  }, [secretQuestion, secretAnswer])
+
+  // Handle file selection and preview after confirmation
+  const handleActualFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     setter: React.Dispatch<React.SetStateAction<File | null>>,
     previewSetter: React.Dispatch<React.SetStateAction<string | null>>,
@@ -118,6 +164,35 @@ export default function CustomerRequirements({
         previewSetter(reader.result as string)
       }
       reader.readAsDataURL(file)
+    }
+  }
+
+  // Function to trigger the warning modal or file input
+  const handleIdUploadClick = (element: HTMLInputElement | null) => {
+    if (!element) return // Ensure element exists
+
+    if (!hasWarningBeenShownOnce) {
+      setCurrentFileInputRef(element) // Store which element to trigger later
+      setShowWarningModal(true)
+      localStorage.setItem("v0_id_upload_warning_shown", "true")
+      setHasWarningBeenShownOnce(true) // Update state immediately
+    } else {
+      element.click() // Directly trigger the file input
+    }
+  }
+
+  const handleConfirmUpload = () => {
+    if (currentFileInputRef) {
+      currentFileInputRef.click() // Trigger the hidden file input
+      setShowWarningModal(false)
+      setCurrentFileInputRef(null) // Clear the ref
+    }
+  }
+
+  const handleImageClick = (imageUrl: string | null) => {
+    if (imageUrl) {
+      setPopupImage(imageUrl)
+      setIsImagePopupOpen(true)
     }
   }
 
@@ -139,7 +214,7 @@ export default function CustomerRequirements({
   }
 
   const isStep3Valid = () => {
-    return profilePicture !== null
+    return secretQuestion.trim() !== "" && secretAnswer.trim() !== ""
   }
 
   // Navigation between steps with animation (only for full mode)
@@ -242,25 +317,25 @@ export default function CustomerRequirements({
     <div className="py-4 px-2 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
       {/* Include animation keyframes */}
       <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideInUp {
-          from { transform: translateY(20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes bounceIn {
-          0% { transform: scale(0); }
-          50% { transform: scale(1.2); }
-          100% { transform: scale(1); }
-        }
-        @keyframes pulse {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-          100% { transform: scale(1); }
-        }
-      `}</style>
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideInUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes bounceIn {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+  `}</style>
 
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -291,104 +366,166 @@ export default function CustomerRequirements({
         )}
 
         {minimalMode ? (
-          // Minimal Mode Form
-          <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 p-4">
+          <div className="bg-white rounded-xl overflow-hidden p-4">
             <form onSubmit={handleMinimalSubmit}>
-              <h3 className="text-lg font-medium mb-4">Basic Account Information</h3>
-              <div className="space-y-4">
-                <div>
-                  <label htmlFor="first-name" className="mb-1 block text-sm font-medium">
-                    First Name
-                  </label>
-                  <input
-                    id="first-name"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Enter your first name"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  />
+              <h3 className="text-lg font-medium mb-4 text-gray-700">Basic Account Information</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Left side: Personal Information */}
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="first-name" className="mb-1 block text-sm font-medium">
+                      First Name
+                    </label>
+                    <input
+                      id="first-name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Enter your first name"
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="last-name" className="mb-1 block text-sm font-medium">
+                      Last Name
+                    </label>
+                    <input
+                      id="last-name"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Enter your last name"
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="middle-name" className="mb-1 block text-sm font-medium">
+                      Middle Name (optional)
+                    </label>
+                    <input
+                      id="middle-name"
+                      value={middleName}
+                      onChange={(e) => setMiddleName(e.target.value)}
+                      placeholder="Enter your middle name"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="email" className="mb-1 block text-sm font-medium">
+                      Email Address
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="example@mail.com"
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label htmlFor="last-name" className="mb-1 block text-sm font-medium">
-                    Last Name
-                  </label>
-                  <input
-                    id="last-name"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Enter your last name"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  />
-                </div>
+                {/* Right side: Location and Password */}
+                <div className="space-y-4">
+                  {/* Location Selection */}
+                  <div>
+                    <h4 className="text-sm font-medium mb-2 text-gray-700">Select Your Location</h4>
+                    <button
+                      type="button"
+                      onClick={() => setShowLocationModal(true)}
+                      className="w-full px-4 py-2 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors"
+                    >
+                      Open Location Selector
+                    </button>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      {!selectedLocation && (
+                        <div className="flex items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg">
+                          <p className="text-gray-400">No location selected</p>
+                        </div>
+                      )}
+                    </div>
+                    {selectedLocation && (
+                      <div className="p-4 bg-white border rounded-lg">
+                        <h4 className="font-medium mb-2">Selected Location</h4>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-xs text-gray-500">Location Name</label>
+                            <p className="font-medium">{selectedLocation.name}</p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-xs text-gray-500">Distance</label>
+                              <p className="font-medium">{selectedLocation.distance.toFixed(1)} km</p>
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-500">Zip Code</label>
+                              <p className="font-medium">
+                                {selectedLocation.zipCode ? (
+                                  selectedLocation.zipCode
+                                ) : (
+                                  <span className="text-gray-400">Not available</span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500">Coordinates</label>
+                            <p className="text-sm">
+                              Lat: {selectedLocation.lat.toFixed(6)}, Lng: {selectedLocation.lng.toFixed(6)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
-                <div>
-                  <label htmlFor="middle-name" className="mb-1 block text-sm font-medium">
-                    Middle Name (optional)
-                  </label>
-                  <input
-                    id="middle-name"
-                    value={middleName}
-                    onChange={(e) => setMiddleName(e.target.value)}
-                    placeholder="Enter your middle name"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  />
-                </div>
+                  {/* Password Information */}
+                  <div>
+                    <div>
+                      <label htmlFor="password" className="mb-1 block text-sm font-medium">
+                        Password
+                      </label>
+                      <input
+                        id="password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      />
+                    </div>
 
-                <div>
-                  <label htmlFor="email" className="mb-1 block text-sm font-medium">
-                    Email Address
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="example@mail.com"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="password" className="mb-1 block text-sm font-medium">
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="confirm-password" className="mb-1 block text-sm font-medium">
-                    Confirm Password
-                  </label>
-                  <input
-                    id="confirm-password"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm your password"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  />
+                    <div className="mt-4">
+                      <label htmlFor="confirm-password" className="mb-1 block text-sm font-medium">
+                        Confirm Password
+                      </label>
+                      <input
+                        id="confirm-password"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Confirm your password"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div className="mt-6">
                 <button
                   type="submit"
-                  disabled={loading || !firstName || !lastName || !email || !password || !confirmPassword}
+                  disabled={
+                    loading || !firstName || !lastName || !email || !password || !confirmPassword || !selectedLocation
+                  }
                   className={`px-5 py-2 rounded-full transition-all duration-300 hover:shadow-md flex items-center justify-center w-full ${
-                    loading || !firstName || !lastName || !email || !password || !confirmPassword
+                    loading || !firstName || !lastName || !email || !password || !confirmPassword || !selectedLocation
                       ? "bg-gray-400 cursor-not-allowed text-white"
                       : "bg-sky-500 hover:bg-sky-600 text-white"
                   }`}
@@ -426,7 +563,7 @@ export default function CustomerRequirements({
           </div>
         ) : (
           // Full Mode Form (Existing Logic)
-          <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl overflow-hidden">
             <div className="p-4 relative">
               {/* SwiftUI-inspired progress indicator */}
               <div className="mb-6 px-30 ml-20">
@@ -491,15 +628,26 @@ export default function CustomerRequirements({
                           </label>
                           <div
                             className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${frontId ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"}`}
-                            onClick={() => frontIdRef.current?.click()}
+                            onClick={() => handleIdUploadClick(frontIdRef.current)}
                           >
                             {frontIdPreview ? (
-                              <div className="relative w-full h-40">
+                              <div
+                                className="relative w-full h-40 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleImageClick(frontIdPreview)
+                                }}
+                              >
                                 <img
                                   src={frontIdPreview || "/placeholder.svg"}
                                   alt="Front ID Preview"
-                                  className="object-contain w-full h-full"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <>
@@ -514,7 +662,7 @@ export default function CustomerRequirements({
                               ref={frontIdRef}
                               className="hidden"
                               accept=".jpg,.jpeg,.png,.pdf"
-                              onChange={(e) => handleFileChange(e, setFrontId, setFrontIdPreview)}
+                              onChange={(e) => handleActualFileChange(e, setFrontId, setFrontIdPreview)}
                             />
                           </div>
                         </div>
@@ -526,15 +674,26 @@ export default function CustomerRequirements({
                           </label>
                           <div
                             className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${backId ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"}`}
-                            onClick={() => backIdRef.current?.click()}
+                            onClick={() => handleIdUploadClick(backIdRef.current)}
                           >
                             {backIdPreview ? (
-                              <div className="relative w-full h-40">
+                              <div
+                                className="relative w-full h-40 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleImageClick(backIdPreview)
+                                }}
+                              >
                                 <img
                                   src={backIdPreview || "/placeholder.svg"}
                                   alt="Back ID Preview"
-                                  className="object-contain w-full h-full"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
                                 />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
+                                </div>
                               </div>
                             ) : (
                               <>
@@ -549,7 +708,7 @@ export default function CustomerRequirements({
                               ref={backIdRef}
                               className="hidden"
                               accept=".jpg,.jpeg,.png,.pdf"
-                              onChange={(e) => handleFileChange(e, setBackId, setBackIdPreview)}
+                              onChange={(e) => handleActualFileChange(e, setBackId, setBackIdPreview)}
                             />
                           </div>
                         </div>
@@ -689,7 +848,7 @@ export default function CustomerRequirements({
                   {/* Step 2: Location Selection */}
                   {currentStep === 2 && (
                     <div>
-                      <h3 className="text-lg font-medium mb-4">Select Your Location</h3>
+                      <h3 className="text-lg font-medium mb-4 text-gray-700">Select Your Location</h3>
 
                       <div className="grid md:grid-cols-2 gap-6">
                         {/* Left side - Location selection and price settings */}
@@ -770,7 +929,7 @@ export default function CustomerRequirements({
                   {/* Step 3: Profile Setup */}
                   {currentStep === 3 && (
                     <div>
-                      <h3 className="text-lg font-medium mb-4">Account Profile Setup</h3>
+                      <h3 className="text-lg font-medium mb-4 text-gray-700">Account Profile Setup</h3>
                       <div className="grid md:grid-cols-2 gap-6">
                         {/* Left side - Bio and Profile Pictures */}
                         <div>
@@ -819,7 +978,7 @@ export default function CustomerRequirements({
                                 ref={coverPhotoRef}
                                 className="hidden"
                                 accept=".jpg,.jpeg,.png"
-                                onChange={(e) => handleFileChange(e, setCoverPhoto, setCoverPhotoPreview)}
+                                onChange={(e) => handleActualFileChange(e, setCoverPhoto, setCoverPhotoPreview)}
                               />
                             </div>
                           </div>
@@ -854,7 +1013,7 @@ export default function CustomerRequirements({
                                 ref={profilePictureRef}
                                 className="hidden"
                                 accept=".jpg,.jpeg,.png"
-                                onChange={(e) => handleFileChange(e, setProfilePicture, setProfilePicturePreview)}
+                                onChange={(e) => handleActualFileChange(e, setProfilePicture, setProfilePicturePreview)}
                               />
                             </div>
                           </div>
@@ -862,48 +1021,47 @@ export default function CustomerRequirements({
 
                         {/* Right side - Profile Preview */}
                         <div>
-                          <h4 className="text-lg font-medium mb-4">Profile Preview</h4>
-                          <div className="bg-white border rounded-lg overflow-hidden">
-                            {/* Cover Photo Preview */}
-                            <div className="h-48 bg-gray-100 relative">
-                              {coverPhotoPreview ? (
-                                <img
-                                  src={coverPhotoPreview || "/placeholder.svg"}
-                                  alt="Cover"
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-gradient-to-r from-sky-400 to-blue-500" />
-                              )}
+                          <h4 className="text-lg font-medium mb-4 text-gray-700">Secret Question & Answer</h4>
+                          <div className="bg-white border rounded-lg p-6 space-y-4">
+                            <div>
+                              <label htmlFor="secret-question" className="mb-1 block text-sm font-medium">
+                                Secret Question
+                              </label>
+                              <input
+                                id="secret-question"
+                                value={secretQuestion}
+                                onChange={(e) => setSecretQuestion(e.target.value)}
+                                placeholder="e.g., What is your mother's maiden name?"
+                                required
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                              />
+                            </div>
+                            <div>
+                              <label htmlFor="secret-answer" className="mb-1 block text-sm font-medium">
+                                Secret Answer
+                              </label>
+                              <input
+                                id="secret-answer"
+                                value={secretAnswer}
+                                onChange={(e) => setSecretAnswer(e.target.value)}
+                                placeholder="Enter your secret answer"
+                                required
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                              />
                             </div>
 
-                            {/* Profile Info */}
-                            <div className="relative px-6 pb-6">
-                              {/* Profile Picture */}
-                              <div className="absolute -top-16 left-6">
-                                <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-white shadow-lg">
-                                  {profilePicturePreview ? (
-                                    <img
-                                      src={profilePicturePreview || "/placeholder.svg"}
-                                      alt="Profile"
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                                      <Camera className="h-8 w-8 text-gray-400" />
-                                    </div>
-                                  )}
-                                </div>
+                            {secretCode && (
+                              <div className="mt-6 p-4 bg-sky-50 border border-sky-100 rounded-lg text-center">
+                                <h5 className="text-sm font-medium text-sky-800 mb-2">Your Secret Code:</h5>
+                                <p className="text-2xl font-bold text-sky-600 tracking-wider select-all">
+                                  {secretCode}
+                                </p>
+                                <p className="mt-2 text-xs text-sky-700">
+                                  Note: Use this code only if necessary for account recovery or verification. Keep it
+                                  safe.
+                                </p>
                               </div>
-
-                              {/* Name and Bio */}
-                              <div className="pt-20">
-                                <h2 className="text-2xl font-bold text-gray-900">
-                                  {firstName} {middleName} {lastName}
-                                </h2>
-                                {bio && <p className="mt-2 text-gray-600">{bio}</p>}
-                              </div>
-                            </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -913,7 +1071,7 @@ export default function CustomerRequirements({
                   {/* Step 4: Account Review */}
                   {currentStep === 4 && (
                     <div>
-                      <h3 className="text-lg font-medium mb-4">Review Your Profile</h3>
+                      <h3 className="text-lg font-medium mb-4 text-gray-700">Review Your Profile</h3>
 
                       {/* Profile Header - Similar to MyProfile.tsx */}
                       <div className="bg-white rounded-xl overflow-hidden mb-6 border border-gray-100">
@@ -960,7 +1118,7 @@ export default function CustomerRequirements({
                             <div className="flex justify-between items-start mb-4">
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <h1 className="text-2xl font-bold text-gray-900">
+                                  <h1 className="text-2xl font-medium text-gray-700">
                                     {firstName} {middleName ? middleName + " " : ""}
                                     {lastName}
                                   </h1>
@@ -1029,31 +1187,31 @@ export default function CustomerRequirements({
                       {/* Personal Information Section */}
                       <div className="bg-white rounded-xl p-6 mb-6 border border-gray-100">
                         <div className="flex justify-between items-center mb-6">
-                          <h2 className="text-xl font-semibold">Personal Information</h2>
+                          <h2 className="text-xl font-medium text-gray-700">Personal Information</h2>
                         </div>
 
                         <div className="bg-white rounded-xl p-6">
-                          <h3 className="text-lg font-semibold mb-6">Basic Information</h3>
+                          <h3 className="text-lg font-medium text-gray-700 mb-6">Basic Information</h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                               <h4 className="text-sm font-medium text-gray-500 mb-1">Full Name</h4>
-                              <p className="text-gray-900">
+                              <p className="text-gray-700">
                                 {firstName} {middleName ? middleName + " " : ""}
                                 {lastName}
                               </p>
                             </div>
                             <div>
                               <h4 className="text-sm font-medium text-gray-500 mb-1">Email</h4>
-                              <p className="text-gray-900">{email}</p>
+                              <p className="text-gray-700">{email}</p>
                             </div>
                             <div>
                               <h4 className="text-sm font-medium text-gray-500 mb-1">Phone</h4>
-                              <p className="text-gray-900">{mobileNumber}</p>
+                              <p className="text-gray-700">{mobileNumber}</p>
                             </div>
                             {selectedLocation && (
                               <div>
                                 <h4 className="text-sm font-medium text-gray-500 mb-1">Location</h4>
-                                <p className="text-gray-900 flex items-center">
+                                <p className="text-gray-700 flex items-center">
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     width="16"
@@ -1078,11 +1236,11 @@ export default function CustomerRequirements({
                             )}
                             <div>
                               <h4 className="text-sm font-medium text-gray-500 mb-1">Gender</h4>
-                              <p className="text-gray-900 capitalize">{gender}</p>
+                              <p className="text-gray-700 capitalize">{gender}</p>
                             </div>
                             <div>
                               <h4 className="text-sm font-medium text-gray-500 mb-1">Account Type</h4>
-                              <p className="text-gray-900">
+                              <p className="text-gray-700">
                                 <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
                                   Customer
                                 </span>
@@ -1095,7 +1253,7 @@ export default function CustomerRequirements({
                           {bio && (
                             <div className="mt-6">
                               <h4 className="text-sm font-medium text-gray-500 mb-1">Bio</h4>
-                              <p className="text-gray-900">{bio}</p>
+                              <p className="text-gray-700">{bio}</p>
                             </div>
                           )}
                         </div>
@@ -1211,6 +1369,73 @@ export default function CustomerRequirements({
           </div>
         )}
 
+        {/* Warning Modal */}
+        {showWarningModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md"
+            style={{ animation: "fadeIn 0.3s ease-out" }}
+          >
+            <div
+              className="bg-white/90 backdrop-blur-xl rounded-3xl max-w-md w-full p-6 shadow-2xl border border-white/20"
+              style={{ animation: "slideInUp 0.4s ease-out" }}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center">
+                  <AlertTriangle className="h-6 w-6 text-amber-500 mr-2" />
+                  <h3 className="text-lg font-medium text-gray-700">Confidential Information</h3>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowWarningModal(false)
+                    if (currentFileInputRef) {
+                      currentFileInputRef.value = "" // Clear the file input value
+                    }
+                    setCurrentFileInputRef(null) // Clear the ref
+                  }}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="mb-6">
+                <p className="text-gray-600 mb-4">
+                  The document you are about to upload contains sensitive business information. We want to assure you
+                  that:
+                </p>
+                <ul className="list-disc pl-5 space-y-2 text-gray-600">
+                  <li>Your documents are stored securely with enterprise-grade encryption</li>
+                  <li>Access is strictly limited to verification personnel only</li>
+                  <li>Documents will only be used for business verification purposes</li>
+                  <li>We comply with all data protection regulations</li>
+                </ul>
+                <p className="mt-4 text-gray-600">
+                  We value your trust and are committed to protecting your confidential information.
+                </p>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowWarningModal(false)
+                    if (currentFileInputRef) {
+                      currentFileInputRef.value = "" // Clear the file input value
+                    }
+                    setCurrentFileInputRef(null) // Clear the ref
+                  }}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmUpload}
+                  className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600"
+                >
+                  Proceed with Upload
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Success Modal - Similar to the one in Transaction.tsx */}
         {isSuccessModalOpen && (
           <div
@@ -1249,46 +1474,28 @@ export default function CustomerRequirements({
           </div>
         )}
 
-        {/* Location selection modal - only render if not in parent modal */}
-        {showLocationModal && !parentModal && !minimalMode && (
+        {/* Location selection modal */}
+        {showLocationModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/20" onClick={() => setShowLocationModal(false)}></div>
             <div className="relative bg-white rounded-xl w-full max-w-3xl max-h-[80vh] overflow-auto p-4 z-10">
               <LocationSelector
-                isOpen={showLocationModal} // Corrected: Bind to showLocationModal state
-                onClose={() => setShowLocationModal(false)} // Corrected: Close modal
+                isOpen={showLocationModal}
+                onClose={() => setShowLocationModal(false)}
                 onSelectLocation={(location) => {
                   handleLocationSelect(location)
-                  setShowLocationModal(false) // Corrected: Close modal after selection
+                  setShowLocationModal(false)
                 }}
                 companyLocation={companyLocation}
-                savedLocations={initialSavedLocations} // Use the stable reference
-                previousLocation={selectedLocation}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Location selection - render directly in parent modal */}
-        {showLocationModal && parentModal && !minimalMode && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/20" onClick={() => setShowLocationModal(false)}></div>
-            <div className="relative bg-white rounded-xl w-full max-w-3xl max-h-[80vh] overflow-auto p-4 z-10">
-              <LocationSelector
-                isOpen={showLocationModal} // Corrected: Bind to showLocationModal state
-                onClose={() => setShowLocationModal(false)} // Corrected: Close modal
-                onSelectLocation={(location) => {
-                  handleLocationSelect(location)
-                  setShowLocationModal(false) // Corrected: Close modal after selection
-                }}
-                companyLocation={companyLocation}
-                savedLocations={initialSavedLocations} // Use the stable reference
+                savedLocations={initialSavedLocations}
                 previousLocation={selectedLocation}
               />
             </div>
           </div>
         )}
       </div>
+      {/* Image Popup */}
+      <ImagePopup imageUrl={popupImage} isOpen={isImagePopupOpen} onClose={() => setIsImagePopupOpen(false)} />
     </div>
   )
 }

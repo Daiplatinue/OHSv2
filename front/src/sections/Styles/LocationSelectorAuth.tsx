@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect, useRef, useCallback } from "react"
 import { X, Search, Check, Cloud, CloudOff, Building } from "lucide-react"
 import "ol/ol.css"
@@ -13,8 +11,8 @@ import { Point, Circle as GeomCircle } from "ol/geom"
 import { Vector as VectorSource } from "ol/source"
 import { Vector as VectorLayer } from "ol/layer"
 import { Style, Circle, Fill, Stroke } from "ol/style"
-import OutOfBoundaryModal from "../Styles/OutOfBoundary" // Updated import path
-import { calculateDistance, isPointInCircle, reverseGeocode } from "../LocationUtils/LocationUtil" // Import from new utility file
+import OutOfBoundaryModal from "../Styles/OutOfBoundary"
+import { calculateDistance, isPointInCircle, reverseGeocode } from "../LocationUtils/LocationUtil"
 
 interface Location {
   name: string
