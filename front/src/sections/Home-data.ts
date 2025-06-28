@@ -2,6 +2,48 @@ import image1 from "../assets/Home/Elderly Clown Among Vintage Electronics.jpeg"
 import image2 from "../assets/Home/Fashion in Motion.jpeg"
 import image3 from "../assets/Home/Dramatic Black-and-White Portrait.jpeg"
 
+import service1 from "../assets/Home/s1.jpg"
+import service2 from "../assets/Home/s2.jpg"
+import service3 from "../assets/Home/s3.jpg"
+import service4 from "../assets/Home/s4.jpg"
+import service5 from "../assets/Home/s5.jpg"
+import service6 from "../assets/services/Indoor Cave Spa.jpeg"
+import service7 from "../assets/Home/s7.jpg"
+import service8 from "../assets/Home/s8.jpg"
+
+import types1 from "../assets/services/Luxurious Bathroom Design.jpeg"
+import types2 from "../assets/services/Modern Minimalist Pipe Installation.jpeg"
+import types3 from "../assets/services/Minimalist Bathroom Scene.jpeg"
+
+import types4 from "../assets/services/Inviting Bathroom Counter Design.jpeg"
+import types5 from "../assets/services/Mediterranean Doorway.jpeg"
+
+import types6 from "../assets/services/Spotless Serenity_ Capturing the Essence of Household Cleanliness.jpeg"
+import types7 from "../assets/services/auto-1006216_960_720.jpg"
+import types8 from "../assets/services/Minimalist Interior Design.jpeg"
+import types9 from "../assets/services/workplace-5517744_1280.jpg"
+import types10 from "../assets/services/Minimalist Window Scene.jpeg"
+
+import types11 from "../assets/services/hamster-1772742_960_720.jpg"
+import types12 from "../assets/services/insects-4619045_960_720.jpg"
+import types13 from "../assets/services/insects-820484_1280.jpg"
+
+import types14 from "../assets/services/Serene Green Landscape.jpeg"
+import types15 from "../assets/services/Serene Residential Greenhouse.jpeg"
+import types16 from "../assets/services/Autumn Solitude.jpeg"
+
+import types17 from "../assets/services/Tranquil Beauty Spa Facial.jpeg"
+import types18 from "../assets/services/Serene Beauty Spa Facial.jpeg"
+import types19 from "../assets/services/Peaceful Wellness Therapy Session.jpeg"
+
+import types20 from "../assets/services/Modern Two-Story House.jpeg"
+import types21 from "../assets/services/roof-9004113_1280.jpg"
+import types22 from "../assets/services/cottage-768889_1280.jpg"
+
+import types23 from "../assets/services/kitchen-2165756_1280.jpg"
+import types24 from "../assets/services/living-room-1835923_1280.jpg"
+import types25 from "../assets/services/living-room-2732939_1280.jpg"
+
 export const serviceSubcategories = {
   "Plumbing Services": [
     {
@@ -9,7 +51,7 @@ export const serviceSubcategories = {
       name: "Leak Repairs",
       description: "Quick identification and repair of leaks in pipes, faucets, and fixtures to prevent water damage.",
       price: 1500,
-      image: "https://cdn.pixabay.com/photo/2018/04/04/15/43/outdoors-3290142_1280.jpg",
+      image: types1,
       workerCount: 1,
       estimatedTime: "1-2 hours",
     },
@@ -18,25 +60,16 @@ export const serviceSubcategories = {
       name: "Pipe Installation",
       description: "Professional installation of new pipes, including PVC, copper, and PEX piping systems.",
       price: 3500,
-      image: "https://cdn.pixabay.com/photo/2015/07/11/14/53/plumbing-840835_1280.jpg",
+      image: types2,
       workerCount: 2,
       estimatedTime: "3-5 hours",
     },
     {
       id: 3,
-      name: "Drain Cleaning",
-      description: "Removal of clogs and buildup in drains using professional-grade equipment and techniques.",
-      price: 1200,
-      image: "https://cdn.pixabay.com/photo/2017/06/29/15/47/drain-2454608_1280.jpg",
-      workerCount: 1,
-      estimatedTime: "1-2 hours",
-    },
-    {
-      id: 4,
       name: "Toilet Repairs",
       description: "Fixing running toilets, replacing flush mechanisms, and addressing leaks at the base.",
       price: 1000,
-      image: "https://cdn.pixabay.com/photo/2016/07/26/10/51/toilet-1542514_1280.jpg",
+      image: types3,
       workerCount: 1,
       estimatedTime: "1 hour",
     },
@@ -47,7 +80,7 @@ export const serviceSubcategories = {
       name: "Plumbing Fixes",
       description: "Minor plumbing repairs including leaky faucets, running toilets, and clogged drains.",
       price: 1300,
-      image: "https://cdn.pixabay.com/photo/2015/07/11/14/53/plumbing-840835_1280.jpg",
+      image: types4,
       workerCount: 1,
       estimatedTime: "1-2 hours",
     },
@@ -56,7 +89,7 @@ export const serviceSubcategories = {
       name: "Door & Window Repairs",
       description: "Fixing stuck doors, broken hinges, window tracks, and hardware replacement.",
       price: 950,
-      image: "https://cdn.pixabay.com/photo/2016/11/18/17/46/house-1836070_1280.jpg",
+      image: types5,
       workerCount: 1,
       estimatedTime: "1-2 hours",
     },
@@ -67,7 +100,7 @@ export const serviceSubcategories = {
       name: "Regular Cleaning",
       description: "Standard cleaning service including dusting, vacuuming, mopping, and bathroom cleaning.",
       price: 2500,
-      image: "https://cdn.pixabay.com/photo/2023/02/11/15/10/glasses-cleaning-7783103_1280.jpg",
+      image: types6,
       workerCount: 2,
       estimatedTime: "2-3 hours",
     },
@@ -76,7 +109,7 @@ export const serviceSubcategories = {
       name: "Deep Cleaning",
       description: "Thorough cleaning of all areas including hard-to-reach places, appliances, and detailed scrubbing.",
       price: 4500,
-      image: "https://cdn.pixabay.com/photo/2015/10/25/19/37/auto-1006216_960_720.jpg",
+      image: types7,
       workerCount: 3,
       estimatedTime: "4-6 hours",
     },
@@ -85,7 +118,7 @@ export const serviceSubcategories = {
       name: "Move-In/Move-Out Cleaning",
       description: "Comprehensive cleaning for vacant properties before moving in or after moving out.",
       price: 5000,
-      image: "https://cdn.pixabay.com/photo/2018/03/10/12/00/paper-3213924_1280.jpg",
+      image: types8,
       workerCount: 3,
       estimatedTime: "5-7 hours",
     },
@@ -94,7 +127,7 @@ export const serviceSubcategories = {
       name: "Carpet Cleaning",
       description: "Professional deep cleaning of carpets using hot water extraction and specialized equipment.",
       price: 3000,
-      image: "https://cdn.pixabay.com/photo/2020/08/25/18/28/workplace-5517744_1280.jpg",
+      image: types9,
       workerCount: 2,
       estimatedTime: "2-4 hours",
     },
@@ -103,7 +136,7 @@ export const serviceSubcategories = {
       name: "Window Cleaning",
       description: "Interior and exterior window cleaning, including screens, tracks, and sills.",
       price: 2800,
-      image: "https://cdn.pixabay.com/photo/2014/07/31/00/30/vw-beetle-405876_1280.jpg",
+      image: types10,
       workerCount: 2,
       estimatedTime: "2-4 hours",
     },
@@ -114,7 +147,7 @@ export const serviceSubcategories = {
       name: "Rodent Control",
       description: "Elimination and prevention of mice, rats, and other rodents using traps and exclusion methods.",
       price: 4000,
-      image: "https://cdn.pixabay.com/photo/2016/10/26/22/00/hamster-1772742_960_720.jpg",
+      image: types11,
       workerCount: 1,
       estimatedTime: "2-3 hours",
     },
@@ -123,7 +156,7 @@ export const serviceSubcategories = {
       name: "Bed Bug Treatment",
       description: "Comprehensive treatment to eliminate bed bugs from mattresses, furniture, and living spaces.",
       price: 5500,
-      image: "https://cdn.pixabay.com/photo/2019/11/11/17/50/insects-4619045_960_720.jpg",
+      image: types12,
       workerCount: 2,
       estimatedTime: "3-4 hours",
     },
@@ -132,7 +165,7 @@ export const serviceSubcategories = {
       name: "Mosquito Control",
       description: "Yard treatments to reduce mosquito populations and prevent breeding around your home.",
       price: 2800,
-      image: "https://cdn.pixabay.com/photo/2015/06/24/17/40/insects-820484_1280.jpg",
+      image: types13,
       workerCount: 1,
       estimatedTime: "1-2 hours",
     },
@@ -143,7 +176,7 @@ export const serviceSubcategories = {
       name: "Lawn Maintenance",
       description: "Regular lawn care including mowing, edging, and fertilization.",
       price: 2500,
-      image: "https://cdn.pixabay.com/photo/2017/09/22/19/05/garden-2776123_1280.jpg",
+      image: types14,
       workerCount: 2,
       estimatedTime: "2-3 hours",
     },
@@ -152,7 +185,7 @@ export const serviceSubcategories = {
       name: "Garden Design",
       description: "Custom garden design and installation with expert plant selection.",
       price: 15000,
-      image: "https://cdn.pixabay.com/photo/2020/04/26/10/35/garden-5094801_1280.jpg",
+      image: types15,
       workerCount: 3,
       estimatedTime: "2-3 days",
     },
@@ -161,38 +194,41 @@ export const serviceSubcategories = {
       name: "Tree Services",
       description: "Professional tree trimming, removal, and maintenance services.",
       price: 8000,
-      image: "https://cdn.pixabay.com/photo/2017/08/07/23/50/climbing-2609319_1280.jpg",
+      image: types16,
       workerCount: 3,
       estimatedTime: "4-6 hours",
     },
   ],
-  "HVAC Maintenance": [
+  "Massage Services": [
     {
-      id: 46,
-      name: "AC Servicing",
-      description: "Comprehensive air conditioning maintenance and repair.",
+      id: 101,
+      name: "Swedish Massage",
+      description:
+        "Relaxing full-body massage using long, flowing strokes to ease muscle tension and promote relaxation.",
+      price: 2500,
+      image: types17,
+      workerCount: 1,
+      estimatedTime: "1 hour",
+    },
+    {
+      id: 102,
+      name: "Deep Tissue Massage",
+      description:
+        "Targets chronic muscle tension and knots with deep pressure and slow strokes, ideal for pain relief.",
+      price: 3000,
+      image: types18,
+      workerCount: 1,
+      estimatedTime: "1 hour 30 mins",
+    },
+    {
+      id: 103,
+      name: "Hot Stone Massage",
+      description:
+        "Uses heated smooth stones placed on the body to warm and relax muscles, allowing for deeper pressure.",
       price: 3500,
-      image: "https://cdn.pixabay.com/photo/2018/01/27/23/46/water-heater-3112352_1280.jpg",
+      image: types19,
       workerCount: 1,
-      estimatedTime: "2-3 hours",
-    },
-    {
-      id: 47,
-      name: "Heating System Repair",
-      description: "Expert heating system diagnostics and repairs.",
-      price: 4000,
-      image: "https://cdn.pixabay.com/photo/2016/11/29/09/41/construction-1868667_1280.jpg",
-      workerCount: 1,
-      estimatedTime: "2-4 hours",
-    },
-    {
-      id: 48,
-      name: "Duct Cleaning",
-      description: "Professional air duct cleaning and sanitization.",
-      price: 5000,
-      image: "https://cdn.pixabay.com/photo/2017/08/07/19/45/air-conditioning-2607432_1280.jpg",
-      workerCount: 2,
-      estimatedTime: "4-6 hours",
+      estimatedTime: "1 hour 15 mins",
     },
   ],
   "Roofing Services": [
@@ -201,7 +237,7 @@ export const serviceSubcategories = {
       name: "Roof Inspection",
       description: "Thorough roof inspection and maintenance check.",
       price: 2000,
-      image: "https://cdn.pixabay.com/photo/2017/12/27/03/41/roof-3041830_1280.jpg",
+      image: types20,
       workerCount: 1,
       estimatedTime: "1-2 hours",
     },
@@ -210,7 +246,7 @@ export const serviceSubcategories = {
       name: "Roof Repair",
       description: "Professional repair of leaks and damaged roofing.",
       price: 8000,
-      image: "https://cdn.pixabay.com/photo/2016/11/18/17/46/house-1836070_1280.jpg",
+      image: types21,
       workerCount: 2,
       estimatedTime: "4-8 hours",
     },
@@ -219,7 +255,7 @@ export const serviceSubcategories = {
       name: "Roof Replacement",
       description: "Complete roof replacement with quality materials.",
       price: 35000,
-      image: "https://cdn.pixabay.com/photo/2018/07/01/13/28/repair-3509295_1280.jpg",
+      image: types22,
       workerCount: 4,
       estimatedTime: "2-3 days",
     },
@@ -230,7 +266,7 @@ export const serviceSubcategories = {
       name: "Design Consultation",
       description: "Professional interior design consultation and planning.",
       price: 5000,
-      image: "https://cdn.pixabay.com/photo/2017/03/22/17/39/kitchen-2165756_1280.jpg",
+      image: types23,
       workerCount: 1,
       estimatedTime: "2-3 hours",
     },
@@ -239,7 +275,7 @@ export const serviceSubcategories = {
       name: "Room Styling",
       description: "Complete room styling and decoration services.",
       price: 15000,
-      image: "https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923_1280.jpg",
+      image: types24,
       workerCount: 2,
       estimatedTime: "1-2 days",
     },
@@ -248,7 +284,7 @@ export const serviceSubcategories = {
       name: "Color Consultation",
       description: "Expert color scheme selection and planning.",
       price: 3000,
-      image: "https://cdn.pixabay.com/photo/2017/09/09/18/25/living-room-2732939_1280.jpg",
+      image: types25,
       workerCount: 1,
       estimatedTime: "1-2 hours",
     },
@@ -884,82 +920,82 @@ export const sellers = {
       workerCount: 3,
     },
   ],
-  "AC Servicing": [
+  "Swedish Massage": [
     {
       id: 49,
-      name: "CoolAir Pro",
+      name: "Relaxation Haven",
       rating: 5,
       reviews: 920,
       location: "Houston",
-      startingRate: 3500,
+      startingRate: 2500,
       ratePerKm: 25,
       badges: ["top", "in demand"],
-      description: "Expert AC maintenance and repair services.",
+      description: "Experience ultimate relaxation with our expert Swedish massage therapists.",
       workerCount: 1,
     },
     {
       id: 50,
-      name: "AirCare Solutions",
+      name: "Serene Touch Spa",
       rating: 4,
       reviews: 780,
       location: "Dallas",
-      startingRate: 3300,
+      startingRate: 2300,
       ratePerKm: 22,
       badges: ["hot"],
-      description: "Professional AC servicing and troubleshooting.",
+      description: "Professional Swedish massage for stress relief and muscle relaxation.",
       workerCount: 1,
     },
   ],
-  "Heating System Repair": [
+  "Deep Tissue Massage": [
     {
       id: 51,
-      name: "HeatPro Services",
+      name: "Muscle Melt Studio",
       rating: 5,
       reviews: 850,
       location: "Chicago",
-      startingRate: 4000,
+      startingRate: 3000,
       ratePerKm: 28,
       badges: ["top"],
-      description: "Expert heating system repairs and maintenance.",
+      description: "Target deep muscle knots and chronic pain with our specialized deep tissue massage.",
       workerCount: 1,
     },
     {
       id: 52,
-      name: "WarmthTech",
+      name: "Therapeutic Hands",
       rating: 4,
       reviews: 680,
       location: "Boston",
-      startingRate: 3800,
+      startingRate: 2800,
       ratePerKm: 25,
       badges: [],
-      description: "Professional heating system diagnostics and repairs.",
+      description: "Expert deep tissue massage to alleviate tension and improve mobility.",
       workerCount: 1,
     },
   ],
-  "Duct Cleaning": [
+  "Hot Stone Massage": [
     {
       id: 53,
-      name: "AirFlow Masters",
+      name: "Stone Serenity Spa",
       rating: 5,
       reviews: 720,
       location: "Atlanta",
-      startingRate: 5000,
+      startingRate: 3500,
       ratePerKm: 30,
       badges: ["top"],
-      description: "Thorough duct cleaning and sanitization services.",
-      workerCount: 2,
+      description: "Indulge in a soothing hot stone massage for deep relaxation and muscle relief.",
+      workerCount: 1,
     },
     {
       id: 54,
-      name: "DuctPro Clean",
+      name: "Warmth & Wellness",
       rating: 4,
       reviews: 580,
       location: "Miami",
-      startingRate: 4800,
+      startingRate: 3300,
       ratePerKm: 28,
       badges: ["hot"],
-      description: "Professional air duct cleaning and maintenance.",
-      workerCount: 2,
+      description: "Experience the therapeutic benefits of hot stone massage from certified therapists.",
+      workerCount: 1,
     },
   ],
   "Roof Inspection": [
@@ -1138,7 +1174,7 @@ export const products = [
     name: "Plumbing Services",
     price: 8000,
     category: "Plumbing",
-    image: "https://cdn.pixabay.com/photo/2015/01/01/13/32/plumbing-585658_1280.jpg",
+    image: service1,
     description:
       "Keep your water systems running smoothly with expert plumbing services, from leak repairs to pipe installations.",
   },
@@ -1147,7 +1183,7 @@ export const products = [
     name: "Handyman Services",
     price: 5499,
     category: "Handyman",
-    image: "https://cdn.pixabay.com/photo/2024/01/02/14/09/forestry-8483331_1280.jpg",
+    image: service2,
     description:
       "Get quality home repairs and improvements at HandyGo's discounted rates—fast, affordable, and hassle-free.",
   },
@@ -1156,7 +1192,7 @@ export const products = [
     name: "Home Cleaning Services",
     price: 12000,
     category: "Cleaning",
-    image: "https://cdn.pixabay.com/photo/2024/04/17/17/10/ai-generated-8702547_1280.jpg",
+    image: service3,
     description: "Enjoy a spotless, sanitized home with deep cleaning, carpet care, and move-in/move-out services.",
   },
   {
@@ -1164,7 +1200,7 @@ export const products = [
     name: "Pest Control Services",
     price: 29000,
     category: "Pest Control",
-    image: "https://cdn.pixabay.com/photo/2018/10/13/03/15/mosquito-3743404_1280.jpg",
+    image: service4,
     description: "Keep your space pest-free with expert extermination for termites, rodents, bed bugs, and more.",
   },
   {
@@ -1172,23 +1208,24 @@ export const products = [
     name: "Landscaping Services",
     price: 15000,
     category: "Outdoor",
-    image: "https://cdn.pixabay.com/photo/2021/03/22/21/04/house-6115719_1280.jpg",
+    image: service5,
     description: "Transform your outdoor space with professional landscaping, lawn care, and garden design services.",
   },
   {
     id: 6,
-    name: "HVAC Maintenance",
+    name: "Massage Services",
     price: 10000,
-    category: "Appliances",
-    image: "https://cdn.pixabay.com/photo/2022/11/07/14/21/labor-7576514_1280.jpg",
-    description: "Keep your heating and cooling systems running efficiently with professional maintenance and repairs.",
+    category: "Wellness",
+    image: service6,
+    description:
+      "Relax and rejuvenate with professional massage services tailored to your needs, from Swedish to deep tissue.",
   },
   {
     id: 7,
     name: "Roofing Services",
     price: 35000,
     category: "Construction",
-    image: "https://cdn.pixabay.com/photo/2017/10/26/16/51/roofers-2891664_1280.jpg",
+    image: service7,
     description:
       "Protect your home with expert roof repairs, replacements, and inspections by certified professionals.",
   },
@@ -1197,7 +1234,7 @@ export const products = [
     name: "Interior Design",
     price: 25000,
     category: "Design",
-    image: "https://cdn.pixabay.com/photo/2017/03/22/17/39/kitchen-2165756_1280.jpg",
+    image: service8,
     description:
       "Transform your living spaces with customized interior design solutions tailored to your style and budget.",
   },

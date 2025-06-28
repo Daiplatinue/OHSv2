@@ -25,6 +25,13 @@ import about4 from '../assets/proposition/Contemplative Figure Amidst Vibrant Ge
 
 import feature1 from '../assets/zoomeye.mp4';
 
+import benifit1 from '../assets/proposition/1.jpeg';
+import benifit2 from '../assets/proposition/2.jpg';
+import benifit3 from '../assets/proposition/3.jpeg';
+import benifit4 from '../assets/proposition/4.jpeg';
+import benifit5 from '../assets/proposition/5.jpeg';
+import benifit6 from '../assets/proposition/6.jpg';
+
 export interface Benefit {
   id: number;
   title: string;
@@ -39,42 +46,42 @@ export const benefits: Benefit[] = [
     title: "Instant Booking",
     subtitle: "Quick & Easy",
     description: "Book your service provider in just a few taps. Our streamlined process gets you connected with professionals instantly.",
-    image: "https://images.pexels.com/photos/4386431/pexels-photo-4386431.jpeg"
+    image: benifit1
   },
   {
     id: 2,
     title: "Verified Professionals",
     subtitle: "Trusted Service",
     description: "All our service providers are thoroughly vetted and verified. Work with confidence knowing you're getting quality service.",
-    image: "https://cdn.pixabay.com/photo/2024/02/16/11/47/people-8577398_1280.jpg"
+    image: benifit2
   },
   {
     id: 3,
     title: "Real-time Tracking",
     subtitle: "Stay Updated",
     description: "Track your service provider's location and estimated arrival time in real-time. Never wonder when help will arrive.",
-    image: "https://images.pexels.com/photos/4386370/pexels-photo-4386370.jpeg"
+    image: benifit3
   },
   {
     id: 4,
     title: "Secure Payments",
     subtitle: "Safe & Reliable",
     description: "Multiple payment options with bank-level security. Pay safely through our encrypted payment system.",
-    image: "https://images.pexels.com/photos/4386433/pexels-photo-4386433.jpeg"
+    image: benifit4
   },
   {
     id: 6,
     title: "24/7 Support",
     subtitle: "Always Available",
     description: "Our customer support team is available round the clock to help you with any questions or concerns.",
-    image: "https://images.pexels.com/photos/4386372/pexels-photo-4386372.jpeg"
+    image: benifit5
   },
   {
     id: 5,
     title: "Quality Guarantee",
     subtitle: "Satisfaction Assured",
     description: "We guarantee the quality of our services. If you're not satisfied, we'll make it right or refund your money.",
-    image: "https://cdn.pixabay.com/photo/2021/11/21/06/28/quality-6813293_1280.jpg"
+    image: benifit6
   }
 ];
 

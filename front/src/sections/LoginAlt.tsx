@@ -1,11 +1,12 @@
 import type React from "react"
 import { useState, useEffect } from "react"
-import { X, AlertTriangle, XCircle, Clock, CheckCircle2, AlertCircle } from "lucide-react" 
+import { X, AlertTriangle, XCircle, Clock, CheckCircle2, AlertCircle } from "lucide-react"
 import CustomerRequirements from "./Styles/CustomerRequirements"
 import ManagerRequirements from "./Styles/ManagerRequirements"
 import OTP from "../sections/Styles/OTP"
 import TermsCondition from "../sections/Styles/TermsCondition"
 import Cookies from "js-cookie"
+import ForgotPassword from "../sections/Styles/ForgotPassword" 
 
 const keyframes = `
 @keyframes fadeIn {
@@ -31,18 +32,19 @@ const keyframes = `
 }
 `
 
+import img1 from '../assets/Login/Contemporary Workspace Environment.jpeg';
+import img2 from '../assets/Login/Casual Office Collaboration.jpeg';
+import img3 from '../assets/Login/Construction Crewmates in Uniform.jpeg';
+
 const slideshowImages = [
   {
-    src: "https://cdn.pixabay.com/photo/2018/02/23/08/03/expression-3174967_1280.jpg",
-    alt: "Fashion model with shopping bags",
+    src: img1,
   },
   {
-    src: "https://cdn.pixabay.com/photo/2017/07/23/14/44/builder-2531572_1280.jpg",
-    alt: "Urban fashion collection",
+    src: img2,
   },
   {
-    src: "https://cdn.pixabay.com/photo/2017/09/14/12/19/building-2748841_960_720.jpg",
-    alt: "Streetwear showcase",
+    src: img3,
   },
 ]
 
@@ -149,6 +151,7 @@ function LoginAlt() {
   const [showSuccessModal, setShowSuccessModal] = useState(false) // State for success modal
   const [successMessage, setSuccessMessage] = useState("") // Message for success modal
   const [termsAccepted, setTermsAccepted] = useState(() => Cookies.get("terms_accepted") === "true") // New state to track terms acceptance
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false) // New state for ForgotPassword modal
 
   const [, setValidId] = useState<File | null>(null)
   const [, setSalaryCertificate] = useState<File | null>(null)
@@ -251,7 +254,8 @@ function LoginAlt() {
       showUnsuccessModal ||
       showSuccessModal ||
       showFillAllPrompt || // Include new modals
-      showUnverifiedWarning // Include new modals
+      showUnverifiedWarning || // Include new modals
+      showForgotPasswordModal // Include ForgotPassword modal
     ) {
       document.body.style.overflow = "hidden"
     } else {
@@ -269,6 +273,7 @@ function LoginAlt() {
     showSuccessModal,
     showFillAllPrompt,
     showUnverifiedWarning,
+    showForgotPasswordModal,
   ]) // Include all modal states
 
   useEffect(() => {
@@ -345,24 +350,9 @@ function LoginAlt() {
               >
                 <img
                   src={image.src || "/placeholder.svg"}
-                  alt={image.alt}
                   className="object-cover w-full h-full rounded-xl"
                 />
               </div>
-            ))}
-          </div>
-
-          {/* Slideshow indicators */}
-          <div className="absolute top-5 left-0 right-0 flex justify-center gap-2">
-            {slideshowImages.map((_, index) => (
-              <button
-                key={index}
-                className={`w-4 h-2 rounded-full transition-all ${
-                  activeSlide === index ? "bg-white w-7" : "bg-white/50"
-                }`}
-                onClick={() => setActiveSlide(index)}
-                aria-label={`Go to slide ${index + 1}`}
-              />
             ))}
           </div>
         </div>
@@ -428,7 +418,9 @@ function LoginAlt() {
                     Save Login Credentials
                   </label>
                 </div>
-                <button className="text-sky-500 hover:underline">Forgot Password?</button>
+                <button onClick={() => setShowForgotPasswordModal(true)} className="text-sky-500 hover:underline">
+                  Forgot Password?
+                </button>
               </div>
             )}
           </div>
@@ -1004,6 +996,9 @@ function LoginAlt() {
           </div>
         </div>
       )}
+
+      {/* Forgot Password Modal */}
+      <ForgotPassword visible={showForgotPasswordModal} onClose={() => setShowForgotPasswordModal(false)} />
     </div>
   )
 }

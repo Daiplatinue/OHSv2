@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
@@ -21,6 +23,8 @@ import {
   PauseCircle,
   CheckSquare,
   CheckCircle2,
+  Eye,
+  EyeOff,
 } from "lucide-react"
 import LocationSelector from "./LocationSelectorAuth"
 import ImagePopup from "../Styles/ImagePopup"
@@ -57,6 +61,7 @@ export default function ManagerRequirements() {
   const [companyLocation, setCompanyLocation] = useState<Location | null>(null)
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [tinNumber, setTinNumber] = useState("")
+  const [showTinNumber, setShowTinNumber] = useState(false) // State for TIN visibility in Step 2
   const [cityCoverage, setCityCoverage] = useState<string[]>([])
   const [newCity, setNewCity] = useState("")
   const [cityCoverageError, setCityCoverageError] = useState<string | null>(null) // New state for error
@@ -108,6 +113,10 @@ export default function ManagerRequirements() {
   const [coverPhoto, setCoverPhoto] = useState<File | null>(null)
   const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(null)
 
+  const [secretQuestion, setSecretQuestion] = useState("")
+  const [secretAnswer, setSecretAnswer] = useState("")
+  const [secretCode, setSecretCode] = useState<string | null>(null)
+
   const [loading, setLoading] = useState(false)
   const [, setError] = useState("")
   const [, setSuccess] = useState(false)
@@ -151,33 +160,33 @@ export default function ManagerRequirements() {
 
   // Company location (for location selector)
   const defaultCompanyLocation = {
-    lat: 10.243343,
-    lng: 123.796293,
+    lat: 10.3125,
+    lng: 123.8924,
   }
 
   // Animation keyframes
   const keyframes = `
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  @keyframes slideInUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  
-  @keyframes bounceIn {
-    0% { transform: scale(0); opacity: 0; }
-    60% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-  }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
 `
 
   // Prevent scrolling when modal is open and handle modal visibility
@@ -204,6 +213,24 @@ export default function ManagerRequirements() {
       styleElement.remove()
     }
   }, [showWarningModal, showLocationModal, isConfirmationModalOpen, keyframes])
+
+  useEffect(() => {
+    const generateSecretCode = async () => {
+      if (secretQuestion.trim() !== "" && secretAnswer.trim() !== "") {
+        const combinedString = secretQuestion.trim() + secretAnswer.trim()
+        const textEncoder = new TextEncoder()
+        const data = textEncoder.encode(combinedString)
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data)
+        const hashArray = Array.from(new Uint8Array(hashBuffer))
+        const hexHash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("")
+        setSecretCode(hexHash.substring(0, 10)) // Use first 10 characters of the hash
+      } else {
+        setSecretCode(null) // Clear code if inputs are empty
+      }
+    }
+
+    generateSecretCode()
+  }, [secretQuestion, secretAnswer])
 
   // Handle file selection and preview
   const handleFileChange = (
@@ -402,8 +429,8 @@ export default function ManagerRequirements() {
   }
 
   const isStep5Valid = () => {
-    // Require at least profile picture
-    return profilePicture !== null
+    // Require at least profile picture, secret question, and secret answer
+    return profilePicture !== null && secretQuestion.trim() !== "" && secretAnswer.trim() !== ""
   }
 
   const [isAnimating, setIsAnimating] = useState(false)
@@ -500,6 +527,9 @@ export default function ManagerRequirements() {
         },
         type: businessName ? "ceo" : "manager",
         status: "pending",
+        secretQuestion: secretQuestion,
+        secretAnswer: secretAnswer,
+        secretCode: secretCode,
       }
 
       // Store user data in state (no API call)
@@ -518,6 +548,7 @@ export default function ManagerRequirements() {
   // First, add these new state variables at the top of the component with the other state declarations
   const [popupImage, setPopupImage] = useState<string | null>(null)
   const [isImagePopupOpen, setIsImagePopupOpen] = useState(false)
+  const [showReviewTinNumber, setShowReviewTinNumber] = useState(false) // New state for TIN visibility in review
 
   // Add this function after the other handler functions
   const handleImageClick = (imageUrl: string | null) => {
@@ -556,7 +587,7 @@ export default function ManagerRequirements() {
                 <div
                   className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
                     currentStep === step
-                      ? "bg-sky-500 text-white scale-110 shadow-md"
+                      ? "bg-sky-500 text-white scale-110"
                       : currentStep > step
                         ? "bg-sky-500 text-white"
                         : "bg-gray-100 text-gray-400"
@@ -591,7 +622,7 @@ export default function ManagerRequirements() {
         </div>
 
         {/* Form content */}
-        <div className="bg-white rounded-xl shadow-sm">
+        <div className="bg-white rounded-xl">
           <div className="p-6">
             <form onSubmit={handleSubmit}>
               <div
@@ -782,16 +813,25 @@ export default function ManagerRequirements() {
                               TIN Number
                             </span>
                           </label>
-                          <input
-                            id="tin-number"
-                            type="text"
-                            value={tinNumber}
-                            onChange={handleTinNumberChange}
-                            placeholder="Enter your TIN number"
-                            required
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            maxLength={11} // Max length for XXX-XXX-XXX
-                          />
+                          <div className="relative">
+                            <input
+                              id="tin-number"
+                              type={showTinNumber ? "text" : "password"}
+                              value={tinNumber}
+                              onChange={handleTinNumberChange}
+                              placeholder="Enter your TIN number"
+                              required
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 pr-10"
+                              maxLength={11} // Max length for XXX-XXX-XXX
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowTinNumber(!showTinNumber)}
+                              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                            >
+                              {showTinNumber ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
+                          </div>
                           <p className="text-xs text-gray-500 mt-1">Format: XXX-XXX-XXX</p>
                         </div>
                       </div>
@@ -857,7 +897,7 @@ export default function ManagerRequirements() {
                 {/* Step 3: Business Permits */}
                 {currentStep === 3 && (
                   <div>
-                    <h3 className="text-xl font-semibold mb-6">Business Permits & Registrations</h3>
+                    <h3 className="text-xl font-medium text-gray-700 mb-6">Business Permits & Registrations</h3>
 
                     <div className="grid md:grid-cols-2 gap-8">
                       {/* Left side - SEC and Business Permit */}
@@ -1077,7 +1117,7 @@ export default function ManagerRequirements() {
                 {/* Step 4: Insurance and Liability Coverage */}
                 {currentStep === 4 && (
                   <div>
-                    <h3 className="text-xl font-semibold mb-6">Insurance and Liability Coverage</h3>
+                    <h3 className="text-xl font-medium text-gray-700 mb-6">Insurance and Liability Coverage</h3>
 
                     <div className="grid md:grid-cols-2 gap-8">
                       {/* Left side - Primary Insurance */}
@@ -1442,7 +1482,7 @@ export default function ManagerRequirements() {
                 {/* Step 5: Profile Setup */}
                 {currentStep === 5 && (
                   <div>
-                    <h3 className="text-xl font-semibold mb-6">Business Profile Setup</h3>
+                    <h3 className="text-xl font-medium text-gray-700 mb-6">Business Profile Setup</h3>
 
                     <div className="grid md:grid-cols-2 gap-8">
                       <div className="space-y-6">
@@ -1525,58 +1565,47 @@ export default function ManagerRequirements() {
 
                       <div className="space-y-6">
                         <div>
-                          <h4 className="text-md font-medium mb-4">Profile Preview</h4>
-                          <div className="border rounded-lg overflow-hidden">
-                            <div className="h-32 bg-gray-200 relative">
-                              {coverPhotoPreview && (
-                                <img
-                                  src={coverPhotoPreview || "/placeholder.svg"}
-                                  alt="Cover"
-                                  className="w-full h-full object-cover"
-                                />
-                              )}
+                          <h4 className="text-lg font-medium mb-4 text-gray-700">Secret Question & Answer</h4>
+                          <div className="bg-white border rounded-lg p-6 space-y-4">
+                            <div>
+                              <label htmlFor="secret-question" className="mb-1 block text-sm font-medium">
+                                Secret Question
+                              </label>
+                              <input
+                                id="secret-question"
+                                value={secretQuestion}
+                                onChange={(e) => setSecretQuestion(e.target.value)}
+                                placeholder="e.g., What is your mother's maiden name?"
+                                required
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                              />
                             </div>
-                            <div className="relative px-4 pb-4">
-                              <div className="absolute -top-12 left-4">
-                                <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden bg-white">
-                                  {profilePicturePreview ? (
-                                    <img
-                                      src={profilePicturePreview || "/placeholder.svg"}
-                                      alt="Logo"
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                      <Building className="h-8 w-8 text-gray-400" />
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="pt-14 pb-2">
-                                <h3 className="font-bold text-lg">{businessName || "Your Business Name"}</h3>
-                                {companyLocation && (
-                                  <p className="text-sm text-gray-500 flex items-center mt-1">
-                                    <MapPin className="h-3 w-3 mr-1" />
-                                    {companyLocation.name}
-                                  </p>
-                                )}
-                              </div>
+                            <div>
+                              <label htmlFor="secret-answer" className="mb-1 block text-sm font-medium">
+                                Secret Answer
+                              </label>
+                              <input
+                                id="secret-answer"
+                                value={secretAnswer}
+                                onChange={(e) => setSecretAnswer(e.target.value)}
+                                placeholder="Enter your secret answer"
+                                required
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                              />
                             </div>
-                          </div>
-                        </div>
 
-                        <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
-                          <div className="flex items-start">
-                            <div className="flex-shrink-0 mt-0.5">
-                              <AlertTriangle className="h-5 w-5 text-blue-500" />
-                            </div>
-                            <div className="ml-3">
-                              <h5 className="text-sm font-medium text-blue-800">Profile Image Guidelines</h5>
-                              <p className="mt-1 text-sm text-blue-700">
-                                Your company logo should be clear and professional. The cover photo should represent
-                                your business services or values. Both images will be visible to potential customers.
-                              </p>
-                            </div>
+                            {secretCode && (
+                              <div className="mt-6 p-4 bg-sky-50 border border-sky-100 rounded-lg text-center">
+                                <h5 className="text-sm font-medium text-sky-800 mb-2">Your Secret Code:</h5>
+                                <p className="text-2xl font-bold text-sky-600 tracking-wider select-all">
+                                  {secretCode}
+                                </p>
+                                <p className="mt-2 text-xs text-sky-700">
+                                  Note: Use this code only if necessary for account recovery or verification. Keep it
+                                  safe.
+                                </p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1587,7 +1616,7 @@ export default function ManagerRequirements() {
                 {/* Step 6: Review */}
                 {currentStep === 6 && (
                   <div>
-                    <h3 className="text-xl font-semibold mb-6">Review Your Business Registration</h3>
+                    <h3 className="text-xl font-medium text-gray-700 mb-6">Review Your Business Registration</h3>
 
                     {/* Business Profile Header */}
                     <div className="bg-white rounded-xl overflow-hidden mb-6 border">
@@ -1628,7 +1657,7 @@ export default function ManagerRequirements() {
                           <div className="flex justify-between items-start mb-4">
                             <div>
                               <div className="flex items-center gap-2">
-                                <h1 className="text-2xl font-bold text-gray-900">{businessName}</h1>
+                                <h1 className="text-2xl font-medium text-gray-700">{businessName}</h1>
                                 <span className="px-2 py-0.5 bg-sky-100 text-sky-800 text-xs font-medium rounded-full">
                                   Service Provider
                                 </span>
@@ -1661,7 +1690,7 @@ export default function ManagerRequirements() {
                     <div className="space-y-8">
                       {/* Basic Information */}
                       <div className="bg-white rounded-xl p-6 border">
-                        <h4 className="text-lg font-semibold mb-4">Basic Information</h4>
+                        <h4 className="text-lg font-medium text-gray-700 mb-4">Basic Information</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">Business Name</h5>
@@ -1685,7 +1714,16 @@ export default function ManagerRequirements() {
                           </div>
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">TIN Number</h5>
-                            <p className="text-gray-900">{tinNumber}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-gray-900">{showReviewTinNumber ? tinNumber : "XXX-XXX-XXX"}</p>
+                              <button
+                                type="button"
+                                onClick={() => setShowReviewTinNumber(!showReviewTinNumber)}
+                                className="text-gray-400 hover:text-gray-600"
+                              >
+                                {showReviewTinNumber ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
+                            </div>
                           </div>
                         </div>
                         <div className="mt-4">
@@ -1696,7 +1734,7 @@ export default function ManagerRequirements() {
 
                       {/* Location Information */}
                       <div className="bg-white rounded-xl p-6 border">
-                        <h4 className="text-lg font-semibold mb-4">Location Information</h4>
+                        <h4 className="text-lg font-medium text-gray-700 mb-4">Location Information</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           {companyLocation && (
                             <div>
@@ -1725,18 +1763,24 @@ export default function ManagerRequirements() {
 
                       {/* Permits and Documents */}
                       <div className="bg-white rounded-xl p-6 border">
-                        <h4 className="text-lg font-semibold mb-4">Permits and Documents</h4>
+                        <h4 className="text-lg font-medium text-gray-700 mb-4">Permits and Documents</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">SEC Registration</h5>
                             {secRegistrationPreview ? (
-                              <div className="mt-2 border rounded p-2 flex items-center">
-                                <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
-                                  <FileText className="h-6 w-6 text-gray-500" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium">SEC Document</p>
-                                  <p className="text-xs text-gray-500">Uploaded</p>
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={() => handleImageClick(secRegistrationPreview)}
+                              >
+                                <img
+                                  src={secRegistrationPreview || "/placeholder.svg"}
+                                  alt="SEC Registration Preview"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
                                 </div>
                               </div>
                             ) : (
@@ -1746,13 +1790,19 @@ export default function ManagerRequirements() {
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">Business Permit</h5>
                             {businessPermitPreview ? (
-                              <div className="mt-2 border rounded p-2 flex items-center">
-                                <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
-                                  <FileText className="h-6 w-6 text-gray-500" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium">Business Permit</p>
-                                  <p className="text-xs text-gray-500">Uploaded</p>
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={() => handleImageClick(businessPermitPreview)}
+                              >
+                                <img
+                                  src={businessPermitPreview || "/placeholder.svg"}
+                                  alt="Business Permit Preview"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
                                 </div>
                               </div>
                             ) : (
@@ -1762,13 +1812,19 @@ export default function ManagerRequirements() {
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">BIR Registration</h5>
                             {birRegistrationPreview ? (
-                              <div className="mt-2 border rounded p-2 flex items-center">
-                                <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
-                                  <FileText className="h-6 w-6 text-gray-500" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium">BIR Document</p>
-                                  <p className="text-xs text-gray-500">Uploaded</p>
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={() => handleImageClick(birRegistrationPreview)}
+                              >
+                                <img
+                                  src={birRegistrationPreview || "/placeholder.svg"}
+                                  alt="BIR Registration Preview"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
                                 </div>
                               </div>
                             ) : (
@@ -1778,13 +1834,19 @@ export default function ManagerRequirements() {
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">ECC Certificate</h5>
                             {eccCertificatePreview ? (
-                              <div className="mt-2 border rounded p-2 flex items-center">
-                                <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
-                                  <FileText className="h-6 w-6 text-gray-500" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium">ECC Document</p>
-                                  <p className="text-xs text-gray-500">Uploaded</p>
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={() => handleImageClick(eccCertificatePreview)}
+                              >
+                                <img
+                                  src={eccCertificatePreview || "/placeholder.svg"}
+                                  alt="ECC Preview"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
                                 </div>
                               </div>
                             ) : (
@@ -1796,16 +1858,24 @@ export default function ManagerRequirements() {
 
                       {/* Insurance Information */}
                       <div className="bg-white rounded-xl p-6 border">
-                        <h4 className="text-lg font-semibold mb-4">Insurance Coverage</h4>
+                        <h4 className="text-lg font-medium text-gray-700 mb-4">Insurance Coverage</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">General Liability Insurance</h5>
-                            {generalLiability.file ? (
-                              <div className="mt-2 border rounded p-2">
-                                <div className="flex items-center">
-                                  <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
-                                    <Shield className="h-6 w-6 text-sky-500" />
-                                  </div>
+                            {generalLiability.preview ? (
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={() => handleImageClick(generalLiability.preview)}
+                              >
+                                <img
+                                  src={generalLiability.preview || "/placeholder.svg"}
+                                  alt="General Liability Insurance Preview"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
                                 </div>
                               </div>
                             ) : (
@@ -1814,63 +1884,102 @@ export default function ManagerRequirements() {
                           </div>
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">Worker's Compensation</h5>
-                            {workersComp.file ? (
-                              <div className="mt-2 border rounded p-2">
-                                <div className="flex items-center">
-                                  <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
-                                    <HardHat className="h-6 w-6 text-sky-500" />
-                                  </div>
+                            {workersComp.preview ? (
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={() => handleImageClick(workersComp.preview)}
+                              >
+                                <img
+                                  src={workersComp.preview || "/placeholder.svg"}
+                                  alt="Worker's Compensation Insurance Preview"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
                                 </div>
                               </div>
                             ) : (
                               <p className="text-red-500 text-sm">Not uploaded</p>
                             )}
                           </div>
-                          {/* Only show other insurance if they've been uploaded */}
-                          {professionalIndemnity.file && (
+                          {professionalIndemnity.preview && (
                             <div>
                               <h5 className="text-sm font-medium text-gray-500 mb-1">Professional Indemnity</h5>
-                              <div className="mt-2 border rounded p-2">
-                                <div className="flex items-center">
-                                  <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
-                                    <Briefcase className="h-6 w-6 text-sky-500" />
-                                  </div>
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={() => handleImageClick(professionalIndemnity.preview)}
+                              >
+                                <img
+                                  src={professionalIndemnity.preview || "/placeholder.svg"}
+                                  alt="Professional Indemnity Insurance Preview"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
                                 </div>
                               </div>
                             </div>
                           )}
-                          {propertyDamage.file && (
+                          {propertyDamage.preview && (
                             <div>
                               <h5 className="text-sm font-medium text-gray-500 mb-1">Property Damage</h5>
-                              <div className="mt-2 border rounded p-2">
-                                <div className="flex items-center">
-                                  <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
-                                    <Home className="h-6 w-6 text-sky-500" />
-                                  </div>
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={() => handleImageClick(propertyDamage.preview)}
+                              >
+                                <img
+                                  src={propertyDamage.preview || "/placeholder.svg"}
+                                  alt="Property Damage Insurance Preview"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
                                 </div>
                               </div>
                             </div>
                           )}
-                          {businessInterruption.file && (
+                          {businessInterruption.preview && (
                             <div>
                               <h5 className="text-sm font-medium text-gray-500 mb-1">Business Interruption</h5>
-                              <div className="mt-2 border rounded p-2">
-                                <div className="flex items-center">
-                                  <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
-                                    <PauseCircle className="h-6 w-6 text-sky-500" />
-                                  </div>
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={() => handleImageClick(businessInterruption.preview)}
+                              >
+                                <img
+                                  src={businessInterruption.preview || "/placeholder.svg"}
+                                  alt="Business Interruption Insurance Preview"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
                                 </div>
                               </div>
                             </div>
                           )}
-                          {bondingInsurance.file && (
+                          {bondingInsurance.preview && (
                             <div>
                               <h5 className="text-sm font-medium text-gray-500 mb-1">Bonding Insurance</h5>
-                              <div className="mt-2 border rounded p-2">
-                                <div className="flex items-center">
-                                  <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center mr-3">
-                                    <CheckSquare className="h-6 w-6 text-sky-500" />
-                                  </div>
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={() => handleImageClick(bondingInsurance.preview)}
+                              >
+                                <img
+                                  src={bondingInsurance.preview || "/placeholder.svg"}
+                                  alt="Bonding Insurance Preview"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -1990,7 +2099,7 @@ export default function ManagerRequirements() {
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center">
                 <AlertTriangle className="h-6 w-6 text-amber-500 mr-2" />
-                <h3 className="text-lg font-semibold">Confidential Information</h3>
+                <h3 className="text-lg font-medium text-gray-700">Confidential Information</h3>
               </div>
               <button onClick={() => setShowWarningModal(false)} className="text-gray-400 hover:text-gray-500">
                 <X className="h-5 w-5" />

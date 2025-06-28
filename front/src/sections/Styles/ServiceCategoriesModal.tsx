@@ -32,7 +32,7 @@ function ServiceCategoriesModal({
       <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
         {/* Header section */}
         <div className="p-6 flex justify-between items-center border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-black">{categoryName} Types</h2>
+          <h2 className="text-xl font-medium text-gray-700">{categoryName} Types</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <X className="h-6 w-6" />
           </button>

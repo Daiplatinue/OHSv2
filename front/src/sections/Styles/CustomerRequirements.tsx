@@ -1,3 +1,4 @@
+"use client"
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import {
@@ -38,10 +39,7 @@ const companyLocation = {
   lng: 123.8924,
 }
 
-export default function CustomerRequirements({
-  onClose,
-  minimalMode = false,
-}: CustomerRequirementsProps) {
+export default function CustomerRequirements({ onClose, minimalMode = false }: CustomerRequirementsProps) {
   // Form state
   const [currentStep, setCurrentStep] = useState(1)
   const [firstName, setFirstName] = useState("")
@@ -1187,75 +1185,123 @@ export default function CustomerRequirements({
                       {/* Personal Information Section */}
                       <div className="bg-white rounded-xl p-6 mb-6 border border-gray-100">
                         <div className="flex justify-between items-center mb-6">
-                          <h2 className="text-xl font-medium text-gray-700">Personal Information</h2>
+                          <h2 className="text-xl font-medium text-gray-700">Basic Information</h2>
                         </div>
 
-                        <div className="bg-white rounded-xl p-6">
-                          <h3 className="text-lg font-medium text-gray-700 mb-6">Basic Information</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-500 mb-1">Full Name</h4>
-                              <p className="text-gray-700">
-                                {firstName} {middleName ? middleName + " " : ""}
-                                {lastName}
-                              </p>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-500 mb-1">Email</h4>
-                              <p className="text-gray-700">{email}</p>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-500 mb-1">Phone</h4>
-                              <p className="text-gray-700">{mobileNumber}</p>
-                            </div>
-                            {selectedLocation && (
-                              <div>
-                                <h4 className="text-sm font-medium text-gray-500 mb-1">Location</h4>
-                                <p className="text-gray-700 flex items-center">
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="h-4 w-4 text-gray-400 mr-1"
-                                  >
-                                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                                    <circle cx="12" cy="10" r="3" />
-                                  </svg>
-                                  {selectedLocation.name}
-                                  {selectedLocation.zipCode && (
-                                    <span className="ml-1 text-sky-600">({selectedLocation.zipCode})</span>
-                                  )}
-                                </p>
-                              </div>
-                            )}
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-500 mb-1">Gender</h4>
-                              <p className="text-gray-700 capitalize">{gender}</p>
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-500 mb-1">Account Type</h4>
-                              <p className="text-gray-700">
-                                <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
-                                  Customer
-                                </span>
-                                <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                                  Pending
-                                </span>
-                              </p>
-                            </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-500 mb-1">Full Name</h4>
+                            <p className="text-gray-700">
+                              {firstName} {middleName ? middleName + " " : ""}
+                              {lastName}
+                            </p>
                           </div>
-                          {bio && (
-                            <div className="mt-6">
-                              <h4 className="text-sm font-medium text-gray-500 mb-1">Bio</h4>
-                              <p className="text-gray-700">{bio}</p>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-500 mb-1">Email</h4>
+                            <p className="text-gray-700">{email}</p>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-500 mb-1">Phone</h4>
+                            <p className="text-gray-700">{mobileNumber}</p>
+                          </div>
+                          {selectedLocation && (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-500 mb-1">Location</h4>
+                              <p className="text-gray-700 flex items-center">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="h-4 w-4 text-gray-400 mr-1"
+                                >
+                                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                                  <circle cx="12" cy="10" r="3" />
+                                </svg>
+                                {selectedLocation.name}
+                                {selectedLocation.zipCode && (
+                                  <span className="ml-1 text-sky-600">({selectedLocation.zipCode})</span>
+                                )}
+                              </p>
                             </div>
                           )}
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-500 mb-1">Gender</h4>
+                            <p className="text-gray-700 capitalize">{gender}</p>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-500 mb-1">Account Type</h4>
+                            <p className="text-gray-700">
+                              <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
+                                Customer
+                              </span>
+                              <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                                Pending
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                        {bio && (
+                          <div className="mt-6">
+                            <h4 className="text-sm font-medium text-gray-500 mb-1">Bio</h4>
+                            <p className="text-gray-700">{bio}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* ID Documents Section */}
+                      <div className="bg-white rounded-xl p-6 mb-6 border border-gray-100">
+                        <h2 className="text-xl font-medium text-gray-700 mb-6">ID Documents</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <h5 className="text-sm font-medium text-gray-500 mb-1">Front of ID</h5>
+                            {frontIdPreview ? (
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={() => handleImageClick(frontIdPreview)}
+                              >
+                                <img
+                                  src={frontIdPreview || "/placeholder.svg"}
+                                  alt="Front ID Preview"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-red-500 text-sm">Not uploaded</p>
+                            )}
+                          </div>
+                          <div>
+                            <h5 className="text-sm font-medium text-gray-500 mb-1">Back of ID</h5>
+                            {backIdPreview ? (
+                              <div
+                                className="relative w-full h-32 cursor-pointer"
+                                onClick={() => handleImageClick(backIdPreview)}
+                              >
+                                <img
+                                  src={backIdPreview || "/placeholder.svg"}
+                                  alt="Back ID Preview"
+                                  className="object-contain w-full h-full filter blur-sm hover:blur-[2px] transition-all"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                                    Click to view
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-red-500 text-sm">Not uploaded</p>
+                            )}
+                          </div>
                         </div>
                       </div>
 
