@@ -1,29 +1,213 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Dot } from "lucide-react"
+import { Plus, Trash, Pencil, ChevronRight, Star } from "lucide-react"
+import { useState } from "react"
+import ServiceCategoriesModal from "../ServiceCategoriesModal"
+import WorkersModal from "../WorkersModal" 
+import { serviceSubcategories, sellers, products } from "../../Home-data"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 
-import mainBackground from '../../../assets/Home/Golden Field and Blue Mountain Landscape.jpeg';
-import HL1 from '../../../assets/Home/Profile of a Fashionable Woman.jpeg';
-import HL2 from '../../../assets/Home/Cheerful Youth Portrait.jpeg';
-import HL3 from '../../../assets/Home/Enigmatic Portrait.jpeg';
+import mainBackground from "../../../assets/Welcome/Serene Landscape Under a Dramatic Sky.jpeg"
+import HL1 from "../../../assets/Home/Profile of a Fashionable Woman.jpeg"
+import HL2 from "../../../assets/Home/Cheerful Youth Portrait.jpeg"
+import HL3 from "../../../assets/Home/Enigmatic Portrait.jpeg"
+
+import service1 from '../../../assets/Home/s2.jpg';
+import service2 from '../../../assets/Home/s3.jpg';
+import service3 from '../../../assets/Home/s5.jpg';
 
 export default function Dashboard() {
+  const userName = "User"
+  const userEmail = "email@example.com" 
+  const totalMoneySpent = "₱1,295,782" 
+
+  const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false)
+  const [isWorkersModalOpen, setIsWorkersModalOpen] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState("")
+  const [selectedProduct, setSelectedProduct] = useState("")
+  const [, setSelectedSubcategory] = useState("")
+
+  const [notes, setNotes] = useState<{ id: number; content: string; completed: boolean }[]>([
+    { id: 1, content: "Call customer for service feedback", completed: false },
+    { id: 2, content: "Record and upload service completion videos", completed: false },
+    { id: 3, content: "Add new technician training to calendar", completed: false },
+    { id: 4, content: "Renew service vehicle lease", completed: false },
+  ])
+  const [newNoteContent, setNewNoteContent] = useState("")
+  const [editingNoteId, setEditingNoteId] = useState<number | null>(null)
+  const [currentEditContent, setCurrentEditContent] = useState("")
+
+  const handleAddNote = () => {
+    if (newNoteContent.trim() !== "") {
+      setNotes([...notes, { id: Date.now(), content: newNoteContent.trim(), completed: false }])
+      setNewNoteContent("")
+    }
+  }
+
+  const handleRemoveNote = (idToRemove: number) => {
+    setNotes(notes.filter((note) => note.id !== idToRemove))
+  }
+
+  const handleEditNote = (id: number, content: string) => {
+    setEditingNoteId(id)
+    setCurrentEditContent(content)
+  }
+
+  const handleSaveNote = () => {
+    if (editingNoteId !== null && currentEditContent.trim() !== "") {
+      setNotes(
+        notes.map((note) => (note.id === editingNoteId ? { ...note, content: currentEditContent.trim() } : note)),
+      )
+      setEditingNoteId(null)
+      setCurrentEditContent("")
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingNoteId(null)
+    setCurrentEditContent("")
+  }
+
+  const handleToggleDone = (id: number) => {
+    setNotes(notes.map((note) => (note.id === id ? { ...note, completed: !note.completed } : note)))
+  }
+
+  const handleSeeMore = (productName: string) => {
+    const product = products.find((p) => p.name === productName)
+    if (product && serviceSubcategories[product.name as keyof typeof serviceSubcategories]) {
+      setSelectedCategory(product.name)
+      setIsCategoriesModalOpen(true)
+    } else {
+      setSelectedProduct(productName)
+      setIsWorkersModalOpen(true)
+    }
+  }
+
+  const handleSubcategorySelect = (subcategory: string) => {
+    setSelectedSubcategory(subcategory)
+    setIsCategoriesModalOpen(false)
+  }
+
+  const ongoingServices = [
+    {
+      id: 1,
+      name: "Plumbing Services",
+      price: 8000,
+      category: "Plumbing",
+      image: service1,
+      description: "Keep your water systems running smoothly with expert plumbing services, from leak repairs to pipe installations.",
+      status: "Ongoing",
+    },
+    {
+      id: 2,
+      name: "Home Cleaning Services",
+      price: 12000,
+      category: "Cleaning",
+      image: service2,
+      description: "Enjoy a spotless, sanitized home with deep cleaning, carpet care, and move-in/move-out services.",
+      status: "Ongoing",
+    },
+    {
+      id: 3,
+      name: "Landscaping Services",
+      price: 15000,
+      category: "Outdoor",
+      image: service3,
+      description: "Transform your outdoor space with professional landscaping, lawn care, and garden design services.",
+      status: "Ongoing",
+    },
+  ]
+
+  const completedServices = [
+    {
+      id: 1,
+      customerName: "Alice Johnson",
+      customerAvatar: "/placeholder.svg?height=40&width=40",
+      serviceName: "Plumbing Services",
+      review: "Excellent service! The plumber was very professional and fixed the leak quickly.",
+      rating: 5,
+      date: "2 days ago",
+      total: 1000,
+    },
+    {
+      id: 2,
+      customerName: "Bob Williams",
+      customerAvatar: "/placeholder.svg?height=40&width=40",
+      serviceName: "Home Cleaning Services",
+      review: "The house looks spotless. Very thorough and efficient cleaning team.",
+      rating: 4,
+      date: "1 week ago",
+      total: 1500,
+    },
+    {
+      id: 3,
+      customerName: "Charlie Davis",
+      customerAvatar: "/placeholder.svg?height=40&width=40",
+      serviceName: "Landscaping Services",
+      review: "Beautiful garden design, exactly what I wanted. Highly recommend!",
+      rating: 5,
+      date: "2 weeks ago",
+      total: 2000,
+    },
+  ]
+
+  const recentReviews = completedServices
+    .filter((s) => s.review && s.rating)
+    .map((service) => ({
+      id: service.id,
+      customerName: service.customerName,
+      customerAvatar: "/placeholder.svg?height=40&width=40", 
+      serviceName: service.serviceName,
+      reviewContent: service.review || "",
+      rating: service.rating || 0,
+      totalPayment: service.total, 
+      serviceId: service.id, 
+      date: "Today",
+    }))
+
+  const newCompanies = [
+    {
+      id: 1,
+      name: "EcoClean Solutions",
+      logo: "/placeholder.svg?height=40&width=40",
+      description: "Specializing in eco-friendly cleaning services for homes and offices.",
+      dateJoined: "Today",
+    },
+    {
+      id: 2,
+      name: "SmartHome Tech Installers",
+      logo: "/placeholder.svg?height=40&width=40",
+      description: "Certified installers for smart home devices and automation systems.",
+      dateJoined: "Yesterday",
+    },
+    {
+      id: 3,
+      name: "Urban Gardeners Co.",
+      logo: "/placeholder.svg?height=40&width=40",
+      description: "Innovative landscaping and vertical garden solutions for urban spaces.",
+      dateJoined: "3 days ago",
+    },
+  ]
+
+  const newServicesToCheckOut = products.slice(8, 11)
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header Section */}
       <div className="relative h-[380px] w-full overflow-hidden">
         <img
-          src={mainBackground}
+          src={mainBackground || "/placeholder.svg"}
           alt="Home services dashboard background"
           className="absolute inset-0 w-full h-full object-cover z-0"
         />
         {/* Gradient Overlay - fades to the background color (gray-100) */}
         <div className="absolute inset-0 z-10 bg-gradient-to-b from-transparent via-transparent to-gray-50"></div>
-        <div className="absolute inset-0 z-10 bg-gradient-to-b from-transparent via-transparent to-gray-50"></div>
         <div className="absolute inset-0 flex flex-col items-center text-center justify-center z-20 text-white">
           <h1 className="text-3xl font-extralight text-gray-100 mb-20">
-            Good Afternoon, User <br />
-            <span className="text-[17px]">akolangito@gmail.com</span>
+            Good Afternoon, {userName} <br />
+            <span className="text-[17px]">{userEmail}</span>
           </h1>
         </div>
       </div>
@@ -33,7 +217,6 @@ export default function Dashboard() {
         {/* Left Column */}
         <div className="space-y-6 flex flex-col">
           {" "}
-          {/* Added flex flex-col to make children stretch */}
           {/* Daily Summary Card */}
           <Card className="flex-1">
             {" "}
@@ -44,52 +227,115 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-lg font-extralight text-gray-700 mb-2">Service Request Overview</h3>
-                <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-                  <li>
-                    <span className="font-extralight">23</span> new service requests, <span className="font-extralight">9</span>{" "}
-                    require your attention
-                  </li>
-                  <li>
-                    <span className="font-extralight">Priority:</span> Urgent plumbing repair request from client #123
-                  </li>
-                  <li>Client #456 requesting status update on HVAC installation</li>
-                  <li>New lead for electrical services needs follow-up by Friday</li>
-                </ul>
+                <h3 className="text-lg font-medium text-gray-700 mb-2">Total Money Spent on Services</h3>
+                <p className="text-2xl font-medium text-gray-700">{totalMoneySpent}</p>
               </div>
 
               <div>
-                <h3 className="text-lg font-extralight mb-2 text-gray-700">Service Tasks Due Today:</h3>
-                <ul className="space-y-2 text-sm text-gray-700">
-                  <li className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center">
-                      <Dot className="w-3 h-3 text-gray-300" />
+                <h3 className="text-lg font-extralight mb-2 text-gray-700">Settle Payments to this Services</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {ongoingServices.map((service) => (
+                    <div
+                      key={service.id}
+                      className="group cursor-pointer bg-gray-100 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full"
+                      onClick={() => handleSeeMore(service.name)}
+                    >
+                      <div className="relative overflow-hidden rounded-md mb-3">
+                        <img
+                          src={service.image || "/placeholder.svg"}
+                          alt={service.name}
+                          className="w-full h-64 object-cover transform transition duration-500 group-hover:scale-105"
+                        />
+                      </div>
+                      <h4 className="text-lg font-medium mb-2 mt-1 text-gray-700">{service.name}</h4>
+                      <p className="text-sm text-gray-600 line-clamp-3 flex-grow">{service.description}</p>
+                      <div className="mt-auto flex justify-between items-center pt-3">
+                        <span className="text-lg font-medium text-gray-900">₱{service.price}</span>
+                        <button className="text-sky-500 flex items-center text-sm transition-all duration-300 hover:text-blue-600 hover:translate-x-1">
+                          View Details <ChevronRight className="h-3 w-3 ml-1" />
+                        </button>
+                      </div>
                     </div>
-                    Schedule technician for AC maintenance at 123 Main St.
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center">
-                      <Dot className="w-3 h-3 text-gray-300" />
-                    </div>
-                    Confirm parts delivery for water heater replacement.
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center">
-                      <Dot className="w-3 h-3 text-gray-300" />
-                    </div>
-                    Send service quote to new customer for landscaping.
-                  </li>
-                </ul>
+                  ))}
+                </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-extralight mb-2 text-gray-700">Service Notes</h3>
-                <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
-                  <li>Call customer for service feedback</li>
-                  <li>Record and upload service completion videos</li>
-                  <li>Add new technician training to calendar</li>
-                  <li>Renew service vehicle lease</li>
-                </ul>
+                <h3 className="text-lg font-extralight mb-2 text-gray-700">Your Notes</h3>
+                <div className="space-y-2">
+                  {notes.map((note) => (
+                    <div key={note.id} className="bg-gray-100 p-3 rounded-md">
+                      {editingNoteId === note.id ? (
+                        <div className="flex flex-col gap-2">
+                          <textarea
+                            value={currentEditContent}
+                            onChange={(e) => setCurrentEditContent(e.target.value)}
+                            className="w-full p-2 border rounded-md text-sm"
+                            rows={3}
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                              Cancel
+                            </Button>
+                            <Button size="sm" onClick={handleSaveNote}>
+                              Save
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id={`note-${note.id}`}
+                              checked={note.completed}
+                              onCheckedChange={() => handleToggleDone(note.id)}
+                            />
+                            <label
+                              htmlFor={`note-${note.id}`}
+                              className={`text-sm text-gray-700 ${note.completed ? "line-through text-gray-500" : ""}`}
+                            >
+                              {note.content}
+                            </label>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditNote(note.id, note.content)}
+                              aria-label="Edit note"
+                            >
+                              <Pencil className="w-4 h-4 text-gray-500" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemoveNote(note.id)}
+                              aria-label="Remove note"
+                            >
+                              <Trash className="w-4 h-4 text-gray-500" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <div className="flex gap-2 mt-4">
+                    <Input
+                      type="text"
+                      placeholder="Add a new note"
+                      value={newNoteContent}
+                      onChange={(e) => setNewNoteContent(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleAddNote()
+                        }
+                      }}
+                    />
+                    <Button onClick={handleAddNote}>
+                      <Plus className="w-4 h-4 mr-2" /> Add Note
+                    </Button>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -103,7 +349,7 @@ export default function Dashboard() {
             <CardContent className="space-y-4">
               <div className="flex items-start gap-4">
                 <img
-                  src={HL1}
+                  src={HL1 || "/placeholder.svg"}
                   alt="Smart home tech"
                   width={60}
                   height={60}
@@ -121,7 +367,7 @@ export default function Dashboard() {
               </div>
               <div className="flex items-start gap-4">
                 <img
-                  src={HL2}
+                  src={HL2 || "/placeholder.svg"}
                   alt="Efficient service management"
                   width={60}
                   height={60}
@@ -139,7 +385,7 @@ export default function Dashboard() {
               </div>
               <div className="flex items-start gap-4">
                 <img
-                  src={HL3}
+                  src={HL3 || "/placeholder.svg"}
                   alt="AI in home services"
                   width={60}
                   height={60}
@@ -162,172 +408,123 @@ export default function Dashboard() {
         {/* Right Column */}
         <div className="space-y-6 flex flex-col">
           {" "}
-          {/* Added flex flex-col to make children stretch */}
-          {/* Important Emails Card */}
-          <Card className="flex-1">
-            {" "}
-            {/* Added flex-1 to make card stretch */}
-            <CardHeader>
-              <CardTitle className="text-lg text-gray-700 font-extralight">Important Communications</CardTitle>
+          <Card className="flex-1 p-5">
+            <CardHeader className="flex flex-row items-center justify-between p-0 mb-4">
+              <CardTitle className="text-lg font-extralight text-gray-700">Recent Reviews on the provider</CardTitle>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <Plus className="h-5 w-5 text-gray-400" />
+              </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start gap-4">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Emman" />
-                  <AvatarFallback>EM</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm">Emman</h4>
-                  <p className="text-xs text-gray-500">Service Feedback</p>
-                  <p className="text-sm text-gray-700 mt-1 line-clamp-2">
-                    Emman praised the recent cleaning service and inquired about recurring maintenance plans.
-                  </p>
+            <CardContent className="p-0 space-y-4">
+              {recentReviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border border-gray-100 rounded-lg"
+                >
+                  <div className="flex items-center space-x-3 mb-2 sm:mb-0">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={review.customerAvatar || "/placeholder.svg"} alt={review.customerName} />
+                      <AvatarFallback>{review.customerName.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-gray-900">{review.customerName}</p>
+                      <p className="text-sm text-gray-500">{review.serviceName}</p>
+                      <div className="flex items-center mt-1">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-4 w-4 ${i < review.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+                          />
+                        ))}
+                        <span className="ml-2 text-xs text-gray-600 italic line-clamp-1">"{review.reviewContent}"</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end space-y-2 sm:space-y-0 sm:ml-auto">
+                    <p className="text-sm font-semibold text-sky-600 mb-2">₱{review.totalPayment.toLocaleString()}</p>
+                    <Button
+                      variant="default"
+                      className="rounded-full px-4 py-2 text-sm bg-sky-500 text-white hover:bg-sky-600"
+                      onClick={() => {
+                        const serviceFound = completedServices.find((s) => s.id === review.serviceId)
+                        if (serviceFound) {
+                          handleSeeMore(serviceFound.serviceName) // Use handleSeeMore to open the modal
+                        }
+                      }}
+                    >
+                      View Service
+                    </Button>
+                  </div>
                 </div>
-                <span className="text-xs text-gray-500 self-start">Today</span>
-              </div>
-              <div className="flex items-start gap-4">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Luba Y" />
-                  <AvatarFallback>LY</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm">Luba Y</h4>
-                  <p className="text-xs text-gray-500">Client Consultation</p>
-                  <p className="text-sm text-gray-700 mt-1 line-clamp-2">
-                    Luba requested to reschedule the plumbing consultation due to an unforeseen issue.
-                  </p>
-                </div>
-                <span className="text-xs text-gray-500 self-start">Today</span>
-              </div>
+              ))}
+              <Button variant="default" className="w-full mt-4 rounded-full bg-sky-500 text-white hover:bg-sky-600">
+                See All
+              </Button>
             </CardContent>
           </Card>
           {/* Upcoming Meetings Card */}
           <Card className="flex-1">
-            {" "}
-            {/* Added flex-1 to make card stretch */}
             <CardHeader>
-              <CardTitle className="text-lg font-extralight text-gray-700">Upcoming Engagements</CardTitle>
+              <CardTitle className="text-lg font-extralight text-gray-700">Welcoming the new companies</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-1 h-full bg-purple-500 rounded-full self-stretch"></div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm">Client Onboarding: New HVAC Install</h4>
-                  <p className="text-xs text-gray-500">
-                    Today, 1:30-2:00pm <span className="text-green-500">in 3 mins</span>
-                  </p>
+              {newCompanies.map((company) => (
+                <div key={company.id} className="flex items-center gap-4">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={company.logo || "/placeholder.svg"} alt={company.name} />
+                    <AvatarFallback>{company.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm">{company.name}</h4>
+                    <p className="text-xs text-gray-500">{company.description}</p>
+                  </div>
+                  <span className="text-xs text-gray-500 self-start">{company.dateJoined}</span>
                 </div>
-                <div className="flex -space-x-2 overflow-hidden">
-                  <Avatar className="w-6 h-6 border-2 border-white">
-                    <AvatarImage src="/placeholder.svg?height=24&width=24" alt="Avatar" />
-                    <AvatarFallback>AB</AvatarFallback>
-                  </Avatar>
-                  <Avatar className="w-6 h-6 border-2 border-white">
-                    <AvatarImage src="/placeholder.svg?height=24&width=24" alt="Avatar" />
-                    <AvatarFallback>CD</AvatarFallback>
-                  </Avatar>
-                  <Avatar className="w-6 h-6 border-2 border-white">
-                    <AvatarImage src="/placeholder.svg?height=24&width=24" alt="Avatar" />
-                    <AvatarFallback>EF</AvatarFallback>
-                  </Avatar>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-1 h-full bg-blue-500 rounded-full self-stretch"></div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm">Team Briefing: Daily Service Routes</h4>
-                  <p className="text-xs text-gray-500">Today, 2:00-2:30pm</p>
-                </div>
-                <div className="flex -space-x-2 overflow-hidden">
-                  <Avatar className="w-6 h-6 border-2 border-white">
-                    <AvatarImage src="/placeholder.svg?height=24&width=24" alt="Avatar" />
-                    <AvatarFallback>GH</AvatarFallback>
-                  </Avatar>
-                  <Avatar className="w-6 h-6 border-2 border-white">
-                    <AvatarImage src="/placeholder.svg?height=24&width=24" alt="Avatar" />
-                    <AvatarFallback>IJ</AvatarFallback>
-                  </Avatar>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-1 h-full bg-red-500 rounded-full self-stretch"></div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm">Supplier Meeting: New Appliance Models</h4>
-                  <p className="text-xs text-gray-500">Today, 4-4:30pm</p>
-                </div>
-                <div className="flex -space-x-2 overflow-hidden">
-                  <Avatar className="w-6 h-6 border-2 border-white">
-                    <AvatarImage src="/placeholder.svg?height=24&width=24" alt="Avatar" />
-                    <AvatarFallback>KL</AvatarFallback>
-                  </Avatar>
-                  <Avatar className="w-6 h-6 border-2 border-white">
-                    <AvatarImage src="/placeholder.svg?height=24&width=24" alt="Avatar" />
-                    <AvatarFallback>MN</AvatarFallback>
-                  </Avatar>
-                  <Avatar className="w-6 h-6 border-2 border-white">
-                    <AvatarImage src="/placeholder.svg?height=24&width=24" alt="Avatar" />
-                    <AvatarFallback>OP</AvatarFallback>
-                  </Avatar>
-                </div>
-              </div>
+              ))}
             </CardContent>
           </Card>
           {/* New Connections Card */}
           <Card className="flex-1">
-            {" "}
-            {/* Added flex-1 to make card stretch */}
             <CardHeader>
-              <CardTitle className="text-lg font-extralight text-gray-700">New Connections</CardTitle>
+              <CardTitle className="text-lg font-extralight text-gray-700">New services to check out</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src="/placeholder.svg?height=40&width=40" alt="John Arnold" />
-                  <AvatarFallback>JA</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm">John Arnold (New Client)</h4>
-                  <p className="text-xs text-gray-500">jarnold@homeservices.com</p>
+              {newServicesToCheckOut.map((service) => (
+                <div key={service.id} className="flex items-center gap-4">
+                  <img
+                    src={service.image || "/placeholder.svg"}
+                    alt={service.name}
+                    width={40}
+                    height={40}
+                    className="rounded-md object-cover"
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-sm">{service.name}</h4>
+                    <p className="text-xs text-gray-500">{service.category}</p>
+                    <p className="text-sm text-gray-700 mt-1 line-clamp-2">{service.description}</p>
+                  </div>
+                  <span className="text-xs text-gray-500 self-start">₱{service.price.toLocaleString()}</span>
                 </div>
-                <span className="text-xs text-gray-500">7:33pm</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Brianna Kim" />
-                  <AvatarFallback>BK</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm">Brianna Kim (New Technician)</h4>
-                  <p className="text-xs text-gray-500">bkim@homeservices.com</p>
-                </div>
-                <span className="text-xs text-gray-500">7:33pm</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Nicole Wegner" />
-                  <AvatarFallback>NW</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm">Nicole Wegner (Supplier Rep)</h4>
-                  <p className="text-xs text-gray-500">n.wegner@parts.co</p>
-                </div>
-                <span className="text-xs text-gray-500">Yesterday</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <Avatar className="w-10 h-10">
-                  <AvatarImage src="/placeholder.svg?height=40&width=40" alt="Lianna Bass" />
-                  <AvatarFallback>LB</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <h4 className="font-medium text-sm">Lianna Bass (Marketing Lead)</h4>
-                  <p className="text-xs text-gray-500">lbass@homeservicesmarketing.com</p>
-                </div>
-                <span className="text-xs text-gray-500">30 Mar &apos;25</span>
-              </div>
+              ))}
             </CardContent>
           </Card>
         </div>
       </div>
+
+      <ServiceCategoriesModal
+        isOpen={isCategoriesModalOpen}
+        onClose={() => setIsCategoriesModalOpen(false)}
+        categoryName={selectedCategory}
+        subcategories={serviceSubcategories[selectedCategory as keyof typeof serviceSubcategories] || []}
+        onSelectSubcategory={handleSubcategorySelect}
+      />
+
+      <WorkersModal
+        isOpen={isWorkersModalOpen}
+        onClose={() => setIsWorkersModalOpen(false)}
+        productName={selectedProduct}
+        sellers={sellers[selectedProduct as keyof typeof sellers] || []}
+      />
     </div>
   )
 }

@@ -44,6 +44,16 @@ import types23 from "../assets/services/kitchen-2165756_1280.jpg"
 import types24 from "../assets/services/living-room-1835923_1280.jpg"
 import types25 from "../assets/services/living-room-2732939_1280.jpg"
 
+import types26 from "../assets/services/Man on Urban Rooftop.jpeg"
+import types27 from "../assets/services/Network Devices Setup.jpeg"
+import types28 from "../assets/services/Serene Study Session in a Wintry Light-bathed Room.jpeg"
+
+import types29 from "../assets/services/Aviation Maintenance Worker.jpeg"
+import types30 from "../assets/services/Vintage Car in Flowers.jpeg"
+import types31 from "../assets/services/Mechanical Component Close-Up.jpeg"
+
+import types32 from "../assets/services/Collaborative Brainstorming.jpeg"
+
 export const serviceSubcategories = {
   "Plumbing Services": [
     {
@@ -285,6 +295,46 @@ export const serviceSubcategories = {
       description: "Expert color scheme selection and planning.",
       price: 3000,
       image: types25,
+      workerCount: 1,
+      estimatedTime: "1-2 hours",
+    },
+  ],
+  "Wifi Installment Services": [
+    {
+      id: 104,
+      name: "Home Wifi Setup",
+      description: "Complete setup of home Wi-Fi networks, including router configuration and signal optimization.",
+      price: 1500,
+      image: types27,
+      workerCount: 1,
+      estimatedTime: "1-2 hours",
+    },
+    {
+      id: 105,
+      name: "Office Network Installation",
+      description: "Installation of robust Wi-Fi networks for offices, including cabling and multiple access points.",
+      price: 5000,
+      image: types28,
+      workerCount: 2,
+      estimatedTime: "3-5 hours",
+    },
+  ],
+  "Mechanic Services": [
+    {
+      id: 106,
+      name: "Car Engine Repair",
+      description: "Diagnosis and repair of car engine issues, from minor fixes to major overhauls.",
+      price: 8000,
+      image: types30,
+      workerCount: 2,
+      estimatedTime: "4-8 hours",
+    },
+    {
+      id: 107,
+      name: "Brake System Check",
+      description: "Inspection and repair of brake systems, including pad replacement and fluid checks.",
+      price: 2500,
+      image: types31,
       workerCount: 1,
       estimatedTime: "1-2 hours",
     },
@@ -1154,6 +1204,62 @@ export const sellers = {
       workerCount: 1,
     },
   ],
+  "Home Wifi Setup": [
+    {
+      id: 67,
+      name: "ConnectFast",
+      rating: 5,
+      reviews: 300,
+      location: "Manila",
+      startingRate: 1500,
+      ratePerKm: 20,
+      badges: ["top"],
+      description: "Quick and reliable home Wi-Fi setup. Get connected in no time!",
+      workerCount: 1,
+    },
+  ],
+  "Office Network Installation": [
+    {
+      id: 68,
+      name: "NetPro Solutions",
+      rating: 5,
+      reviews: 450,
+      location: "Makati",
+      startingRate: 5000,
+      ratePerKm: 30,
+      badges: ["in demand"],
+      description: "Expert office network installation for seamless business operations.",
+      workerCount: 2,
+    },
+  ],
+  "Car Engine Repair": [
+    {
+      id: 69,
+      name: "EngineFix Pros",
+      rating: 5,
+      reviews: 600,
+      location: "Quezon City",
+      startingRate: 8000,
+      ratePerKm: 40,
+      badges: ["top", "hot"],
+      description: "Specialized in all types of car engine repairs. Get your vehicle running like new.",
+      workerCount: 2,
+    },
+  ],
+  "Brake System Check": [
+    {
+      id: 70,
+      name: "BrakeSafe Auto",
+      rating: 4,
+      reviews: 350,
+      location: "Pasig",
+      startingRate: 2500,
+      ratePerKm: 25,
+      badges: [],
+      description: "Thorough brake system checks and reliable repairs for your safety.",
+      workerCount: 1,
+    },
+  ],
 }
 
 export const carouselItems = [
@@ -1237,5 +1343,31 @@ export const products = [
     image: service8,
     description:
       "Transform your living spaces with customized interior design solutions tailored to your style and budget.",
+  },
+  {
+    id: 9,
+    name: "Wifi Installment Services",
+    price: 3000,
+    category: "Connectivity",
+    image: types26,
+    description:
+      "Professional Wi-Fi setup and network installation for homes and offices, ensuring seamless connectivity.",
+  },
+  {
+    id: 10,
+    name: "Mechanic Services",
+    price: 4500,
+    category: "Automotive",
+    image: types29,
+    description:
+      "Reliable automotive repair and maintenance services for all types of vehicles, right at your doorstep.",
+  },
+  {
+    id: 11, 
+    name: "Suggest a Service",
+    price: 0, 
+    category: "Community", 
+    image: types32,
+    description: "Can't find what you're looking for? Suggest a new service and help us grow our offerings!",
   },
 ]

@@ -12,29 +12,7 @@ import Popular from "../sections/Styles/HomeComponents/Popular"
 import BestCompanies from "./Styles/HomeComponents/BestCompanies"
 import { serviceSubcategories, sellers, carouselItems, products } from "../sections/Home-data"
 import WelcomeModal from "../sections/Styles/HomeComponents/WelcomeMsg"
-
-function useScrollReveal() {
-  useEffect(() => {
-    const observerCallback = (entries: IntersectionObserverEntry[]) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("visible")
-        }
-      })
-    }
-
-    const observer = new IntersectionObserver(observerCallback, {
-      threshold: 0.1,
-      rootMargin: "0px",
-    })
-
-    document.querySelectorAll(".scroll-reveal").forEach((element) => {
-      observer.observe(element)
-    })
-
-    return () => observer.disconnect()
-  }, [])
-}
+import SuggestServiceModal from "../sections/Styles/SuggestServiceModal"
 
 function Home() {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -47,9 +25,8 @@ function Home() {
   const [, setSelectedSubcategory] = useState<string>("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [showAllServices, setShowAllServices] = useState(false)
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false) // New state for welcome modal
-
-  useScrollReveal()
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false)
+  const [isSuggestServiceModalOpen, setIsSuggestServiceModalOpen] = useState(false)
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % carouselItems.length)
@@ -111,7 +88,9 @@ function Home() {
   }
 
   const handleSeeMore = (productName: string) => {
-    if (serviceSubcategories[productName as keyof typeof serviceSubcategories]) {
+    if (productName === "Suggest a Service") {
+      setIsSuggestServiceModalOpen(true)
+    } else if (serviceSubcategories[productName as keyof typeof serviceSubcategories]) {
       setSelectedCategory(productName)
       setIsCategoriesModalOpen(true)
     } else {
@@ -145,6 +124,7 @@ function Home() {
       <div className="z-40 flex">
         <MyFloatingDockCustomer />
       </div>
+      
       <Welcome />
 
       <div className="relative">
@@ -206,7 +186,7 @@ function Home() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col space-y-8">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <h2 className="text-3xl font-medium scroll-reveal text-gray-700">List of all Services</h2>
+              <h2 className="text-3xl font-medium text-gray-700">List of all Services</h2>
               <p className="text-sm text-gray-500">
                 Showing {displayedProducts.length} of {filteredProducts.length} services
               </p>
@@ -273,7 +253,7 @@ function Home() {
               {displayedProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="group cursor-pointer bg-gray-200/70 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 scroll-reveal hover-scale flex flex-col h-full"
+                  className="group cursor-pointer bg-gray-200/70 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full"
                 >
                   <div className="relative overflow-hidden rounded-lg mb-4">
                     <img
@@ -304,17 +284,15 @@ function Home() {
               <div className="flex justify-center mt-8">
                 <button
                   onClick={toggleShowAllServices}
-                  className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-blue-500 to-sky-400 text-white hover:from-blue-600 hover:to-sky-500 transition-all transform hover:scale-105 shadow-md"
+                  className="text-sky-500 flex items-center transition-all duration-300 hover:text-blue-600 hover:translate-x-1"
                 >
                   {showAllServices ? (
                     <>
-                      <ChevronUp className="h-5 w-5" />
-                      Show Less
+                      Show Less <ChevronUp className="h-4 w-4 ml-1" />
                     </>
                   ) : (
                     <>
-                      <ChevronDown className="h-5 w-5" />
-                      Show More Services
+                      Show More Services <ChevronDown className="h-4 w-4 ml-1" />
                     </>
                   )}
                 </button>
@@ -344,6 +322,8 @@ function Home() {
         onClose={handleWelcomeModalClose}
         onDoNotShowAgain={handleDoNotShowWelcomeAgain}
       />
+
+      <SuggestServiceModal isOpen={isSuggestServiceModalOpen} onClose={() => setIsSuggestServiceModalOpen(false)} />
 
       <LegalText />
 
