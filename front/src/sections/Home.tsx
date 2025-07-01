@@ -11,7 +11,7 @@ import Welcome from "../sections/Styles/HomeComponents/Welcome"
 import Popular from "../sections/Styles/HomeComponents/Popular"
 import BestCompanies from "./Styles/HomeComponents/BestCompanies"
 import { serviceSubcategories, sellers, carouselItems, products } from "../sections/Home-data"
-import WelcomeModal from "../sections/Styles/HomeComponents/WelcomeMsg"
+// import WelcomeModal from "../sections/Styles/HomeComponents/WelcomeMsg"
 import SuggestServiceModal from "../sections/Styles/SuggestServiceModal"
 
 function Home() {
@@ -25,7 +25,8 @@ function Home() {
   const [, setSelectedSubcategory] = useState<string>("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [showAllServices, setShowAllServices] = useState(false)
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false)
+  // const [showWelcomeModal, setShowWelcomeModal] = useState(false)
+  const [, setShowWelcomeModal] = useState(false)
   const [isSuggestServiceModalOpen, setIsSuggestServiceModalOpen] = useState(false)
 
   const nextSlide = () => {
@@ -110,14 +111,14 @@ function Home() {
     setShowAllServices((prev) => !prev)
   }
 
-  const handleWelcomeModalClose = () => {
-    setShowWelcomeModal(false)
-  }
+  // const handleWelcomeModalClose = () => {
+  //   setShowWelcomeModal(false)
+  // }
 
-  const handleDoNotShowWelcomeAgain = () => {
-    localStorage.setItem("hasSeenWelcomeModal", "true")
-    setShowWelcomeModal(false)
-  }
+  // const handleDoNotShowWelcomeAgain = () => {
+  //   localStorage.setItem("hasSeenWelcomeModal", "true")
+  //   setShowWelcomeModal(false)
+  // }
 
   return (
     <div className="min-h-screen bg-white/90 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
@@ -155,18 +156,6 @@ function Home() {
           >
             <ChevronRight className="w-6 h-6" />
           </button>
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
-            {carouselItems.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`w-2.5 h-2.5 rounded-full transition-all ${
-                  index === currentSlide ? "bg-white" : "bg-white/50 hover:bg-white/70"
-                }`}
-                aria-label={`Go to slide ${index + 1}`}
-              />
-            ))}
-          </div>
         </div>
       </div>
 
@@ -317,11 +306,11 @@ function Home() {
         sellers={sellers[selectedProduct as keyof typeof sellers] || []}
       />
 
-      <WelcomeModal
+      {/* <WelcomeModal
         isOpen={showWelcomeModal}
         onClose={handleWelcomeModalClose}
         onDoNotShowAgain={handleDoNotShowWelcomeAgain}
-      />
+      /> */}
 
       <SuggestServiceModal isOpen={isSuggestServiceModalOpen} onClose={() => setIsSuggestServiceModalOpen(false)} />
 

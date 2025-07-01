@@ -936,7 +936,7 @@ const LocationSelectionModal = ({
       <div className="bg-white/95 backdrop-blur-sm rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white/40">
         {/* Header */}
         <div className="p-5 flex justify-between items-center border-b border-gray-100/50">
-          <h2 className="text-xl font-semibold text-gray-800">Select your service location</h2>
+          <h2 className="text-xl font-medium text-gray-700">Select your service location</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors rounded-full p-1 hover:bg-gray-100"

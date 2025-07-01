@@ -1,34 +1,42 @@
 import "leaflet/dist/leaflet.css"
 import { useState, useEffect, useRef } from "react"
-import { Share, Flag, Calendar, MapPin, X, Check, ArrowLeft, Users } from "lucide-react"
+import { Share, Flag, MapPin, X, Check, ArrowLeft, Users } from "lucide-react"
 import L from "leaflet"
 import LocationSelectionModal from "./LocationSelectionModal"
 import CompanyModal from "./CompanyModal"
 import { getMockCompanyData } from "./company-data"
+import { format } from "date-fns"
+import { CalendarIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 
 // Add animation keyframes
 const animationStyles = `
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  @keyframes bounceIn {
-    0% { transform: scale(0); opacity: 0; }
-    60% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  
-  @keyframes slideInUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-  }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
 `
 
 interface Seller {
@@ -77,8 +85,8 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
   const [totalRate, setTotalRate] = useState<number>(0)
   const [bookingSuccess, setBookingSuccess] = useState<boolean>(false)
   const [confirmationStep, setConfirmationStep] = useState<boolean>(false)
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date())
-  const [calendarDays, setCalendarDays] = useState<Date[]>([])
+  const [currentMonth, ] = useState<Date>(new Date())
+  const [, setCalendarDays] = useState<Date[]>([])
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false)
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState<boolean>(false)
   const [selectedCompany, setSelectedCompany] = useState<any>(null)
@@ -224,14 +232,12 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
   }
 
   // Modify the handleDateSelect function to open the location modal after selecting a date
-  const handleDateSelect = (date: Date) => {
-    // Fix: Use the exact date object without timezone issues
-    const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
-    setSelectedDate(formattedDate)
-
-    // Only proceed if time is selected
-    if (selectedTime) {
-      setBookingStep(2)
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+      setSelectedDate(formattedDate)
+    } else {
+      setSelectedDate("")
     }
   }
 
@@ -293,13 +299,13 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
     try {
       // Get user auth data using our helper function
       const { userId, token, firstname } = getUserAuthData()
-      
+
       if (!userId || !token) {
         console.error("Authentication data missing, userId:", userId, "token:", token ? "exists" : "missing")
-        return { 
-          success: false, 
+        return {
+          success: false,
           error: "Authentication required. Please log in again.",
-          authError: true
+          authError: true,
         }
       }
 
@@ -331,7 +337,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
       }
 
       console.log("Sending booking data:", bookingData)
-      
+
       const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/bookings`
       console.log("API URL:", apiUrl)
 
@@ -340,7 +346,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(bookingData),
       })
@@ -348,18 +354,18 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: "Unknown error" }))
         console.error("Error creating booking:", errorData)
-        
+
         if (response.status === 401) {
-          return { 
-            success: false, 
+          return {
+            success: false,
             error: "Your session has expired. Please log in again.",
-            authError: true
+            authError: true,
           }
         }
-        
-        return { 
-          success: false, 
-          error: errorData.message || `Server error (${response.status})`
+
+        return {
+          success: false,
+          error: errorData.message || `Server error (${response.status})`,
         }
       }
 
@@ -378,17 +384,14 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
 
         console.log("Creating booking notification:", notificationData)
 
-        await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/notifications/booking`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify(notificationData),
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/notifications/booking`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-        ).catch(err => {
+          body: JSON.stringify(notificationData),
+        }).catch((err) => {
           // Log but don't fail if notification creation fails
           console.error("Error creating notification:", err)
         })
@@ -396,13 +399,13 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
         console.error("Error creating booking notification:", notificationError)
         // Continue with booking success even if notification fails
       }
-      
+
       return { success: true, result }
     } catch (error) {
       console.error("Error submitting booking:", error)
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Unknown error occurred"
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
       }
     }
   }
@@ -413,7 +416,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
 
     try {
       const { success, error, authError } = await submitBookingToDatabase()
-      
+
       if (success) {
         setIsSubmitting(false)
         setConfirmationStep(false)
@@ -422,7 +425,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
         setIsSubmitting(false)
         setErrorMessage(error || "There was an error creating your booking. Please try again.")
         setIsErrorModalOpen(true)
-        
+
         // If it's an auth error, you might want to redirect to login or handle differently
         if (authError) {
           console.error("Authentication error during booking")
@@ -453,32 +456,11 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
     return date.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
   }
 
-  const changeMonth = (increment: number) => {
-    const newMonth = new Date(currentMonth)
-    newMonth.setMonth(newMonth.getMonth() + increment)
-    setCurrentMonth(newMonth)
-  }
-
-  const isToday = (date: Date) => {
-    const today = new Date()
-    return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    )
-  }
-
-  const isCurrentMonth = (date: Date) => {
-    return date.getMonth() === currentMonth.getMonth()
-  }
-
   const isPastDate = (date: Date) => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     return date < today
   }
-
-  const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 
   const handleErrorModalClose = () => {
     setIsErrorModalOpen(false)
@@ -493,7 +475,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
         <div className="p-6 flex justify-between items-center border-b border-gray-100/50 bg-white/80 backdrop-blur-sm">
           {bookingStep === 0 && !selectedSeller && !bookingSuccess && !confirmationStep && (
             <>
-              <h2 className="text-xl font-semibold text-black">Providers for {productName}</h2>
+              <h2 className="text-xl font-medium text-gray-700">Providers for {productName}</h2>
               <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X className="h-6 w-6" />
               </button>
@@ -509,7 +491,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                 >
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back to providers
                 </button>
-                <h2 className="text-xl font-semibold text-black mt-2">Select a Date</h2>
+                <h2 className="text-xl font-medium text-gray-700 mt-2">Select a Date</h2>
               </div>
               <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X className="h-6 w-6" />
@@ -526,7 +508,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                 >
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back to date selection
                 </button>
-                <h2 className="text-xl font-semibold text-black mt-2">Select Service Location</h2>
+                <h2 className="text-xl font-medium text-gray-700 mt-2">Select Service Location</h2>
               </div>
               <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X className="h-6 w-6" />
@@ -543,7 +525,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                 >
                   <ArrowLeft className="h-4 w-4 mr-1" /> Back to location selection
                 </button>
-                <h2 className="text-xl font-semibold text-black mt-2">Confirm Booking</h2>
+                <h2 className="text-xl font-medium text-gray-700 mt-2">Confirm Booking</h2>
               </div>
               <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X className="h-6 w-6" />
@@ -672,114 +654,91 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
 
               <div className="mb-6">
                 <h4 className="text-md font-medium mb-3 flex items-center">
-                  <Calendar className="h-4 w-4 mr-2" /> Select a date for your booking
+                  <CalendarIcon className="h-4 w-4 mr-2" /> Select a date and time for your booking
                 </h4>
 
-                {/* Compact Calendar */}
-                <div className="bg-white/90 backdrop-blur-sm border border-gray-200/70 rounded-xl shadow-sm max-w-md mx-auto">
-                  {/* Calendar header */}
-                  <div className="flex justify-between items-center p-3 border-b border-gray-200">
-                    <button
-                      onClick={() => changeMonth(-1)}
-                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      &lt;
-                    </button>
-                    <h3 className="font-medium text-sm">
-                      {currentMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-                    </h3>
-                    <button
-                      onClick={() => changeMonth(1)}
-                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      &gt;
-                    </button>
-                  </div>
-
-                  {/* Weekday headers */}
-                  <div className="grid grid-cols-7 text-center py-1 border-b border-gray-200">
-                    {weekdays.map((day) => (
-                      <div key={day} className="text-xs font-medium text-gray-500">
-                        {day}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Calendar days */}
-                  <div className="grid grid-cols-7 gap-1 p-2">
-                    {calendarDays.map((date, index) => {
-                      // Format date for comparison with selectedDate
-                      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
-                      const isSelected = dateStr === selectedDate
-
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => !isPastDate(date) && isCurrentMonth(date) && handleDateSelect(date)}
-                          disabled={isPastDate(date) || !isCurrentMonth(date)}
-                          className={`
-                            p-1 rounded-md text-center text-sm h-8 w-8 mx-auto flex items-center justify-center
-                            ${isToday(date) ? "bg-sky-100 text-sky-700" : ""}
-                            ${!isCurrentMonth(date) ? "text-gray-300" : "text-gray-800"}
-                            ${isPastDate(date) ? "cursor-not-allowed opacity-50" : ""}
-                            ${!isPastDate(date) && isCurrentMonth(date) ? "hover:bg-sky-50 hover:text-sky-700" : ""}
-                            ${isSelected ? "bg-sky-600 text-white hover:bg-sky-700" : ""}
-                          `}
+                <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                  {/* Date Picker */}
+                  <div className="flex-1">
+                    <Label htmlFor="date-select" className="sr-only">
+                      Select Date
+                    </Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !selectedDate && "text-muted-foreground",
+                          )}
                         >
-                          {date.getDate()}
-                        </button>
-                      )
-                    })}
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {selectedDate ? format(new Date(selectedDate), "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate ? new Date(selectedDate) : undefined}
+                          onSelect={handleDateSelect}
+                          initialFocus
+                          disabled={(date) => isPastDate(date)}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* Time Selection */}
+                  <div className="flex-1">
+                    <Label htmlFor="time-select" className="sr-only">
+                      Select Time
+                    </Label>
+                    <Select value={selectedTime} onValueChange={setSelectedTime}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a time" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="08:00">8:00 AM</SelectItem>
+                        <SelectItem value="09:00">9:00 AM</SelectItem>
+                        <SelectItem value="10:00">10:00 AM</SelectItem>
+                        <SelectItem value="11:00">11:00 AM</SelectItem>
+                        <SelectItem value="12:00">12:00 PM</SelectItem>
+                        <SelectItem value="13:00">1:00 PM</SelectItem>
+                        <SelectItem value="14:00">2:00 PM</SelectItem>
+                        <SelectItem value="15:00">3:00 PM</SelectItem>
+                        <SelectItem value="16:00">4:00 PM</SelectItem>
+                        <SelectItem value="17:00">5:00 PM</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
-                {/* Selected date display */}
-                {selectedDate && (
-                  <div className="mt-4 p-3 bg-sky-50 border border-sky-100 rounded-lg">
-                    <p className="text-sky-800 text-center">
-                      <span className="font-medium">Selected date:</span> {formatDate(selectedDate)}
+                {/* Selected date and time display */}
+                {(selectedDate || selectedTime) && (
+                  <div className="mt-4 p-3 bg-sky-50 border border-sky-100 rounded-lg text-center">
+                    <p className="text-sky-800">
+                      <span className="font-medium">Selected:</span>{" "}
+                      {selectedDate ? formatDate(selectedDate) : "No date selected"}
+                      {selectedDate && selectedTime && " at "}
+                      {selectedTime
+                        ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })
+                        : "No time selected"}
                     </p>
-
-                    {/* Add time selection */}
-                    <div className="mt-3">
-                      <label htmlFor="time-select" className="block text-sm font-medium text-sky-800 mb-1">
-                        Select a time:
-                      </label>
-                      <select
-                        id="time-select"
-                        value={selectedTime}
-                        onChange={(e) => setSelectedTime(e.target.value)}
-                        className="w-full p-2 border border-sky-200 rounded-md bg-white"
-                      >
-                        <option value="">Select a time</option>
-                        <option value="08:00">8:00 AM</option>
-                        <option value="09:00">9:00 AM</option>
-                        <option value="10:00">10:00 AM</option>
-                        <option value="11:00">11:00 AM</option>
-                        <option value="12:00">12:00 PM</option>
-                        <option value="13:00">1:00 PM</option>
-                        <option value="14:00">2:00 PM</option>
-                        <option value="15:00">3:00 PM</option>
-                        <option value="16:00">4:00 PM</option>
-                        <option value="17:00">5:00 PM</option>
-                      </select>
-                    </div>
-
-                    <div className="mt-3 flex justify-center">
-                      <button
-                        onClick={() => selectedTime && handleDateSelect(new Date(selectedDate))}
-                        disabled={!selectedTime}
-                        className={`px-4 py-2 rounded-md transition-colors ${
-                          selectedTime
-                            ? "bg-sky-600 text-white hover:bg-sky-700"
-                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        }`}
-                      >
-                        Continue
-                      </button>
-                    </div>
                   </div>
                 )}
+
+                <div className="mt-6 flex justify-center">
+                  <Button
+                    onClick={() => selectedDate && selectedTime && setBookingStep(2)}
+                    disabled={!selectedDate || !selectedTime}
+                    className="px-6 py-2 rounded-full transition-colors shadow-sm hover:shadow-md"
+                  >
+                    Continue
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -789,9 +748,18 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
               <div className="mb-4">
                 <h3 className="text-lg font-medium">{selectedSeller.name}</h3>
                 <p className="text-gray-600 text-sm mb-2">{selectedSeller.description}</p>
-                <p className="text-gray-600 text-sm flex items-center">
-                  <Calendar className="h-4 w-4 mr-2 text-sky-600" />
+                <p className="text-gray-600 text-sm flex items-center mt-5">
+                  <CalendarIcon className="h-4 w-4 mr-2 text-sky-600" />
                   <span className="font-medium">Selected date:</span> {formatDate(selectedDate)}
+                  {selectedTime && (
+                    <>
+                      {" at "}
+                      {new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </>
+                  )}
                 </p>
 
                 {/* Worker count information */}
@@ -1209,7 +1177,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
               <h3 className="text-xl font-medium text-gray-900 mb-2 animate-slideInUp">Booking Failed</h3>
 
               <p className="text-gray-600 mb-6 animate-fadeIn">{errorMessage}</p>
-        
+
               <button
                 onClick={handleErrorModalClose}
                 className="px-8 py-3 bg-red-500 text-white rounded-full font-medium shadow-sm hover:bg-red-600 active:scale-95 transition-all duration-200 animate-fadeIn"

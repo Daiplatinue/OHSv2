@@ -1,9 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Plus, Trash, Pencil, ChevronRight, Star } from "lucide-react"
+import { Plus, Trash, Pencil, ChevronRight, Star, Info } from "lucide-react"
 import { useState } from "react"
 import ServiceCategoriesModal from "../ServiceCategoriesModal"
-import WorkersModal from "../WorkersModal" 
+import WorkersModal from "../WorkersModal"
 import { serviceSubcategories, sellers, products } from "../../Home-data"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -14,14 +14,17 @@ import HL1 from "../../../assets/Home/Profile of a Fashionable Woman.jpeg"
 import HL2 from "../../../assets/Home/Cheerful Youth Portrait.jpeg"
 import HL3 from "../../../assets/Home/Enigmatic Portrait.jpeg"
 
-import service1 from '../../../assets/Home/s2.jpg';
-import service2 from '../../../assets/Home/s3.jpg';
-import service3 from '../../../assets/Home/s5.jpg';
+import service1 from "../../../assets/Home/s2.jpg"
+import service2 from "../../../assets/Home/s3.jpg"
+import service3 from "../../../assets/Home/s5.jpg"
+
+import service4 from "../../../assets/Home/Mysterious Fashion Portrait.jpeg"
+import service5 from "../../../assets/Home/Warm Sunlit Kitchen Scene.jpeg"
+import service6 from "../../../assets/Home/Garden Community.jpeg"
 
 export default function Dashboard() {
   const userName = "User"
-  const userEmail = "email@example.com" 
-  const totalMoneySpent = "₱1,295,782" 
+  const userEmail = "email@example.com"
 
   const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false)
   const [isWorkersModalOpen, setIsWorkersModalOpen] = useState(false)
@@ -97,7 +100,8 @@ export default function Dashboard() {
       price: 8000,
       category: "Plumbing",
       image: service1,
-      description: "Keep your water systems running smoothly with expert plumbing services, from leak repairs to pipe installations.",
+      description:
+        "Keep your water systems running smoothly with expert plumbing services, from leak repairs to pipe installations.",
       status: "Ongoing",
     },
     {
@@ -158,12 +162,12 @@ export default function Dashboard() {
     .map((service) => ({
       id: service.id,
       customerName: service.customerName,
-      customerAvatar: "/placeholder.svg?height=40&width=40", 
+      customerAvatar: "/placeholder.svg?height=40&width=40",
       serviceName: service.serviceName,
       reviewContent: service.review || "",
       rating: service.rating || 0,
-      totalPayment: service.total, 
-      serviceId: service.id, 
+      totalPayment: service.total,
+      serviceId: service.id,
       date: "Today",
     }))
 
@@ -171,27 +175,28 @@ export default function Dashboard() {
     {
       id: 1,
       name: "EcoClean Solutions",
-      logo: "/placeholder.svg?height=40&width=40",
+      logo: service4,
       description: "Specializing in eco-friendly cleaning services for homes and offices.",
       dateJoined: "Today",
     },
     {
       id: 2,
       name: "SmartHome Tech Installers",
-      logo: "/placeholder.svg?height=40&width=40",
+      logo: service5,
       description: "Certified installers for smart home devices and automation systems.",
       dateJoined: "Yesterday",
     },
     {
       id: 3,
       name: "Urban Gardeners Co.",
-      logo: "/placeholder.svg?height=40&width=40",
+      logo: service6,
       description: "Innovative landscaping and vertical garden solutions for urban spaces.",
       dateJoined: "3 days ago",
     },
   ]
 
-  const newServicesToCheckOut = products.slice(8, 11)
+  // Create a mutable copy of newServicesToCheckOut to modify the name
+  const newServicesToCheckOut = products.slice(6, 10).map((service) => ({ ...service }))
 
   return (
     <div className="min-h-screen bg-white">
@@ -213,7 +218,7 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content Grid - Pulled up to overlap the header */}
-      <div className="container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 -mt-40 relative z-30 max-w-[80rem]">
+      <div className="container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6 -mt-40 relative z-30 max-w-[80rem]">
         {/* Left Column */}
         <div className="space-y-6 flex flex-col">
           {" "}
@@ -227,24 +232,19 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-700 mb-2">Total Money Spent on Services</h3>
-                <p className="text-2xl font-medium text-gray-700">{totalMoneySpent}</p>
-              </div>
-
-              <div>
                 <h3 className="text-lg font-extralight mb-2 text-gray-700">Settle Payments to this Services</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {ongoingServices.map((service) => (
                     <div
                       key={service.id}
-                      className="group cursor-pointer bg-gray-100 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full"
+                      className="group cursor-pointer bg-gray-100 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-[25rem]"
                       onClick={() => handleSeeMore(service.name)}
                     >
                       <div className="relative overflow-hidden rounded-md mb-3">
                         <img
                           src={service.image || "/placeholder.svg"}
                           alt={service.name}
-                          className="w-full h-64 object-cover transform transition duration-500 group-hover:scale-105"
+                          className="w-full h-40 object-cover transform transition duration-500 group-hover:scale-105"
                         />
                       </div>
                       <h4 className="text-lg font-medium mb-2 mt-1 text-gray-700">{service.name}</h4>
@@ -350,56 +350,61 @@ export default function Dashboard() {
               <div className="flex items-start gap-4">
                 <img
                   src={HL1 || "/placeholder.svg"}
-                  alt="Smart home tech"
+                  alt="Rise of Sustainable Home Services"
                   width={60}
                   height={60}
                   className="rounded-md object-cover"
                 />
                 <div className="flex-1">
-                  <h4 className="font-medium text-sm">Smart Home Tech Trends</h4>
-                  <p className="text-xs text-gray-500">Industry Insights</p>
+                  <h4 className="font-medium text-sm">The Rise of Sustainable Home Services</h4>
+                  <p className="text-xs text-gray-500">Market Trends</p>
                   <p className="text-sm text-gray-700 mt-1 line-clamp-2">
-                    Explore the latest innovations in smart home devices and how they are creating new opportunities for
-                    home service providers, from automated repairs to predictive maintenance.
+                    Consumers are increasingly prioritizing eco-friendly options. Learn how integrating sustainable
+                    practices can boost your business.
                   </p>
                 </div>
-                <span className="text-xs text-gray-500 self-start">9:04 AM</span>
+                <span className="text-xs text-gray-500 self-start">July 1, 2025</span>
               </div>
               <div className="flex items-start gap-4">
                 <img
                   src={HL2 || "/placeholder.svg"}
-                  alt="Efficient service management"
+                  alt="Impact of AI on Customer Support"
                   width={60}
                   height={60}
                   className="rounded-md object-cover"
                 />
                 <div className="flex-1">
-                  <h4 className="font-medium text-sm">Efficient Service Management</h4>
-                  <p className="text-xs text-gray-500">Operational Excellence</p>
+                  <h4 className="font-medium text-sm">AI's Impact on Customer Support</h4>
+                  <p className="text-xs text-gray-500">Technology Adoption</p>
                   <p className="text-sm text-gray-700 mt-1 line-clamp-2">
-                    Discover strategies for optimizing service routes, managing technician teams, and improving overall
-                    operational efficiency in your home services business.
+                    Artificial intelligence is revolutionizing how home service businesses handle customer inquiries and
+                    support, leading to faster resolutions and improved satisfaction.
                   </p>
                 </div>
-                <span className="text-xs text-gray-500 self-start">9:04 AM</span>
+                <span className="text-xs text-gray-500 self-start">June 28, 2025</span>
               </div>
               <div className="flex items-start gap-4">
                 <img
                   src={HL3 || "/placeholder.svg"}
-                  alt="AI in home services"
+                  alt="Growth of On-Demand Services"
                   width={60}
                   height={60}
                   className="rounded-md object-cover"
                 />
                 <div className="flex-1">
-                  <h4 className="font-medium text-sm">AI in Home Services</h4>
-                  <p className="text-xs text-gray-500">Innovation Spotlight</p>
+                  <h4 className="font-medium text-sm">Growth of On-Demand Home Services</h4>
+                  <p className="text-xs text-gray-500">Consumer Behavior</p>
                   <p className="text-sm text-gray-700 mt-1 line-clamp-2">
-                    Artificial intelligence is transforming how home services are delivered, from automated scheduling
-                    and diagnostics to enhanced customer support and predictive maintenance.
+                    The demand for immediate, convenient home services continues to surge. Adapt your offerings to meet
+                    the expectations of today's fast-paced consumers.
                   </p>
                 </div>
-                <span className="text-xs text-gray-500 self-start">8:30 AM</span>
+                <span className="text-xs text-gray-500 self-start">June 25, 2025</span>
+              </div>
+              {/* New "Nothing follows" section */}
+              <div className="flex flex-col items-center mt-15 justify-center text-center py-4 text-gray-500">
+                <Info className="h-6 w-6 mb-2" />
+                <p className="text-sm">No more advertisements follows, <br /> create another service then advertise it</p>
               </div>
             </CardContent>
           </Card>
@@ -419,7 +424,7 @@ export default function Dashboard() {
               {recentReviews.map((review) => (
                 <div
                   key={review.id}
-                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border border-gray-100 rounded-lg"
+                  className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border border-gray-100 rounded-lg cursor-pointer hover:bg-gray-50 hover:shadow-md transition-all duration-200"
                 >
                   <div className="flex items-center space-x-3 mb-2 sm:mb-0">
                     <Avatar className="h-10 w-10">
@@ -440,7 +445,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end space-y-2 sm:space-y-0 sm:ml-auto">
+                  <div className="flex flex-col items-end space-y-2 sm:space-y-0 sm:ml-auto flex-shrink-0">
                     <p className="text-sm font-semibold text-sky-600 mb-2">₱{review.totalPayment.toLocaleString()}</p>
                     <Button
                       variant="default"
@@ -458,54 +463,91 @@ export default function Dashboard() {
                 </div>
               ))}
               <Button variant="default" className="w-full mt-4 rounded-full bg-sky-500 text-white hover:bg-sky-600">
-                See All
+                See All Reviews
               </Button>
             </CardContent>
           </Card>
-          {/* Upcoming Meetings Card */}
-          <Card className="flex-1">
-            <CardHeader>
+          {/* Welcoming the new companies Card */}
+          <Card className="flex-1 p-5">
+            <CardHeader className="flex flex-row items-center justify-between p-0 mb-4">
               <CardTitle className="text-lg font-extralight text-gray-700">Welcoming the new companies</CardTitle>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <Plus className="h-5 w-5 text-gray-400" />
+              </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-0 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {newCompanies.map((company) => (
-                <div key={company.id} className="flex items-center gap-4">
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src={company.logo || "/placeholder.svg"} alt={company.name} />
-                    <AvatarFallback>{company.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-sm">{company.name}</h4>
-                    <p className="text-xs text-gray-500">{company.description}</p>
+                <div
+                  key={company.id}
+                  className="group cursor-pointer bg-gray-100 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full"
+                  onClick={() => {
+                    // Add logic to view company details, e.g., open a modal or navigate
+                    console.log(`View company: ${company.name}`)
+                  }}
+                >
+                  <div className="relative overflow-hidden rounded-md mb-3">
+                    <img
+                      src={company.logo || "/placeholder.svg"}
+                      alt={company.name}
+                      className="w-full h-40 object-cover transform transition duration-500 group-hover:scale-105"
+                    />
                   </div>
-                  <span className="text-xs text-gray-500 self-start">{company.dateJoined}</span>
+                  <h4 className="text-lg font-medium mb-2 mt-1 text-gray-700">{company.name}</h4>
+                  <p className="text-sm text-gray-600 line-clamp-3 flex-grow">{company.description}</p>
+                  <div className="mt-auto flex justify-between items-center pt-3">
+                    <span className="text-sm text-gray-600">{company.dateJoined}</span>
+                    <button className="text-sky-500 flex items-center text-sm transition-all duration-300 hover:text-blue-600 hover:translate-x-1">
+                      View Company <ChevronRight className="h-3 w-3 ml-1" />
+                    </button>
+                  </div>
                 </div>
               ))}
+              <Button
+                variant="default"
+                className="w-full mt-4 rounded-full bg-sky-500 text-white hover:bg-sky-600 col-span-full"
+              >
+                See All Companies
+              </Button>
             </CardContent>
           </Card>
           {/* New Connections Card */}
-          <Card className="flex-1">
-            <CardHeader>
+          <Card className="flex-1 p-5">
+            <CardHeader className="flex flex-row items-center justify-between p-0 mb-4">
               <CardTitle className="text-lg font-extralight text-gray-700">New services to check out</CardTitle>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <Plus className="h-5 w-5 text-gray-400" />
+              </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-0 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {newServicesToCheckOut.map((service) => (
-                <div key={service.id} className="flex items-center gap-4">
-                  <img
-                    src={service.image || "/placeholder.svg"}
-                    alt={service.name}
-                    width={40}
-                    height={40}
-                    className="rounded-md object-cover"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-medium text-sm">{service.name}</h4>
-                    <p className="text-xs text-gray-500">{service.category}</p>
-                    <p className="text-sm text-gray-700 mt-1 line-clamp-2">{service.description}</p>
+                <div
+                  key={service.id}
+                  className="group cursor-pointer bg-gray-100 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full"
+                  onClick={() => handleSeeMore(service.name)}
+                >
+                  <div className="relative overflow-hidden rounded-md mb-3">
+                    <img
+                      src={service.image || "/placeholder.svg"}
+                      alt={service.name}
+                      className="w-full h-40 object-cover transform transition duration-500 group-hover:scale-105"
+                    />
                   </div>
-                  <span className="text-xs text-gray-500 self-start">₱{service.price.toLocaleString()}</span>
+                  <h4 className="text-lg font-medium mb-2 mt-1 text-gray-700">{service.name}</h4>
+                  <p className="text-sm text-gray-600 line-clamp-3 flex-grow">{service.description}</p>
+                  <div className="mt-auto flex justify-between items-center pt-3">
+                    <span className="text-lg font-medium text-gray-900">₱{service.price.toLocaleString()}</span>
+                    <button className="text-sky-500 flex items-center text-sm transition-all duration-300 hover:text-blue-600 hover:translate-x-1">
+                      View Details <ChevronRight className="h-3 w-3 ml-1" />
+                    </button>
+                  </div>
                 </div>
               ))}
+              <Button
+                variant="default"
+                className="w-full mt-4 rounded-full bg-sky-500 text-white hover:bg-sky-600 col-span-full"
+              >
+                See All Services
+              </Button>
             </CardContent>
           </Card>
         </div>

@@ -1,7 +1,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import MyFloatingDockCeo from "../Styles/MyFloatingDock-Ceo"
-import { Dialog } from "@headlessui/react"
+import { Dialog, Switch } from "@headlessui/react"
 import {
   MapPin,
   ChevronRight,
@@ -42,6 +42,7 @@ import {
   userDetails,
 } from "./bookings-data"
 import Footer from "../Styles/Footer"
+import SubscriptionInfoCard from "../Manager-tabs/SubInfoCard" 
 
 const keyframes = `
 @keyframes fadeIn {
@@ -98,7 +99,7 @@ function Bookings() {
   const [subscription, setSubscription] = useState<SubscriptionInfo>({
     tier: "free",
     maxServices: 3,
-    name: "Free",
+    name: "Freebie",
     color: "text-gray-600",
     price: 0,
     billingCycle: "Monthly",
@@ -106,6 +107,7 @@ function Bookings() {
   })
 
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false)
+  const [isYearlyBilling, setIsYearlyBilling] = useState(false) // New state for billing toggle
 
   const [newService, setNewService] = useState<Partial<Service>>({
     name: "",
@@ -188,7 +190,7 @@ function Bookings() {
           name: plan.name,
           color: plan.textColor,
           price: plan.price,
-          billingCycle: "Monthly",
+          billingCycle: isYearlyBilling ? "Yearly" : "Monthly", // Use isYearlyBilling
           nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
         })
 
@@ -203,7 +205,7 @@ function Bookings() {
         window.history.replaceState({}, document.title, window.location.pathname)
       }
     }
-  }, [])
+  }, [isYearlyBilling]) // Add isYearlyBilling to dependency array
 
   // Get current items for pagination
   const getCurrentItems = () => {
@@ -396,7 +398,8 @@ function Bookings() {
     const selectedPlan = subscriptionPlans.find((plan) => plan.tier === tier)
 
     if (selectedPlan) {
-      window.location.href = `/transaction?plan=${tier}&price=${selectedPlan.price}&redirect=/ceo/bookings`
+      const priceToUse = isYearlyBilling ? selectedPlan.yearlyPrice : selectedPlan.price
+      window.location.href = `/transaction?plan=${tier}&price=${priceToUse}&redirect=/ceo/bookings`
     }
   }
 
@@ -593,7 +596,7 @@ function Bookings() {
                       <span className="text-red-500 ml-1">*</span>
                     </label>
                     <p className="text-xs text-gray-500 mb-2">{req.desc}</p>
-                    <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 focus-within:ring-2 focus-within:ring-sky-500">
+                    <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 focus-within:ring-2 focus:ring-sky-500">
                       <input
                         type="file"
                         id={`file-${req.key}`}
@@ -988,92 +991,11 @@ function Bookings() {
           </div>
 
           {/* Subscription Information - Apple-inspired design */}
-          <div className="bg-white rounded-3xl shadow-sm p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold">Subscription</h3>
-              <button
-                onClick={() => setIsPlansModalOpen(true)}
-                className="text-sky-500 hover:text-sky-600 text-sm font-medium"
-              >
-                Change Plan
-              </button>
-            </div>
-
-            <div className="bg-gray-50 rounded-xl p-6">
-              <div className="flex items-center mb-4">
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center mr-4 ${
-                    subscription.tier === "free"
-                      ? "bg-gray-200"
-                      : subscription.tier === "mid"
-                        ? "bg-blue-100"
-                        : subscription.tier === "premium"
-                          ? "bg-purple-100"
-                          : "bg-amber-100"
-                  }`}
-                >
-                  <Crown className={`h-6 w-6 ${subscription.color}`} />
-                </div>
-                <div>
-                  <h4 className="text-lg font-medium">{subscription.name} Plan</h4>
-                  <p className="text-gray-600 text-sm">
-                    {subscription.maxServices === Number.POSITIVE_INFINITY
-                      ? "Unlimited services"
-                      : `Up to ${subscription.maxServices} services`}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <h5 className="text-sm font-medium text-gray-500 mb-1">Current Usage</h5>
-                  <div className="flex items-center">
-                    <span className="text-xl font-medium">{services.length}</span>
-                    <span className="text-gray-500 mx-1">/</span>
-                    <span className="text-gray-500">
-                      {subscription.maxServices === Number.POSITIVE_INFINITY ? "∞" : subscription.maxServices}
-                    </span>
-                    <span className="text-gray-500 ml-1">services</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div
-                      className={`h-2 rounded-full ${
-                        subscription.tier === "free"
-                          ? "bg-gray-500"
-                          : subscription.tier === "mid"
-                            ? "bg-blue-500"
-                            : subscription.tier === "premium"
-                              ? "bg-purple-500"
-                              : "bg-amber-500"
-                      }`}
-                      style={{
-                        width: `${
-                          subscription.maxServices === Number.POSITIVE_INFINITY
-                            ? 10
-                            : Math.min(100, (services.length / subscription.maxServices) * 100)
-                        }%`,
-                      }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <h5 className="text-sm font-medium text-gray-500 mb-1">Billing</h5>
-                  {subscription.price > 0 ? (
-                    <>
-                      <p className="text-xl font-medium">
-                        ${subscription.price}
-                        <span className="text-sm text-gray-500">/month</span>
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">Next billing: {subscription.nextBillingDate}</p>
-                    </>
-                  ) : (
-                    <p className="text-xl font-medium">Free</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <SubscriptionInfoCard
+            subscription={subscription}
+            currentServicesCount={services.length}
+            onOpenPlansModal={() => setIsPlansModalOpen(true)}
+          />
         </div>
       )
     } else if (activeTab === "security") {
@@ -2532,64 +2454,112 @@ function Bookings() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="mx-auto max-w-4xl w-full bg-white rounded-2xl overflow-hidden shadow-xl">
-            <div className="p-6">
+          <Dialog.Panel className="mx-auto max-w-6xl w-full bg-white rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-8">
               <div className="flex justify-between items-start mb-6">
-                <Dialog.Title className="text-xl font-semibold text-gray-900">Choose a Plan</Dialog.Title>
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900">
+                    Powerful features for <span className="text-blue-600">powerful creators</span>
+                  </h2>
+                  <p className="text-gray-600 mt-2">Choose a plan that's right for you</p>
+                </div>
                 <button onClick={() => setIsPlansModalOpen(false)} className="text-gray-400 hover:text-gray-500">
-                  <X className="h-5 w-5" />
+                  <X className="h-6 w-6" />
                 </button>
               </div>
 
-              <div className="mb-6">
-                <p className="text-gray-600">
-                  Select the plan that best fits your needs. Each plan includes different service limits and features.
-                </p>
+              {/* Billing Toggle */}
+              <div className="flex items-center justify-center mb-10">
+                <span className="text-gray-700 font-medium mr-3">Pay Monthly</span>
+                <Switch
+                  checked={isYearlyBilling}
+                  onChange={setIsYearlyBilling}
+                  className={`{
+                    isYearlyBilling ? "bg-blue-600" : "bg-gray-300"
+                  } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                >
+                  <span className="sr-only">Enable yearly billing</span>
+                  <span
+                    className={`{
+                      isYearlyBilling ? "translate-x-6" : "translate-x-1"
+                    } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                  />
+                </Switch>
+                <span className="text-gray-700 font-medium ml-3">Pay Yearly</span>
+                {isYearlyBilling && (
+                  <span className="ml-4 text-blue-600 font-semibold text-sm flex items-center">
+                    <ArrowRight className="h-4 w-4 mr-1 -rotate-45" />
+                    Save 25%
+                  </span>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {subscriptionPlans.map((plan) => (
-                  <div
-                    key={plan.tier}
-                    className={`border rounded-xl p-5 flex flex-col relative ${
-                      plan.tier === subscription.tier
-                        ? "border-sky-500 bg-sky-50 shadow-lg"
-                        : "border-gray-200 hover:border-sky-300 hover:shadow-md"
-                    } transition-all cursor-pointer`}
-                    onClick={() => handleSelectPlan(plan.tier as SubscriptionTier)}
-                  >
-                    {plan.tier === subscription.tier && (
-                      <div className="absolute top-4 right-4 bg-sky-500 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
-                        <Check className="h-3 w-3" /> Current Plan
-                      </div>
-                    )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {subscriptionPlans
+                  .filter((plan) => plan.tier !== "unlimited") // Filter out 'unlimited' as it's not in the image
+                  .map((plan) => (
                     <div
-                      className={`text-sm font-medium px-2 py-1 rounded-full self-start mb-2 ${plan.color} ${plan.textColor}`}
+                      key={plan.tier}
+                      className={`rounded-xl p-6 flex flex-col shadow-lg transition-all duration-300
+                      ${plan.color} ${plan.textColor}
+                      ${
+                        plan.tier === subscription.tier
+                          ? plan.tier === "mid"
+                            ? "ring-4 ring-blue-300"
+                            : "ring-4 ring-blue-200"
+                          : "border border-gray-200" // Add border for non-blue cards
+                      }
+                      `}
                     >
-                      {plan.name}
-                    </div>
-                    <div className="mt-2 mb-4">
-                      <span className="text-2xl font-bold">₱{plan.price}</span>
-                      {plan.price > 0 && <span className="text-gray-500 text-sm">/month</span>}
-                    </div>
+                      <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+                      <p className={`text-sm mb-4 ${plan.tier === "mid" ? "text-blue-200" : "text-gray-600"}`}>
+                        {plan.description}
+                      </p>
 
-                    <div className="flex items-center mb-4">
-                      <span className="font-medium">Services:</span>
-                      <span className="ml-2">
-                        {plan.maxServices === Number.POSITIVE_INFINITY ? "Unlimited" : `Up to ${plan.maxServices}`}
-                      </span>
-                    </div>
+                      <div className="mb-6">
+                        <span className="text-4xl font-bold">${isYearlyBilling ? plan.yearlyPrice : plan.price}</span>
+                        <span className={`text-lg ${plan.tier === "mid" ? "text-blue-200" : "text-gray-500"}`}>
+                          /Month
+                        </span>
+                      </div>
 
-                    <ul className="space-y-2 mb-6 flex-grow">
-                      {plan.features.map((feature, index) => (
-                        <li key={index} className="flex items-start">
-                          <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                          <span className="text-sm text-gray-600">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+                      <button
+                        onClick={() => handleSelectPlan(plan.tier as SubscriptionTier)}
+                        className={`w-full py-3 rounded-lg font-semibold transition-colors duration-200
+                        ${
+                          plan.tier === "mid"
+                            ? "bg-white text-blue-600 hover:bg-gray-100"
+                            : "bg-blue-600 text-white hover:bg-blue-700"
+                        }
+                        ${plan.tier === subscription.tier ? "opacity-70 cursor-not-allowed" : ""}
+                        `}
+                        disabled={plan.tier === subscription.tier}
+                      >
+                        {plan.tier === subscription.tier ? "Current Plan" : "Get Started Now"}
+                      </button>
+
+                      <ul className="space-y-3 mt-8 flex-grow">
+                        {plan.features.map((feature, index) => (
+                          <li key={index} className="flex items-center">
+                            {feature.included ? (
+                              <CheckCircle
+                                className={`h-5 w-5 mr-3 flex-shrink-0 ${
+                                  plan.tier === "mid" ? "text-white" : "text-green-500"
+                                }`}
+                              />
+                            ) : (
+                              <X
+                                className={`h-5 w-5 mr-3 flex-shrink-0 ${
+                                  plan.tier === "mid" ? "text-blue-300" : "text-gray-400"
+                                }`}
+                              />
+                            )}
+                            <span className={`text-sm ${plan.textColor}`}>{feature.text}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
               </div>
             </div>
           </Dialog.Panel>
