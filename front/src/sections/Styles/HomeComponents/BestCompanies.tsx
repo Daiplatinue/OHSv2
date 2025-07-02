@@ -92,7 +92,7 @@ export default function BestCompanies() {
                 </div>
 
                 {/* Top 6 Companies Section - Responsive Grid */}
-                <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 pt-20 p-15">
+                <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 pt-20 p-5">
                     {topCompanies.map((company) => (
                         <div
                             key={company.id}

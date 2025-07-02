@@ -130,7 +130,7 @@ function Home() {
 
       <div className="relative">
         {/* Carousel */}
-        <div className="relative aspect-video max-h-[600px] w-[80rem] max-w-[80rem] overflow-hidden mx-auto mt-10 rounded-2xl group">
+        <div className="relative aspect-video max-h-[600px] w-full max-w-[80rem] overflow-hidden mx-auto mt-10 rounded-2xl group">
           {carouselItems.map((item, index) => (
             <div
               key={index}

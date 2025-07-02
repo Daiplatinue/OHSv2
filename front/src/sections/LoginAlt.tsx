@@ -6,35 +6,35 @@ import ManagerRequirements from "./Styles/ManagerRequirements"
 import OTP from "../sections/Styles/OTP"
 import TermsCondition from "../sections/Styles/TermsCondition"
 import Cookies from "js-cookie"
-import ForgotPassword from "../sections/Styles/ForgotPassword" 
+import ForgotPassword from "../sections/Styles/ForgotPassword"
 
 const keyframes = `
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+from { opacity: 0; }
+to { opacity: 1; }
 }
 
 @keyframes bounceIn {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.2); }
-  100% { transform: 1; opacity: 1; }
+0% { transform: scale(0); opacity: 0; }
+60% { transform: scale(1.2); }
+100% { transform: 1; opacity: 1; }
 }
 
 @keyframes slideInUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+from { transform: translateY(20px); opacity: 0; }
+to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+0% { transform: scale(1); }
+50% { transform: scale(1.05); }
+100% { transform: scale(1); }
 }
 `
 
-import img1 from '../assets/Login/Contemporary Workspace Environment.jpeg';
-import img2 from '../assets/Login/Casual Office Collaboration.jpeg';
-import img3 from '../assets/Login/Construction Crewmates in Uniform.jpeg';
+import img1 from "../assets/Login/Contemporary Workspace Environment.jpeg"
+import img2 from "../assets/Login/Casual Office Collaboration.jpeg"
+import img3 from "../assets/Login/Construction Crewmates in Uniform.jpeg"
 
 const slideshowImages = [
   {
@@ -348,10 +348,7 @@ function LoginAlt() {
                   activeSlide === index ? "opacity-100" : "opacity-0"
                 }`}
               >
-                <img
-                  src={image.src || "/placeholder.svg"}
-                  className="object-cover w-full h-full rounded-xl"
-                />
+                <img src={image.src || "/placeholder.svg"} className="object-cover w-full h-full rounded-xl" />
               </div>
             ))}
           </div>
@@ -427,7 +424,7 @@ function LoginAlt() {
           <button
             onClick={handleLogin}
             className={`w-full bg-gray-200 text-gray-500 hover:bg-gray-300 rounded-full h-12 font-medium transition-colors
-          ${!email || (showPasswordField && !password) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
+        ${!email || (showPasswordField && !password) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
             disabled={!email || (showPasswordField && !password) || loading}
           >
             {loading
@@ -547,11 +544,11 @@ function LoginAlt() {
                     }}
                     disabled={!termsAccepted} // Disabled if terms not accepted
                     className={`flex flex-col items-center justify-center p-6 border-2 rounded-xl transition-all w-[13rem] cursor-pointer
-                      ${
-                        termsAccepted
-                          ? "hover:border-sky-400 hover:bg-sky-50"
-                          : "opacity-50 cursor-not-allowed bg-gray-100"
-                      }`}
+                    ${
+                      termsAccepted
+                        ? "hover:border-sky-400 hover:bg-sky-50"
+                        : "opacity-50 cursor-not-allowed bg-gray-100"
+                    }`}
                   >
                     <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mb-4">
                       <svg
@@ -581,11 +578,11 @@ function LoginAlt() {
                     }}
                     disabled={!termsAccepted} // Disabled if terms not accepted
                     className={`flex flex-col items-center justify-center p-6 border-2 rounded-xl transition-all w-[13rem] cursor-pointer
-                      ${
-                        termsAccepted
-                          ? "hover:border-sky-400 hover:bg-sky-50"
-                          : "opacity-50 cursor-not-allowed bg-gray-100"
-                      }`}
+                    ${
+                      termsAccepted
+                        ? "hover:border-sky-400 hover:bg-sky-50"
+                        : "opacity-50 cursor-not-allowed bg-gray-100"
+                    }`}
                   >
                     <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mb-4">
                       <svg
@@ -625,9 +622,10 @@ function LoginAlt() {
                     onClose={() => setShowModal(false)}
                     parentModal={true}
                     minimalMode={customerMinimalMode}
+                    accountType="customer"
                   />
                 ) : accountType === "manager" ? (
-                  <ManagerRequirements />
+                  <ManagerRequirements accountType="manager" />
                 ) : null}
               </>
             )}

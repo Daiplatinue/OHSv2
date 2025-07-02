@@ -1,4 +1,3 @@
-"use client"
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import {
@@ -31,6 +30,7 @@ interface CustomerRequirementsProps {
   onClose?: () => void
   parentModal?: boolean
   minimalMode?: boolean // New prop
+  accountType: "customer" // Added accountType prop
 }
 
 // Define companyLocation outside the component to ensure a stable reference
@@ -39,7 +39,7 @@ const companyLocation = {
   lng: 123.8924,
 }
 
-export default function CustomerRequirements({ onClose, minimalMode = false }: CustomerRequirementsProps) {
+export default function CustomerRequirements({ onClose, minimalMode = false, accountType }: CustomerRequirementsProps) {
   // Form state
   const [currentStep, setCurrentStep] = useState(1)
   const [firstName, setFirstName] = useState("")
@@ -114,6 +114,9 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
       setCoverPhoto(null)
       setProfilePicturePreview(null)
       setCoverPhotoPreview(null)
+      setSecretQuestion("")
+      setSecretAnswer("")
+      setSecretCode(null)
 
       // Reset to first step
       setCurrentStep(1)
@@ -196,23 +199,15 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
 
   // Validation for each step (only for full mode)
   const isStep1Valid = () => {
-    return (
-      firstName.trim() !== "" &&
-      lastName.trim() !== "" &&
-      email.trim() !== "" &&
-      mobileNumber.trim() !== "" &&
-      gender !== "" &&
-      frontId !== null &&
-      backId !== null
-    )
+    return password === confirmPassword
   }
 
   const isStep2Valid = () => {
-    return selectedLocation !== null
+    return true
   }
 
   const isStep3Valid = () => {
-    return secretQuestion.trim() !== "" && secretAnswer.trim() !== ""
+    return true // All fields in this step are now optional
   }
 
   // Navigation between steps with animation (only for full mode)
@@ -263,15 +258,52 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
     setLoading(true)
     setError("")
 
-    try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.")
+      setLoading(false)
+      return
+    }
 
-      // Mock successful form submission
+    try {
+      const response = await fetch("http://localhost:3000/api/users/register/customer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName: firstName || null,
+          lastName: lastName || null,
+          middleName: middleName || null, // Send null if empty
+          email: email || null,
+          password: password || null,
+          mobileNumber: mobileNumber || null,
+          gender: gender || null,
+          bio: bio || null, // Send null if empty
+          accountType: accountType, // Use prop here
+          minimalMode: false, // Full registration
+          idDocuments: {
+            front: frontIdPreview || null, // Send null if empty
+            back: backIdPreview || null, // Send null if empty
+          },
+          location: selectedLocation,
+          profilePicture: profilePicturePreview || null, // Send null if empty
+          coverPhoto: coverPhotoPreview || null, // Send null if empty
+          secretQuestion: secretQuestion || null, // Send null if empty
+          secretAnswer: secretAnswer || null, // Send null if empty
+          secretCode: secretCode || null, // Send null if empty
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Registration failed.")
+      }
+
       setSuccess(true)
       setIsSuccessModalOpen(true)
-    } catch (error) {
-      setError("An error occurred during registration. Please try again.")
+    } catch (error: any) {
+      setError(error.message || "An error occurred during registration. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -290,14 +322,43 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
     }
 
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const response = await fetch("http://localhost:3000/api/users/register/customer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName: firstName || null,
+          lastName: lastName || null,
+          middleName: middleName || null, // Send null if empty
+          email: email || null,
+          password: password || null,
+          mobileNumber: mobileNumber || null,
+          gender: gender || null,
+          bio: bio || null, // Send null if empty
+          accountType: accountType, // Use prop here
+          minimalMode: true, // Minimal registration
+          location: selectedLocation,
+          // Explicitly send null for fields not collected in minimal mode
+          idDocuments: { front: null, back: null },
+          profilePicture: null,
+          coverPhoto: null,
+          secretQuestion: null,
+          secretAnswer: null,
+          secretCode: null,
+        }),
+      })
 
-      // Mock successful form submission for minimal mode
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Registration failed.")
+      }
+
       setSuccess(true)
       setIsSuccessModalOpen(true)
-    } catch (error) {
-      setError("An error occurred during registration. Please try again.")
+    } catch (error: any) {
+      setError(error.message || "An error occurred during registration. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -315,25 +376,25 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
     <div className="py-4 px-2 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
       {/* Include animation keyframes */}
       <style>{`
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes slideInUp {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    @keyframes bounceIn {
-      0% { transform: scale(0); }
-      50% { transform: scale(1.2); }
-      100% { transform: scale(1); }
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-  `}</style>
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideInUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes bounceIn {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+`}</style>
 
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -372,28 +433,26 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="first-name" className="mb-1 block text-sm font-medium">
-                      First Name
+                      First Name (optional)
                     </label>
                     <input
                       id="first-name"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       placeholder="Enter your first name"
-                      required
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                     />
                   </div>
 
                   <div>
                     <label htmlFor="last-name" className="mb-1 block text-sm font-medium">
-                      Last Name
+                      Last Name (optional)
                     </label>
                     <input
                       id="last-name"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       placeholder="Enter your last name"
-                      required
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                     />
                   </div>
@@ -413,7 +472,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
 
                   <div>
                     <label htmlFor="email" className="mb-1 block text-sm font-medium">
-                      Email Address
+                      Email Address (optional)
                     </label>
                     <input
                       id="email"
@@ -421,9 +480,39 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="example@mail.com"
-                      required
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                     />
+                  </div>
+
+                  <div>
+                    <label htmlFor="mobile-number" className="mb-1 block text-sm font-medium">
+                      Mobile Number (optional)
+                    </label>
+                    <input
+                      id="mobile-number"
+                      value={mobileNumber}
+                      onChange={(e) => setMobileNumber(e.target.value)}
+                      placeholder="Enter your mobile number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="gender" className="mb-1 block text-sm font-medium">
+                      Gender (optional)
+                    </label>
+                    <select
+                      id="gender"
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    >
+                      <option value="">Select gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                      <option value="prefer-not-to-say">Prefer not to say</option>
+                    </select>
                   </div>
                 </div>
 
@@ -431,7 +520,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                 <div className="space-y-4">
                   {/* Location Selection */}
                   <div>
-                    <h4 className="text-sm font-medium mb-2 text-gray-700">Select Your Location</h4>
+                    <h4 className="text-sm font-medium mb-2 text-gray-700">Select Your Location (optional)</h4>
                     <button
                       type="button"
                       onClick={() => setShowLocationModal(true)}
@@ -485,7 +574,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                   <div>
                     <div>
                       <label htmlFor="password" className="mb-1 block text-sm font-medium">
-                        Password
+                        Password (optional)
                       </label>
                       <input
                         id="password"
@@ -493,14 +582,13 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Enter your password"
-                        required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                       />
                     </div>
 
                     <div className="mt-4">
                       <label htmlFor="confirm-password" className="mb-1 block text-sm font-medium">
-                        Confirm Password
+                        Confirm Password (optional)
                       </label>
                       <input
                         id="confirm-password"
@@ -508,7 +596,6 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Confirm your password"
-                        required
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                       />
                     </div>
@@ -519,11 +606,9 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
               <div className="mt-6">
                 <button
                   type="submit"
-                  disabled={
-                    loading || !firstName || !lastName || !email || !password || !confirmPassword || !selectedLocation
-                  }
+                  disabled={loading || password !== confirmPassword}
                   className={`px-5 py-2 rounded-full transition-all duration-300 hover:shadow-md flex items-center justify-center w-full ${
-                    loading || !firstName || !lastName || !email || !password || !confirmPassword || !selectedLocation
+                    loading || password !== confirmPassword
                       ? "bg-gray-400 cursor-not-allowed text-white"
                       : "bg-sky-500 hover:bg-sky-600 text-white"
                   }`}
@@ -622,7 +707,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                         {/* Front ID */}
                         <div className="mb-4">
                           <label htmlFor="front-id" className="mb-2 block text-sm font-medium">
-                            Front of ID
+                            Front of ID (optional)
                           </label>
                           <div
                             className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${frontId ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"}`}
@@ -668,7 +753,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                         {/* Back ID */}
                         <div className="mb-4">
                           <label htmlFor="back-id" className="mb-2 block text-sm font-medium">
-                            Back of ID
+                            Back of ID (optional)
                           </label>
                           <div
                             className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${backId ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"}`}
@@ -752,28 +837,26 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                         <div className="space-y-4">
                           <div>
                             <label htmlFor="first-name" className="mb-1 block text-sm font-medium">
-                              First Name
+                              First Name (optional)
                             </label>
                             <input
                               id="first-name"
                               value={firstName}
                               onChange={(e) => setFirstName(e.target.value)}
                               placeholder="Enter your first name"
-                              required
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                             />
                           </div>
 
                           <div>
                             <label htmlFor="last-name" className="mb-1 block text-sm font-medium">
-                              Last Name
+                              Last Name (optional)
                             </label>
                             <input
                               id="last-name"
                               value={lastName}
                               onChange={(e) => setLastName(e.target.value)}
                               placeholder="Enter your last name"
-                              required
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                             />
                           </div>
@@ -793,14 +876,13 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
 
                           <div>
                             <label htmlFor="gender" className="mb-1 block text-sm font-medium">
-                              Gender
+                              Gender (optional)
                             </label>
                             <select
                               id="gender"
                               value={gender}
                               onChange={(e) => setGender(e.target.value)}
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
-                              required
                             >
                               <option value="">Select gender</option>
                               <option value="male">Male</option>
@@ -812,7 +894,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
 
                           <div>
                             <label htmlFor="email" className="mb-1 block text-sm font-medium">
-                              Email Address
+                              Email Address (optional)
                             </label>
                             <input
                               id="email"
@@ -820,21 +902,47 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                               value={email}
                               onChange={(e) => setEmail(e.target.value)}
                               placeholder="example@mail.com"
-                              required
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label htmlFor="password" className="mb-1 block text-sm font-medium">
+                              Password (optional)
+                            </label>
+                            <input
+                              id="password"
+                              type="password"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              placeholder="Enter your password"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label htmlFor="confirm-password" className="mb-1 block text-sm font-medium">
+                              Confirm Password (optional)
+                            </label>
+                            <input
+                              id="confirm-password"
+                              type="password"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              placeholder="Confirm your password"
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                             />
                           </div>
 
                           <div>
                             <label htmlFor="mobile-number" className="mb-1 block text-sm font-medium">
-                              Mobile Number
+                              Mobile Number (optional)
                             </label>
                             <input
                               id="mobile-number"
                               value={mobileNumber}
                               onChange={(e) => setMobileNumber(e.target.value)}
                               placeholder="Enter your mobile number"
-                              required
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                             />
                           </div>
@@ -934,7 +1042,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                           {/* Bio */}
                           <div className="mb-6">
                             <label htmlFor="bio" className="mb-2 block text-sm font-medium">
-                              Bio
+                              Bio (optional)
                             </label>
                             <textarea
                               id="bio"
@@ -984,7 +1092,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                           {/* Profile Picture */}
                           <div className="mb-4">
                             <label htmlFor="profile-picture" className="mb-2 block text-sm font-medium">
-                              Profile Picture
+                              Profile Picture (optional)
                             </label>
                             <div
                               className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${profilePicture ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"}`}
@@ -1019,7 +1127,9 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
 
                         {/* Right side - Profile Preview */}
                         <div>
-                          <h4 className="text-lg font-medium mb-4 text-gray-700">Secret Question & Answer</h4>
+                          <h4 className="text-lg font-medium mb-4 text-gray-700">
+                            Secret Question & Answer (optional)
+                          </h4>
                           <div className="bg-white border rounded-lg p-6 space-y-4">
                             <div>
                               <label htmlFor="secret-question" className="mb-1 block text-sm font-medium">
@@ -1030,7 +1140,6 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                                 value={secretQuestion}
                                 onChange={(e) => setSecretQuestion(e.target.value)}
                                 placeholder="e.g., What is your mother's maiden name?"
-                                required
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                               />
                             </div>
@@ -1043,7 +1152,6 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                                 value={secretAnswer}
                                 onChange={(e) => setSecretAnswer(e.target.value)}
                                 placeholder="Enter your secret answer"
-                                required
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                               />
                             </div>
@@ -1117,8 +1225,8 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                               <div>
                                 <div className="flex items-center gap-2">
                                   <h1 className="text-2xl font-medium text-gray-700">
-                                    {firstName} {middleName ? middleName + " " : ""}
-                                    {lastName}
+                                    {firstName || "Not provided"} {middleName ? middleName + " " : ""}
+                                    {lastName || "Not provided"}
                                   </h1>
                                   <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
                                     Customer
@@ -1141,7 +1249,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                                       <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
                                       <circle cx="12" cy="10" r="3" />
                                     </svg>
-                                    <span>{selectedLocation.name}</span>
+                                    <span>{selectedLocation.name || "Not provided"}</span>
                                     {selectedLocation.zipCode && (
                                       <span className="ml-1 text-sky-600">({selectedLocation.zipCode})</span>
                                     )}
@@ -1192,17 +1300,17 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                           <div>
                             <h4 className="text-sm font-medium text-gray-500 mb-1">Full Name</h4>
                             <p className="text-gray-700">
-                              {firstName} {middleName ? middleName + " " : ""}
-                              {lastName}
+                              {firstName || "Not provided"} {middleName ? middleName + " " : ""}
+                              {lastName || "Not provided"}
                             </p>
                           </div>
                           <div>
                             <h4 className="text-sm font-medium text-gray-500 mb-1">Email</h4>
-                            <p className="text-gray-700">{email}</p>
+                            <p className="text-gray-700">{email || "Not provided"}</p>
                           </div>
                           <div>
                             <h4 className="text-sm font-medium text-gray-500 mb-1">Phone</h4>
-                            <p className="text-gray-700">{mobileNumber}</p>
+                            <p className="text-gray-700">{mobileNumber || "Not provided"}</p>
                           </div>
                           {selectedLocation && (
                             <div>
@@ -1223,7 +1331,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                                   <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
                                   <circle cx="12" cy="10" r="3" />
                                 </svg>
-                                {selectedLocation.name}
+                                {selectedLocation.name || "Not provided"}
                                 {selectedLocation.zipCode && (
                                   <span className="ml-1 text-sky-600">({selectedLocation.zipCode})</span>
                                 )}
@@ -1232,7 +1340,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                           )}
                           <div>
                             <h4 className="text-sm font-medium text-gray-500 mb-1">Gender</h4>
-                            <p className="text-gray-700 capitalize">{gender}</p>
+                            <p className="text-gray-700 capitalize">{gender || "Not provided"}</p>
                           </div>
                           <div>
                             <h4 className="text-sm font-medium text-gray-500 mb-1">Account Type</h4>
@@ -1277,7 +1385,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-red-500 text-sm">Not uploaded</p>
+                              <p className="text-gray-500 text-sm">Not uploaded</p>
                             )}
                           </div>
                           <div>
@@ -1299,7 +1407,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-red-500 text-sm">Not uploaded</p>
+                              <p className="text-gray-500 text-sm">Not uploaded</p>
                             )}
                           </div>
                         </div>
@@ -1356,15 +1464,9 @@ export default function CustomerRequirements({ onClose, minimalMode = false }: C
                     <button
                       type="button"
                       onClick={goToNextStep}
-                      disabled={
-                        (currentStep === 1 && !isStep1Valid()) ||
-                        (currentStep === 2 && !isStep2Valid()) ||
-                        (currentStep === 3 && !isStep3Valid())
-                      }
+                      disabled={(currentStep === 1 && !isStep1Valid()) || (currentStep === 2 && !isStep2Valid())}
                       className={`group px-4 py-2 flex items-center rounded-full text-white transition-all duration-300 ${
-                        (currentStep === 1 && !isStep1Valid()) ||
-                        (currentStep === 2 && !isStep2Valid()) ||
-                        (currentStep === 3 && !isStep3Valid())
+                        (currentStep === 1 && !isStep1Valid()) || (currentStep === 2 && !isStep2Valid())
                           ? "bg-sky-300 cursor-not-allowed"
                           : "bg-sky-500 hover:bg-sky-600 hover:shadow-md"
                       }`}

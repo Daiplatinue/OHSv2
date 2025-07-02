@@ -1,7 +1,8 @@
+"use client"
+
 import { useState, useRef } from "react"
 import { Gem, Radio, Star, MapPin, Award, DollarSign, ChevronDown, ChevronUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
-
 import img1 from "../../../assets/Home/Cheerful Youth Portrait.jpeg"
 
 const topServices = [
@@ -9,7 +10,7 @@ const topServices = [
     id: 1,
     providerName: "SparkleClean",
     serviceName: "Regular Cleaning",
-    image: img1, 
+    image: img1,
     startingPrice: "10,000,000",
     isFirst: true,
     reviews: "3.2M+",
@@ -22,7 +23,7 @@ const topServices = [
     id: 2,
     providerName: "FixIt All",
     serviceName: "Furniture Assembly",
-    image: img1, 
+    image: img1,
     startingPrice: "5,000,000",
     isFirst: false,
     reviews: "2.9M+",
@@ -35,7 +36,7 @@ const topServices = [
     id: 3,
     providerName: "ColorMasters",
     serviceName: "Painting Services",
-    image: img1, 
+    image: img1,
     startingPrice: "1,000,000",
     isFirst: false,
     reviews: "1.2M+",
@@ -52,7 +53,7 @@ const serviceLeaderboardData = [
     providerName: "GreenThumb",
     serviceName: "Gardening & Landscaping",
     tag: "@greenthumb",
-    image: img1, 
+    image: img1,
     reviews: "102,062",
     rating: "4.9",
     avgPrice: "75,200",
@@ -63,7 +64,7 @@ const serviceLeaderboardData = [
     providerName: "TechFix",
     serviceName: "Electronics Repair",
     tag: "@techfix",
-    image: img1, 
+    image: img1,
     reviews: "98,812",
     rating: "4.8",
     avgPrice: "60,000",
@@ -74,7 +75,7 @@ const serviceLeaderboardData = [
     providerName: "PlumbPerfect",
     serviceName: "Plumbing Services",
     tag: "@plumbperfect",
-    image: img1, 
+    image: img1,
     reviews: "82,702",
     rating: "4.7",
     avgPrice: "89,999",
@@ -85,7 +86,7 @@ const serviceLeaderboardData = [
     providerName: "CleanSweep",
     serviceName: "Carpet Cleaning",
     tag: "@cleansweep",
-    image: img1, 
+    image: img1,
     reviews: "75,123",
     rating: "4.6",
     avgPrice: "55,000",
@@ -96,7 +97,7 @@ const serviceLeaderboardData = [
     providerName: "HandyManPro",
     serviceName: "Home Repairs",
     tag: "@handymanpro",
-    image: img1, 
+    image: img1,
     reviews: "68,901",
     rating: "4.5",
     avgPrice: "120,000",
@@ -107,7 +108,7 @@ const serviceLeaderboardData = [
     providerName: "PetPals",
     serviceName: "Pet Sitting",
     tag: "@petpals",
-    image: img1, 
+    image: img1,
     reviews: "60,456",
     rating: "4.7",
     avgPrice: "40,000",
@@ -118,7 +119,7 @@ const serviceLeaderboardData = [
     providerName: "FitFast",
     serviceName: "Personal Training",
     tag: "@fitfast",
-    image: img1, 
+    image: img1,
     reviews: "55,789",
     rating: "4.9",
     avgPrice: "90,000",
@@ -129,7 +130,7 @@ const serviceLeaderboardData = [
     providerName: "QuickFix",
     serviceName: "Appliance Repair",
     tag: "@quickfix",
-    image: img1, 
+    image: img1,
     reviews: "48,200",
     rating: "4.6",
     avgPrice: "70,000",
@@ -140,7 +141,7 @@ const serviceLeaderboardData = [
     providerName: "SparkleWash",
     serviceName: "Car Detailing",
     tag: "@sparklewash",
-    image: img1, 
+    image: img1,
     reviews: "42,100",
     rating: "4.8",
     avgPrice: "65,000",
@@ -151,7 +152,7 @@ const serviceLeaderboardData = [
     providerName: "GardenGuru",
     serviceName: "Lawn Care",
     tag: "@gardenguru",
-    image: img1, 
+    image: img1,
     reviews: "35,900",
     rating: "4.5",
     avgPrice: "50,000",
@@ -187,15 +188,15 @@ export default function Popular() {
         </div>
 
         {/* Top 3 Services Section */}
-        <div className="relative flex flex-col md:flex-row justify-center items-end gap-6 mb-12 mt-30">
+        <div className="relative flex flex-col md:flex-row justify-center items-center gap-20 mb-12 mt-48">
           <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-gray-200 to-transparent opacity-50 rounded-t-3xl" />
           <div className="absolute inset-x-0 bottom-0 h-32 bg-gray-100 opacity-70 rounded-t-3xl" />
 
           {/* FixIt All (2nd Place) */}
-          <div className="relative z-10 flex flex-col items-center p-6 bg-gradient-to-b from-white to-transparent rounded-2xl border border-sky-200  shadow-lg w-full max-w-xs md:max-w-[200px] lg:max-w-[240px] pb-10 pt-16 -mb-8 md:mb-0">
+          <div className="relative z-10 flex flex-col items-center p-6 bg-gradient-to-b from-white to-transparent rounded-2xl border border-sky-200  shadow-lg w-full max-w-xs md:max-w-[200px] lg:max-w-[240px] pb-10 pt-16 mb-8 md:mb-0">
             <div className="absolute -top-12">
               <img
-                src={topServices[1].image || "/placeholder.svg"} 
+                src={topServices[1].image || "/placeholder.svg"}
                 alt={topServices[1].serviceName}
                 width={80}
                 height={80}
@@ -236,10 +237,10 @@ export default function Popular() {
           </div>
 
           {/* SparkleClean (1st Place) */}
-          <div className="relative z-20 flex flex-col items-center p-6 bg-gradient-to-b from-white to-transparent rounded-2xl border border-sky-200 shadow-xl w-full max-w-xs md:max-w-[240px] lg:max-w-[280px] pb-10 pt-20 -mt-8 md:mt-0">
+          <div className="relative z-20 flex flex-col items-center p-6 bg-gradient-to-b from-white to-transparent rounded-2xl border border-sky-200 shadow-xl w-full max-w-xs md:max-w-[240px] lg:max-w-[290px] pb-10 pt-20 mb-8 md:mt-0">
             <div className="absolute -top-16">
               <img
-                src={topServices[0].image || "/placeholder.svg"} 
+                src={topServices[0].image || "/placeholder.svg"}
                 alt={topServices[0].serviceName}
                 width={100}
                 height={100}
@@ -280,10 +281,10 @@ export default function Popular() {
           </div>
 
           {/* ColorMasters (3rd Place) */}
-          <div className="relative z-10 flex flex-col items-center p-6 bg-gradient-to-b from-white to-transparent rounded-2xl border border-sky-200  shadow-lg w-full max-w-xs md:max-w-[200px] lg:max-w-[240px] pb-10 pt-16 -mb-8 md:mb-0">
+          <div className="relative z-10 flex flex-col items-center p-6 bg-gradient-to-b from-white to-transparent rounded-2xl border border-sky-200  shadow-lg w-full max-w-xs md:max-w-[200px] lg:max-w-[240px] pb-10 pt-16 mb-8 md:mb-0">
             <div className="absolute -top-12">
               <img
-                src={topServices[2].image || "/placeholder.svg"} 
+                src={topServices[2].image || "/placeholder.svg"}
                 alt={topServices[2].serviceName}
                 width={80}
                 height={80}
@@ -383,7 +384,7 @@ export default function Popular() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={service.image || "/placeholder.svg"} 
+                          src={service.image || "/placeholder.svg"}
                           alt={service.providerName}
                           width={40}
                           height={40}
@@ -409,12 +410,12 @@ export default function Popular() {
         </div>
         <div className="flex justify-center mt-6 gap-4">
           {displayCount < 10 && ( // Only show "Show More" if not at max display count
-            <Button onClick={handleExpand} variant="outline" className="text-sky-500">
+            <Button onClick={handleExpand} variant="outline" className="text-sky-500 bg-transparent">
               <ChevronDown className="w-4 h-4 mr-2" /> Show More
             </Button>
           )}
           {displayCount > 5 && ( // Only show "Show Less" if expanded beyond initial
-            <Button onClick={handleCollapse} variant="outline" className="text-sky-500">
+            <Button onClick={handleCollapse} variant="outline" className="text-sky-500 bg-transparent">
               <ChevronUp className="w-4 h-4 mr-2" /> Show Less
             </Button>
           )}

@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
@@ -45,13 +43,19 @@ interface InsuranceDocument {
   preview: string | null
 }
 
-export default function ManagerRequirements() {
+interface ManagerRequirementsProps {
+  accountType: "manager" // Added accountType prop
+}
+
+export default function ManagerRequirements({ accountType }: ManagerRequirementsProps) {
   // Form state
   const [currentStep, setCurrentStep] = useState(1)
 
   // Step 1 - Business Information
   const [businessName, setBusinessName] = useState("")
   const [businessEmail, setBusinessEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [foundedDate, setFoundedDate] = useState("")
   const [aboutCompany, setAboutCompany] = useState("")
   const [teamSize, setTeamSize] = useState("")
@@ -118,13 +122,14 @@ export default function ManagerRequirements() {
   const [secretCode, setSecretCode] = useState<string | null>(null)
 
   const [loading, setLoading] = useState(false)
-  const [, setError] = useState("")
+  const [error, setError] = useState("")
   const [, setSuccess] = useState(false)
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
   const [, setUserData] = useState<any>(null)
 
   // Confirmation modal state
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false)
+  const [skipVerification, setSkipVerification] = useState(false) // New state to track if verification was skipped
 
   // Refs for profile pictures
   const profilePictureRef = useRef<HTMLInputElement>(null)
@@ -167,25 +172,25 @@ export default function ManagerRequirements() {
   // Animation keyframes
   const keyframes = `
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+from { opacity: 0; }
+to { opacity: 1; }
 }
 
 @keyframes slideInUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+from { transform: translateY(20px); opacity: 0; }
+to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes bounceIn {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.2); }
-  100% { transform: scale(1); opacity: 1; }
+0% { transform: scale(0); opacity: 0; }
+60% { transform: scale(1.2); }
+100% { transform: scale(1); opacity: 1; }
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+0% { transform: scale(1); }
+50% { transform: scale(1.05); }
+100% { transform: scale(1); }
 }
 `
 
@@ -197,7 +202,7 @@ export default function ManagerRequirements() {
     document.head.appendChild(styleElement)
 
     // Handle body scroll
-    if (showWarningModal || showLocationModal || isConfirmationModalOpen) {
+    if (showWarningModal || showLocationModal || isConfirmationModalOpen || isSuccessModalOpen) {
       document.body.style.overflow = "hidden"
     } else {
       document.body.style.overflow = "auto"
@@ -212,7 +217,7 @@ export default function ManagerRequirements() {
       document.body.style.overflow = "auto"
       styleElement.remove()
     }
-  }, [showWarningModal, showLocationModal, isConfirmationModalOpen, keyframes])
+  }, [showWarningModal, showLocationModal, isConfirmationModalOpen, isSuccessModalOpen, keyframes])
 
   useEffect(() => {
     const generateSecretCode = async () => {
@@ -398,39 +403,30 @@ export default function ManagerRequirements() {
     }, 300)
   }
 
-  // Validation for each step
+  // Validation for each step - now minimal or always true
   const isStep1Valid = () => {
-    return (
-      businessName.trim() !== "" &&
-      businessEmail.trim() !== "" &&
-      foundedDate.trim() !== "" &&
-      aboutCompany.trim() !== "" &&
-      teamSize.trim() !== "" &&
-      companyNumber.trim() !== ""
-    )
+    // Only check password match, other fields are optional for now
+    return password === confirmPassword
   }
 
   const isStep2Valid = () => {
-    // Validate TIN number format: XXX-XXX-XXX
-    const tinRegex = /^\d{3}-\d{3}-\d{3}$/
-    return companyLocation !== null && tinRegex.test(tinNumber) && cityCoverage.length > 0
+    // All fields in this step are now optional for progression
+    return true
   }
 
   const isStep3Valid = () => {
-    return (
-      secRegistration !== null && businessPermit !== null && birRegistration !== null
-      // ECC is optional
-    )
+    // All fields in this step are now optional for progression
+    return true
   }
 
   const isStep4Valid = () => {
-    // Require at least general liability and workers comp
-    return generalLiability.file !== null && workersComp.file !== null
+    // All fields in this step are now optional for progression
+    return true
   }
 
   const isStep5Valid = () => {
-    // Require at least profile picture, secret question, and secret answer
-    return profilePicture !== null && secretQuestion.trim() !== "" && secretAnswer.trim() !== ""
+    // All fields in this step are now optional for progression
+    return true
   }
 
   const [isAnimating, setIsAnimating] = useState(false)
@@ -442,7 +438,6 @@ export default function ManagerRequirements() {
       animateStepChange("next", 2)
     } else if (currentStep === 2 && isStep2Valid()) {
       // Before going to step 3, show the confirmation modal
-      // Using a timeout to ensure it doesn't trigger twice due to React's batching
       if (!isConfirmationModalOpen) {
         setIsConfirmationModalOpen(true)
       }
@@ -484,59 +479,51 @@ export default function ManagerRequirements() {
     setError("")
 
     try {
-      // Create user data object (without API call)
-      const userData = {
-        firstname: businessName.split(" ")[0] || businessName,
-        lastname: businessName.split(" ").slice(1).join(" ") || "Company",
-        middleName: "",
-        email: businessEmail,
-        contact: companyNumber,
-        gender: "",
-        bio: aboutCompany,
-        location: companyLocation,
-        frontId: secRegistrationPreview,
-        backId: businessPermitPreview,
-        profilePicture: profilePicturePreview,
-        coverPhoto: coverPhotoPreview,
-        businessName: businessName,
-        foundedDate: foundedDate,
-        teamSize: teamSize,
-        tinNumber: tinNumber,
-        cityCoverage: cityCoverage,
-        secRegistrationPreview: secRegistrationPreview,
-        birRegistrationPreview: birRegistrationPreview,
-        businessPermitPreview: businessPermitPreview,
-        eccCertificatePreview: eccCertificatePreview,
-        generalLiability: {
-          preview: generalLiability.preview,
+      // IMPORTANT: Use absolute URL for fetch to ensure it hits your backend server
+      const response = await fetch("http://localhost:3000/api/users/register/manager", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        propertyDamage: {
-          preview: propertyDamage.preview,
-        },
-        workersComp: {
-          preview: workersComp.preview,
-        },
-        businessInterruption: {
-          preview: businessInterruption.preview,
-        },
-        professionalIndemnity: {
-          preview: professionalIndemnity.preview,
-        },
-        bondingInsurance: {
-          preview: bondingInsurance.preview,
-        },
-        type: businessName ? "ceo" : "manager",
-        status: "pending",
-        secretQuestion: secretQuestion,
-        secretAnswer: secretAnswer,
-        secretCode: secretCode,
+        body: JSON.stringify({
+          businessName: businessName || null,
+          businessEmail: businessEmail || null,
+          password: password || null,
+          foundedDate: foundedDate || null,
+          aboutCompany: aboutCompany || null,
+          teamSize: teamSize || null,
+          companyNumber: companyNumber || null,
+          companyLocation: companyLocation || null,
+          tinNumber: tinNumber || null,
+          cityCoverage: cityCoverage || [], // Ensure it's an array
+          secRegistration: secRegistrationPreview || null,
+          businessPermit: businessPermitPreview || null,
+          birRegistration: birRegistrationPreview || null,
+          eccCertificate: eccCertificatePreview || null,
+          generalLiability: generalLiability.preview || null,
+          workersComp: workersComp.preview || null,
+          professionalIndemnity: professionalIndemnity.preview || null,
+          propertyDamage: propertyDamage.preview || null,
+          businessInterruption: businessInterruption.preview || null,
+          bondingInsurance: bondingInsurance.preview || null,
+          profilePicture: profilePicturePreview || null,
+          coverPhoto: coverPhotoPreview || null,
+          secretQuestion: secretQuestion || null,
+          secretAnswer: secretAnswer || null,
+          secretCode: secretCode || null,
+          minimalMode: skipVerification, // Pass this to the backend
+          accountType: accountType, // Use prop here
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Registration failed")
       }
 
-      // Store user data in state (no API call)
-      setUserData(userData)
+      setUserData(data.user)
       setSuccess(true)
-
-      // Show success modal
       setIsSuccessModalOpen(true)
     } catch (error) {
       setError(error instanceof Error ? error.message : "An error occurred during registration")
@@ -561,11 +548,13 @@ export default function ManagerRequirements() {
   // Handle confirmation modal actions
   const handleContinueRegistration = () => {
     setIsConfirmationModalOpen(false)
+    setSkipVerification(false) // Not skipping verification
     animateStepChange("next", 3)
   }
 
   const handleSkipVerification = () => {
     setIsConfirmationModalOpen(false)
+    setSkipVerification(true) // Skipping verification
     // Skip to profile setup instead of review
     animateStepChange("next", 5)
   }
@@ -647,7 +636,7 @@ export default function ManagerRequirements() {
                           <label htmlFor="business-name" className="block text-sm font-medium text-gray-700 mb-1">
                             <span className="flex items-center">
                               <Building className="h-4 w-4 mr-1 text-gray-500" />
-                              Business Name
+                              Business Name (optional)
                             </span>
                           </label>
                           <input
@@ -656,7 +645,6 @@ export default function ManagerRequirements() {
                             value={businessName}
                             onChange={(e) => setBusinessName(e.target.value)}
                             placeholder="Enter your business name"
-                            required
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                           />
                         </div>
@@ -665,7 +653,7 @@ export default function ManagerRequirements() {
                           <label htmlFor="business-email" className="block text-sm font-medium text-gray-700 mb-1">
                             <span className="flex items-center">
                               <Mail className="h-4 w-4 mr-1 text-gray-500" />
-                              Business Email
+                              Business Email (optional)
                             </span>
                           </label>
                           <input
@@ -674,9 +662,41 @@ export default function ManagerRequirements() {
                             value={businessEmail}
                             onChange={(e) => setBusinessEmail(e.target.value)}
                             placeholder="business@example.com"
-                            required
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                           />
+                        </div>
+                      </div>
+
+                      {/* Password & Confirm Password */}
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                            Password (optional)
+                          </label>
+                          <input
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter your password"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1">
+                            Confirm Password (optional)
+                          </label>
+                          <input
+                            id="confirm-password"
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm your password"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          />
+                          {password !== confirmPassword && confirmPassword !== "" && (
+                            <p className="text-red-500 text-xs mt-1">Passwords do not match.</p>
+                          )}
                         </div>
                       </div>
 
@@ -686,14 +706,13 @@ export default function ManagerRequirements() {
                           <label htmlFor="team-size" className="block text-sm font-medium text-gray-700 mb-1">
                             <span className="flex items-center">
                               <Users className="h-4 w-4 mr-1 text-gray-500" />
-                              Team Size
+                              Team Size (optional)
                             </span>
                           </label>
                           <select
                             id="team-size"
                             value={teamSize}
                             onChange={(e) => setTeamSize(e.target.value)}
-                            required
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                           >
                             <option value="">Select team size</option>
@@ -711,7 +730,7 @@ export default function ManagerRequirements() {
                           <label htmlFor="company-number" className="block text-sm font-medium text-gray-700 mb-1">
                             <span className="flex items-center">
                               <Phone className="h-4 w-4 mr-1 text-gray-500" />
-                              Company Contact Number
+                              Company Contact Number (optional)
                             </span>
                           </label>
                           <input
@@ -720,7 +739,6 @@ export default function ManagerRequirements() {
                             value={companyNumber}
                             onChange={(e) => setCompanyNumber(e.target.value)}
                             placeholder="Enter company contact number"
-                            required
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                           />
                         </div>
@@ -731,7 +749,7 @@ export default function ManagerRequirements() {
                         <label htmlFor="founded-date" className="block text-sm font-medium text-gray-700 mb-1">
                           <span className="flex items-center">
                             <Calendar className="h-4 w-4 mr-1 text-gray-500" />
-                            Founded Date
+                            Founded Date (optional)
                           </span>
                         </label>
                         <input
@@ -739,7 +757,6 @@ export default function ManagerRequirements() {
                           type="date"
                           value={foundedDate}
                           onChange={(e) => setFoundedDate(e.target.value)}
-                          required
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                         />
                       </div>
@@ -747,7 +764,7 @@ export default function ManagerRequirements() {
                       {/* About Company - Full width at bottom */}
                       <div>
                         <label htmlFor="about-company" className="block text-sm font-medium text-gray-700 mb-1">
-                          About the Company
+                          About the Company (optional)
                         </label>
                         <textarea
                           id="about-company"
@@ -755,7 +772,6 @@ export default function ManagerRequirements() {
                           onChange={(e) => setAboutCompany(e.target.value)}
                           placeholder="Tell us about your company, services, and mission..."
                           rows={5}
-                          required
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                         />
                       </div>
@@ -775,7 +791,7 @@ export default function ManagerRequirements() {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             <span className="flex items-center">
                               <MapPin className="h-4 w-4 mr-1 text-gray-500" />
-                              Company Location
+                              Company Location (optional)
                             </span>
                           </label>
                           <button
@@ -810,7 +826,7 @@ export default function ManagerRequirements() {
                           <label htmlFor="tin-number" className="block text-sm font-medium text-gray-700 mb-1">
                             <span className="flex items-center">
                               <FileText className="h-4 w-4 mr-1 text-gray-500" />
-                              TIN Number
+                              TIN Number (optional)
                             </span>
                           </label>
                           <div className="relative">
@@ -820,7 +836,6 @@ export default function ManagerRequirements() {
                               value={tinNumber}
                               onChange={handleTinNumberChange}
                               placeholder="Enter your TIN number"
-                              required
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 pr-10"
                               maxLength={11} // Max length for XXX-XXX-XXX
                             />
@@ -839,7 +854,9 @@ export default function ManagerRequirements() {
                       {/* Right side - City coverage */}
                       <div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">City Coverage Area</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            City Coverage Area (optional)
+                          </label>
                           <div className="flex mb-2">
                             <input
                               type="text"
@@ -903,7 +920,9 @@ export default function ManagerRequirements() {
                       {/* Left side - SEC and Business Permit */}
                       <div className="space-y-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">SEC Registration</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            SEC Registration (optional)
+                          </label>
                           <div
                             className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${
                               secRegistration ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
@@ -949,7 +968,7 @@ export default function ManagerRequirements() {
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Mayor's Permit / Business Permit
+                            Mayor's Permit / Business Permit (optional)
                           </label>
                           <div
                             className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${
@@ -1000,7 +1019,9 @@ export default function ManagerRequirements() {
                       {/* Right side - BIR and ECC */}
                       <div className="space-y-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">BIR Registration</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            BIR Registration (optional)
+                          </label>
                           <div
                             className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${
                               birRegistration ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
@@ -1048,7 +1069,7 @@ export default function ManagerRequirements() {
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Environmental Compliance Certificate (ECC)
+                            Environmental Compliance Certificate (ECC) (optional)
                           </label>
                           <div
                             className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${
@@ -1127,7 +1148,7 @@ export default function ManagerRequirements() {
                           <div className="flex items-center mb-2">
                             <Shield className="h-4 w-4 mr-1 text-sky-500" />
                             <label className="block text-sm font-medium text-gray-700">
-                              General Liability Insurance
+                              General Liability Insurance (optional)
                             </label>
                           </div>
                           <p className="text-xs text-gray-500 mb-3">
@@ -1183,7 +1204,7 @@ export default function ManagerRequirements() {
                           <div className="flex items-center mb-2">
                             <HardHat className="h-4 w-4 mr-1 text-sky-500" />
                             <label className="block text-sm font-medium text-gray-700">
-                              Worker's Compensation Insurance
+                              Worker's Compensation Insurance (optional)
                             </label>
                           </div>
                           <p className="text-xs text-gray-500 mb-3">Covers employees in case of injury while on duty</p>
@@ -1237,7 +1258,7 @@ export default function ManagerRequirements() {
                           <div className="flex items-center mb-2">
                             <Briefcase className="h-4 w-4 mr-1 text-sky-500" />
                             <label className="block text-sm font-medium text-gray-700">
-                              Professional Indemnity Insurance
+                              Professional Indemnity Insurance (optional)
                             </label>
                           </div>
                           <p className="text-xs text-gray-500 mb-3">
@@ -1297,7 +1318,9 @@ export default function ManagerRequirements() {
                         <div>
                           <div className="flex items-center mb-2">
                             <Home className="h-4 w-4 mr-1 text-sky-500" />
-                            <label className="block text-sm font-medium text-gray-700">Property Damage Insurance</label>
+                            <label className="block text-sm font-medium text-gray-700">
+                              Property Damage Insurance (optional)
+                            </label>
                           </div>
                           <p className="text-xs text-gray-500 mb-3">
                             Protects against damage to the customer's property during service
@@ -1352,7 +1375,7 @@ export default function ManagerRequirements() {
                           <div className="flex items-center mb-2">
                             <PauseCircle className="h-4 w-4 mr-1 text-sky-500" />
                             <label className="block text-sm font-medium text-gray-700">
-                              Business Interruption Insurance
+                              Business Interruption Insurance (optional)
                             </label>
                           </div>
                           <p className="text-xs text-gray-500 mb-3">
@@ -1409,7 +1432,9 @@ export default function ManagerRequirements() {
                         <div>
                           <div className="flex items-center mb-2">
                             <CheckSquare className="h-4 w-4 mr-1 text-sky-500" />
-                            <label className="block text-sm font-medium text-gray-700">Bonding Insurance</label>
+                            <label className="block text-sm font-medium text-gray-700">
+                              Bonding Insurance (optional)
+                            </label>
                           </div>
                           <p className="text-xs text-gray-500 mb-3">
                             Protects customers if the service provider fails to complete the job.
@@ -1488,7 +1513,9 @@ export default function ManagerRequirements() {
                       <div className="space-y-6">
                         {/* Cover Photo */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Company Cover Photo</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Company Cover Photo (optional)
+                          </label>
                           <div
                             className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors h-40 ${
                               coverPhoto ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
@@ -1526,7 +1553,9 @@ export default function ManagerRequirements() {
 
                         {/* Profile Picture */}
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Company Logo</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Company Logo (optional)
+                          </label>
                           <div
                             className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${
                               profilePicture ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"
@@ -1565,7 +1594,9 @@ export default function ManagerRequirements() {
 
                       <div className="space-y-6">
                         <div>
-                          <h4 className="text-lg font-medium mb-4 text-gray-700">Secret Question & Answer</h4>
+                          <h4 className="text-lg font-medium mb-4 text-gray-700">
+                            Secret Question & Answer (optional)
+                          </h4>
                           <div className="bg-white border rounded-lg p-6 space-y-4">
                             <div>
                               <label htmlFor="secret-question" className="mb-1 block text-sm font-medium">
@@ -1576,7 +1607,6 @@ export default function ManagerRequirements() {
                                 value={secretQuestion}
                                 onChange={(e) => setSecretQuestion(e.target.value)}
                                 placeholder="e.g., What is your mother's maiden name?"
-                                required
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                               />
                             </div>
@@ -1589,7 +1619,6 @@ export default function ManagerRequirements() {
                                 value={secretAnswer}
                                 onChange={(e) => setSecretAnswer(e.target.value)}
                                 placeholder="Enter your secret answer"
-                                required
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500"
                               />
                             </div>
@@ -1612,7 +1641,6 @@ export default function ManagerRequirements() {
                     </div>
                   </div>
                 )}
-
                 {/* Step 6: Review */}
                 {currentStep === 6 && (
                   <div>
@@ -1657,7 +1685,7 @@ export default function ManagerRequirements() {
                           <div className="flex justify-between items-start mb-4">
                             <div>
                               <div className="flex items-center gap-2">
-                                <h1 className="text-2xl font-medium text-gray-700">{businessName}</h1>
+                                <h1 className="text-2xl font-medium text-gray-700">{businessName || "Not provided"}</h1>
                                 <span className="px-2 py-0.5 bg-sky-100 text-sky-800 text-xs font-medium rounded-full">
                                   Service Provider
                                 </span>
@@ -1665,13 +1693,15 @@ export default function ManagerRequirements() {
                               {companyLocation && (
                                 <div className="flex items-center gap-2 mt-1 text-gray-600">
                                   <MapPin className="h-4 w-4" />
-                                  <span>{companyLocation.name}</span>
+                                  <span>{companyLocation.name || "Not provided"}</span>
                                 </div>
                               )}
                             </div>
                           </div>
 
-                          {aboutCompany && <p className="text-gray-600 max-w-2xl mb-6">{aboutCompany}</p>}
+                          {aboutCompany && (
+                            <p className="text-gray-600 max-w-2xl mb-6">{aboutCompany || "Not provided"}</p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1694,23 +1724,23 @@ export default function ManagerRequirements() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">Business Name</h5>
-                            <p className="text-gray-900">{businessName}</p>
+                            <p className="text-gray-900">{businessName || "Not provided"}</p>
                           </div>
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">Business Email</h5>
-                            <p className="text-gray-900">{businessEmail}</p>
+                            <p className="text-gray-900">{businessEmail || "Not provided"}</p>
                           </div>
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">Founded Date</h5>
-                            <p className="text-gray-900">{foundedDate}</p>
+                            <p className="text-gray-900">{foundedDate || "Not provided"}</p>
                           </div>
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">Contact Number</h5>
-                            <p className="text-gray-900">{companyNumber}</p>
+                            <p className="text-gray-900">{companyNumber || "Not provided"}</p>
                           </div>
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">Team Size</h5>
-                            <p className="text-gray-900">{teamSize}</p>
+                            <p className="text-gray-900">{teamSize || "Not provided"}</p>
                           </div>
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">TIN Number</h5>
@@ -1728,7 +1758,7 @@ export default function ManagerRequirements() {
                         </div>
                         <div className="mt-4">
                           <h5 className="text-sm font-medium text-gray-500 mb-1">About the Company</h5>
-                          <p className="text-gray-900">{aboutCompany}</p>
+                          <p className="text-gray-900">{aboutCompany || "Not provided"}</p>
                         </div>
                       </div>
 
@@ -1739,23 +1769,28 @@ export default function ManagerRequirements() {
                           {companyLocation && (
                             <div>
                               <h5 className="text-sm font-medium text-gray-500 mb-1">Company Location</h5>
-                              <p className="text-gray-900">{companyLocation.name}</p>
+                              <p className="text-gray-900">{companyLocation.name || "Not provided"}</p>
                               <p className="text-sm text-gray-500">
-                                Lat: {companyLocation.lat.toFixed(6)}, Lng: {companyLocation.lng.toFixed(6)}
+                                Lat: {companyLocation.lat?.toFixed(6) || "N/A"}, Lng:{" "}
+                                {companyLocation.lng?.toFixed(6) || "N/A"}
                               </p>
                             </div>
                           )}
                           <div>
                             <h5 className="text-sm font-medium text-gray-500 mb-1">Service Coverage Areas</h5>
                             <div className="flex flex-wrap gap-2 mt-1">
-                              {cityCoverage.map((city) => (
-                                <span
-                                  key={city}
-                                  className="inline-block bg-sky-100 text-sky-800 px-2 py-1 rounded-full text-xs"
-                                >
-                                  {city}
-                                </span>
-                              ))}
+                              {cityCoverage.length > 0 ? (
+                                cityCoverage.map((city) => (
+                                  <span
+                                    key={city}
+                                    className="inline-block bg-sky-100 text-sky-800 px-2 py-1 rounded-full text-xs"
+                                  >
+                                    {city}
+                                  </span>
+                                ))
+                              ) : (
+                                <p className="text-gray-500 text-sm">Not provided</p>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1784,7 +1819,7 @@ export default function ManagerRequirements() {
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-red-500 text-sm">Not uploaded</p>
+                              <p className="text-gray-500 text-sm">Not uploaded</p>
                             )}
                           </div>
                           <div>
@@ -1806,7 +1841,7 @@ export default function ManagerRequirements() {
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-red-500 text-sm">Not uploaded</p>
+                              <p className="text-gray-500 text-sm">Not uploaded</p>
                             )}
                           </div>
                           <div>
@@ -1828,7 +1863,7 @@ export default function ManagerRequirements() {
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-red-500 text-sm">Not uploaded</p>
+                              <p className="text-gray-500 text-sm">Not uploaded</p>
                             )}
                           </div>
                           <div>
@@ -1850,7 +1885,7 @@ export default function ManagerRequirements() {
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-gray-500 text-sm">Optional (Not uploaded)</p>
+                              <p className="text-gray-500 text-sm">Not uploaded</p>
                             )}
                           </div>
                         </div>
@@ -1879,7 +1914,7 @@ export default function ManagerRequirements() {
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-red-500 text-sm">Not uploaded</p>
+                              <p className="text-gray-500 text-sm">Not uploaded</p>
                             )}
                           </div>
                           <div>
@@ -1901,10 +1936,10 @@ export default function ManagerRequirements() {
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-red-500 text-sm">Not uploaded</p>
+                              <p className="text-gray-500 text-sm">Not uploaded</p>
                             )}
                           </div>
-                          {professionalIndemnity.preview && (
+                          {professionalIndemnity.preview ? (
                             <div>
                               <h5 className="text-sm font-medium text-gray-500 mb-1">Professional Indemnity</h5>
                               <div
@@ -1923,8 +1958,10 @@ export default function ManagerRequirements() {
                                 </div>
                               </div>
                             </div>
+                          ) : (
+                            <p className="text-gray-500 text-sm">Not uploaded</p>
                           )}
-                          {propertyDamage.preview && (
+                          {propertyDamage.preview ? (
                             <div>
                               <h5 className="text-sm font-medium text-gray-500 mb-1">Property Damage</h5>
                               <div
@@ -1943,8 +1980,10 @@ export default function ManagerRequirements() {
                                 </div>
                               </div>
                             </div>
+                          ) : (
+                            <p className="text-gray-500 text-sm">Not uploaded</p>
                           )}
-                          {businessInterruption.preview && (
+                          {businessInterruption.preview ? (
                             <div>
                               <h5 className="text-sm font-medium text-gray-500 mb-1">Business Interruption</h5>
                               <div
@@ -1963,8 +2002,10 @@ export default function ManagerRequirements() {
                                 </div>
                               </div>
                             </div>
+                          ) : (
+                            <p className="text-gray-500 text-sm">Not uploaded</p>
                           )}
-                          {bondingInsurance.preview && (
+                          {bondingInsurance.preview ? (
                             <div>
                               <h5 className="text-sm font-medium text-gray-500 mb-1">Bonding Insurance</h5>
                               <div
@@ -1983,6 +2024,8 @@ export default function ManagerRequirements() {
                                 </div>
                               </div>
                             </div>
+                          ) : (
+                            <p className="text-gray-500 text-sm">Not uploaded</p>
                           )}
                         </div>
                       </div>
@@ -2081,6 +2124,11 @@ export default function ManagerRequirements() {
                   </button>
                 )}
               </div>
+              {error && (
+                <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-center">
+                  {error}
+                </div>
+              )}
             </form>
           </div>
         </div>
