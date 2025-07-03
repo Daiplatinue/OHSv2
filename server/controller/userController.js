@@ -1,4 +1,5 @@
 import { User } from "../models/user.js"
+import bcrypt from "bcryptjs"
 
 // Helper function for password validation
 const validatePassword = (password) => {
@@ -8,8 +9,6 @@ const validatePassword = (password) => {
   return null
 }
 
-// Helper function to handle optional fields: if null, undefined, or empty string, make it 'not provided'
-// This helper will remain for other fields where 'not provided' is an acceptable placeholder.
 const getOptionalValue = (value) => {
   return value === null || value === undefined || value === "" ? "not provided" : value
 }
@@ -25,7 +24,7 @@ export const registerCustomer = async (req, res) => {
       mobileNumber,
       gender,
       location,
-      minimalMode, // From frontend
+      minimalMode,
       middleName,
       bio,
       secretQuestion,
@@ -101,8 +100,8 @@ export const registerCustomer = async (req, res) => {
   }
 }
 
-// Register Manager
-export const registerManager = async (req, res) => {
+// Register coo
+export const registerCOO = async (req, res) => {
   try {
     const {
       email,
@@ -114,7 +113,7 @@ export const registerManager = async (req, res) => {
       tinNumber,
       cityCoverage,
       location,
-      minimalMode, // From frontend
+      minimalMode,
       secretQuestion,
       secretAnswer,
       secretCode,
@@ -150,10 +149,10 @@ export const registerManager = async (req, res) => {
 
     // Set default values for optional fields.
     // For email, explicitly set to null if not provided, to avoid unique key error.
-    const managerData = {
+    const COOData = {
       email: email || null, // FIX: Set email to null if not provided, instead of "not provided" string
       password: password || null,
-      accountType: "manager",
+      accountType: "coo",
       businessName: getOptionalValue(businessName),
       foundedDate: getOptionalValue(foundedDate),
       teamSize: getOptionalValue(teamSize),
@@ -189,16 +188,46 @@ export const registerManager = async (req, res) => {
       isVerified: minimalMode ? true : false,
     }
 
-    const newUser = new User(managerData)
+    const newUser = new User(COOData)
     await newUser.save()
 
-    res.status(201).json({ message: "Manager registered successfully!", user: newUser })
+    res.status(201).json({ message: "COO registered successfully!", user: newUser })
   } catch (error) {
-    console.error("Manager registration error:", error)
+    console.error("COO registration error:", error)
     if (error.name === "ValidationError") {
       const messages = Object.values(error.errors).map((err) => err.message)
       return res.status(400).json({ message: messages.join(", ") })
     }
-    res.status(500).json({ message: "Server error during manager registration." })
+    res.status(500).json({ message: "Server error during coo registration." })
+  }
+}
+
+// New login function
+export const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Please enter both email and password." })
+    }
+
+    const user = await User.findOne({ email })
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials." })
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password)
+
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials." })
+    }
+
+    // If login is successful, return user data (excluding password)
+    const { password: _, ...userData } = user.toObject()
+    res.status(200).json({ message: "Login successful!", user: userData })
+  } catch (error) {
+    console.error("Login error:", error)
+    res.status(500).json({ message: "Server error during login." })
   }
 }

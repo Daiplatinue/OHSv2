@@ -2,7 +2,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { X, AlertTriangle, XCircle, Clock, CheckCircle2, AlertCircle } from "lucide-react"
 import CustomerRequirements from "./Styles/CustomerRequirements"
-import ManagerRequirements from "./Styles/ManagerRequirements"
+import COORequirements from "./Styles/COORequirements"
 import OTP from "../sections/Styles/OTP"
 import TermsCondition from "../sections/Styles/TermsCondition"
 import Cookies from "js-cookie"
@@ -166,25 +166,70 @@ function LoginAlt() {
   const [showUnverifiedWarning, setShowUnverifiedWarning] = useState(false)
   const [customerMinimalMode, setCustomerMinimalMode] = useState(false)
 
+  // Removed: const router = useRouter() // Not used in Vite
+
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     setError("")
     setLoading(true)
 
+    if (!email || (showPasswordField && !password)) {
+      setError("Please enter both email and password.")
+      setLoading(false)
+      return
+    }
+
     try {
       if (showPasswordField) {
-        console.log("Login with password requested for:", email, "and password:", password)
-        if (saveCredentials) {
-          console.log("Saving login credentials...")
-        }
-        setTimeout(() => {
-          setLoading(false)
-          setError("Password login simulated. Redirecting...")
+        // Login with password
+        const response = await fetch("http://localhost:3000/api/users/login", {
+          // Replace with your actual backend URL
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        })
+
+        const data = await response.json()
+
+        if (response.ok) {
+          setSuccessMessage(data.message)
+          setShowSuccessModal(true)
+          // Store user data or token if needed, e.g., in localStorage or cookies
+          localStorage.setItem("user", JSON.stringify(data.user))
+
+          // Redirect based on account type
+          const userAccountType = data.user.accountType
+          let redirectPath = "/"
+          switch (userAccountType) {
+            case "customer":
+              redirectPath = "/"
+              break
+            case "coo":
+              redirectPath = "/coo"
+              break
+            case "admin":
+              redirectPath = "/admin"
+              break
+            case "provider":
+              redirectPath = "/provider"
+              break
+            default:
+              redirectPath = "/" // Default redirect for unknown types
+          }
+
           setTimeout(() => {
-            console.log("Redirecting to dashboard...")
-          }, 1000)
-        }, 1000)
+            setShowSuccessModal(false)
+            window.location.href = redirectPath // Use window.location.href for Vite
+          }, 1500)
+        } else {
+          setUnsuccessMessage(data.message || "Login failed. Please check your credentials.")
+          setShowUnsuccessModal(true)
+          setTimeout(() => setShowUnsuccessModal(false), 2000)
+        }
       } else {
+        // Magic link (existing logic)
         console.log("Magic link requested for:", email)
         setTimeout(() => {
           setLoading(false)
@@ -193,7 +238,10 @@ function LoginAlt() {
       }
     } catch (err) {
       console.error("Login error:", err)
-      setError(`Failed to login. Please try again.`)
+      setUnsuccessMessage("Failed to connect to the server. Please try again later.")
+      setShowUnsuccessModal(true)
+      setTimeout(() => setShowUnsuccessModal(false), 2000)
+    } finally {
       setLoading(false)
     }
   }
@@ -204,6 +252,8 @@ function LoginAlt() {
     setError("Successfully authenticated! Redirecting to dashboard...")
     setTimeout(() => {
       console.log("Redirecting to dashboard...")
+      // For magic link, you might fetch user data and then redirect
+      window.location.href = "/" // Example redirect after magic link OTP
     }, 2000)
   }
 
@@ -424,7 +474,7 @@ function LoginAlt() {
           <button
             onClick={handleLogin}
             className={`w-full bg-gray-200 text-gray-500 hover:bg-gray-300 rounded-full h-12 font-medium transition-colors
-        ${!email || (showPasswordField && !password) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
+      ${!email || (showPasswordField && !password) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
             disabled={!email || (showPasswordField && !password) || loading}
           >
             {loading
@@ -544,11 +594,9 @@ function LoginAlt() {
                     }}
                     disabled={!termsAccepted} // Disabled if terms not accepted
                     className={`flex flex-col items-center justify-center p-6 border-2 rounded-xl transition-all w-[13rem] cursor-pointer
-                    ${
-                      termsAccepted
-                        ? "hover:border-sky-400 hover:bg-sky-50"
-                        : "opacity-50 cursor-not-allowed bg-gray-100"
-                    }`}
+                  ${
+                    termsAccepted ? "hover:border-sky-400 hover:bg-sky-50" : "opacity-50 cursor-not-allowed bg-gray-100"
+                  }`}
                   >
                     <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mb-4">
                       <svg
@@ -568,21 +616,19 @@ function LoginAlt() {
                       </svg>
                     </div>
                     <h3 className="font-medium text-lg text-gray-700">Customer</h3>
-                    <p className="text-sm text-gray-500 text-center mt-2">Sign up to hire service providers</p>
+                    <p className="text-sm text-gray-500 text-center mt-2">Book services easier than ever</p>
                   </button>
 
                   <button
                     onClick={() => {
-                      setAccountType("manager")
+                      setAccountType("coo")
                       setRegistrationStep("requirements")
                     }}
                     disabled={!termsAccepted} // Disabled if terms not accepted
                     className={`flex flex-col items-center justify-center p-6 border-2 rounded-xl transition-all w-[13rem] cursor-pointer
-                    ${
-                      termsAccepted
-                        ? "hover:border-sky-400 hover:bg-sky-50"
-                        : "opacity-50 cursor-not-allowed bg-gray-100"
-                    }`}
+                  ${
+                    termsAccepted ? "hover:border-sky-400 hover:bg-sky-50" : "opacity-50 cursor-not-allowed bg-gray-100"
+                  }`}
                   >
                     <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mb-4">
                       <svg
@@ -603,8 +649,10 @@ function LoginAlt() {
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                       </svg>
                     </div>
-                    <h3 className="font-medium text-lg text-gray-700">Manager</h3>
-                    <p className="text-sm text-gray-500 text-center mt-2">Sign up to offer services</p>
+                    <h3 className="font-medium text-lg text-gray-700">COO</h3>
+                    <p className="text-sm text-gray-500 text-center mt-2">
+                      Chief Operating Officer, offer various services
+                    </p>
                   </button>
                 </div>
                 <div className="mt-8 text-center text-sm text-gray-600 px-4">
@@ -624,8 +672,8 @@ function LoginAlt() {
                     minimalMode={customerMinimalMode}
                     accountType="customer"
                   />
-                ) : accountType === "manager" ? (
-                  <ManagerRequirements accountType="manager" />
+                ) : accountType === "coo" ? (
+                  <COORequirements accountType="coo" />
                 ) : null}
               </>
             )}
@@ -869,7 +917,6 @@ function LoginAlt() {
         </div>
       )}
 
-      {/* New: Unverified Account Warning Modal (styled like ManagerRequirements.tsx warning) */}
       {showUnverifiedWarning && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md"

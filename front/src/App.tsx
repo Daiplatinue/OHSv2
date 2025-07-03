@@ -16,7 +16,7 @@ import MyProfile from './sections/Admin_Tabs/MyProfile';
 import MyEmailsAdmin from './sections/Admin_Tabs/MyEmailsAdmin';
 import MyNotificationsAdmin from './sections/Admin_Tabs/MyNotificationsAdmin';
 
-import Ceo from './sections/Ceo';
+import COO from './sections/COO';
 import MyBalance from './sections/Manager-tabs/MyBalance';
 import Bookings from './sections/Manager-tabs/Bookings';
 import EmailCeo from './sections/Manager-tabs/MyEmailsCeo';
@@ -54,7 +54,7 @@ const App: React.FC = () => {
         <Route path='/admin/notifications' element={<MyNotificationsAdmin />} />
 
         {/* Ceo Tabs */}
-        <Route path='/ceo' element={<Ceo />} />
+        <Route path='/coo' element={<COO />} />
         <Route path='/ceo/my-balance' element={<MyBalance />} />
         <Route path='/ceo/bookings' element={<Bookings />} />
         <Route path='/ceo/email' element={<EmailCeo />} />
