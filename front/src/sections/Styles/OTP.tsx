@@ -1,20 +1,19 @@
-"use client"
-
 import type React from "react"
 
-import { CheckCircle2, X, ArrowRight } from "lucide-react"
+import { CheckCircle2, X, ArrowRight, AlertCircle } from "lucide-react" // Added AlertCircle for error icon
 import { useEffect, useRef, useState, useCallback } from "react"
 import ReCAPTCHA from "../Styles/Recaptcha"
-import { verifyRecaptchaClient } from "../../../../server/Recaptcha/Recaptcha" // New client-side API helper
+import { verifyRecaptchaClient } from "../../../../server/Recaptcha/Recaptcha"
 
 interface OTPProps {
   email: string
   onClose: () => void
-  onVerify: () => void
+  onOtpVerifiedSuccess: (user: any) => void // Modified to pass user data on full success
   visible: boolean
+  onResendOtp: (email: string) => Promise<boolean> // New prop for resending OTP
 }
 
-function OTP({ email, onClose, onVerify, visible }: OTPProps) {
+function OTP({ email, onClose, onOtpVerifiedSuccess, visible, onResendOtp }: OTPProps) {
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""))
   const [isVerifying, setIsVerifying] = useState(false)
   const [error, setError] = useState("")
@@ -25,10 +24,18 @@ function OTP({ email, onClose, onVerify, visible }: OTPProps) {
   const [modalVisible, setModalVisible] = useState(false)
   const [showRecaptcha, setShowRecaptcha] = useState(false)
   const [isRecaptchaVerifying, setIsRecaptchaVerifying] = useState(false)
+  const [verifiedUserData, setVerifiedUserData] = useState<any | null>(null) // To store user data after OTP verification
 
   useEffect(() => {
     if (visible) {
       setTimeout(() => setModalVisible(true), 10)
+      setCountdown(60) // Reset countdown when modal becomes visible
+      setResendDisabled(true) // Disable resend immediately
+      setOtp(Array(6).fill("")) // Clear OTP input
+      setError("") // Clear any previous errors
+      setSuccess(false) // Reset success state
+      setShowRecaptcha(false) // Hide recaptcha initially
+      setVerifiedUserData(null) // Clear verified user data
     } else {
       setModalVisible(false)
     }
@@ -105,15 +112,20 @@ function OTP({ email, onClose, onVerify, visible }: OTPProps) {
     inputRefs.current[lastIndex]?.focus()
   }
 
-  const handleResend = () => {
+  const handleResend = async () => {
     setCountdown(60)
     setResendDisabled(true)
-    console.log("Resending OTP to:", email)
-    setError("New OTP code sent!")
+    setError("")
+    const success = await onResendOtp(email)
+    if (success) {
+      setError("New OTP code sent!")
+    } else {
+      setError("Failed to resend OTP. Please try again.")
+    }
     setTimeout(() => setError(""), 3000)
   }
 
-  const handleVerify = () => {
+  const handleVerifyClick = async () => {
     const otpValue = otp.join("")
 
     if (otpValue.length !== 6) {
@@ -124,11 +136,32 @@ function OTP({ email, onClose, onVerify, visible }: OTPProps) {
     setError("")
     setIsVerifying(true)
 
-    setTimeout(() => {
+    try {
+      const response = await fetch("http://localhost:3000/api/users/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, otp: otpValue }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setVerifiedUserData(data.user) // Store user data
+        setShowRecaptcha(true) // Proceed to reCAPTCHA
+        setError("") // Clear any previous errors
+      } else {
+        setError(data.message || "Invalid or expired OTP.") // Show error if OTP is wrong
+        setOtp(Array(6).fill("")) // Clear OTP input on error
+        inputRefs.current[0]?.focus() // Focus first input
+      }
+    } catch (err) {
+      console.error("OTP verification error:", err)
+      setError("Failed to connect to the server for OTP verification. Please try again.")
+    } finally {
       setIsVerifying(false)
-      // After OTP "verification", show reCAPTCHA
-      setShowRecaptcha(true)
-    }, 1500)
+    }
   }
 
   const handleRecaptchaSuccess = useCallback(
@@ -136,13 +169,14 @@ function OTP({ email, onClose, onVerify, visible }: OTPProps) {
       setIsRecaptchaVerifying(true)
       setError("")
       try {
-        // Call the new client-side API helper
         const result = await verifyRecaptchaClient(token)
 
         if (result.success) {
           setSuccess(true)
           setTimeout(() => {
-            onVerify()
+            if (verifiedUserData) {
+              onOtpVerifiedSuccess(verifiedUserData) // Pass the stored user data
+            }
           }, 1500)
         } else {
           setError(result.message || "reCAPTCHA verification failed.")
@@ -160,7 +194,7 @@ function OTP({ email, onClose, onVerify, visible }: OTPProps) {
         setIsRecaptchaVerifying(false)
       }
     },
-    [onVerify],
+    [onOtpVerifiedSuccess, verifiedUserData],
   )
 
   const handleRecaptchaError = useCallback(() => {
@@ -249,14 +283,15 @@ function OTP({ email, onClose, onVerify, visible }: OTPProps) {
               </div>
 
               {error && (
-                <p className={`text-center text-sm mb-4 ${error.includes("sent") ? "text-green-500" : "text-red-500"}`}>
+                <div className="flex items-center justify-center text-center text-sm mb-4 text-red-500">
+                  <AlertCircle className="h-4 w-4 mr-1" />
                   {error}
-                </p>
+                </div>
               )}
 
               <div className="flex flex-col gap-4">
                 <button
-                  onClick={handleVerify}
+                  onClick={handleVerifyClick}
                   disabled={otp.join("").length !== 6 || isVerifying}
                   className={`w-full py-3 px-4 rounded-full font-medium flex items-center justify-center gap-2 ${
                     otp.join("").length !== 6 || isVerifying

@@ -1,5 +1,3 @@
-// This file runs on the client-side (in your Vite app)
-
 interface RecaptchaVerificationResult {
   success: boolean
   message?: string
@@ -7,8 +5,7 @@ interface RecaptchaVerificationResult {
 
 export async function verifyRecaptchaClient(token: string): Promise<RecaptchaVerificationResult> {
   try {
-    // Changed to match backend running on port 3000
-    const response = await fetch("http://localhost:3006/captcha", {
+    const response = await fetch("http://localhost:3000/api/verify-recaptcha", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { X, AlertTriangle, XCircle, Clock, CheckCircle2, AlertCircle } from "lucide-react"
 import CustomerRequirements from "./Styles/CustomerRequirements"
 import COORequirements from "./Styles/COORequirements"
@@ -173,8 +173,8 @@ function LoginAlt() {
     setError("")
     setLoading(true)
 
-    if (!email || (showPasswordField && !password)) {
-      setError("Please enter both email and password.")
+    if (!email) {
+      setError("Please enter your email.")
       setLoading(false)
       return
     }
@@ -182,8 +182,12 @@ function LoginAlt() {
     try {
       if (showPasswordField) {
         // Login with password
+        if (!password) {
+          setError("Please enter your password.")
+          setLoading(false)
+          return
+        }
         const response = await fetch("http://localhost:3000/api/users/login", {
-          // Replace with your actual backend URL
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -192,14 +196,20 @@ function LoginAlt() {
         })
 
         const data = await response.json()
+        console.log("Server response data (password login):", data) // Debugging log
 
         if (response.ok) {
           setSuccessMessage(data.message)
           setShowSuccessModal(true)
-          // Store user data or token if needed, e.g., in localStorage or cookies
           localStorage.setItem("user", JSON.stringify(data.user))
+          // Save the token to localStorage
+          if (data.token) {
+            localStorage.setItem("token", data.token)
+            console.log("Token saved to localStorage:", data.token) // Debugging log
+          } else {
+            console.warn("No token received from password login response.") // Debugging log
+          }
 
-          // Redirect based on account type
           const userAccountType = data.user.accountType
           let redirectPath = "/"
           switch (userAccountType) {
@@ -216,12 +226,12 @@ function LoginAlt() {
               redirectPath = "/provider"
               break
             default:
-              redirectPath = "/" // Default redirect for unknown types
+              redirectPath = "/"
           }
 
           setTimeout(() => {
             setShowSuccessModal(false)
-            window.location.href = redirectPath // Use window.location.href for Vite
+            window.location.href = redirectPath
           }, 1500)
         } else {
           setUnsuccessMessage(data.message || "Login failed. Please check your credentials.")
@@ -229,12 +239,35 @@ function LoginAlt() {
           setTimeout(() => setShowUnsuccessModal(false), 2000)
         }
       } else {
-        // Magic link (existing logic)
-        console.log("Magic link requested for:", email)
-        setTimeout(() => {
-          setLoading(false)
-          setShowOtpModal(true)
-        }, 1000)
+        // Magic link: Send OTP
+        const response = await fetch("http://localhost:3000/api/users/send-otp", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        })
+
+        const data = await response.json()
+        console.log("Server response data (send OTP):", data) // Debugging log
+
+        if (response.ok) {
+          setSuccessMessage(data.message)
+          setShowSuccessModal(true)
+          setTimeout(() => {
+            setShowSuccessModal(false)
+            setShowOtpModal(true) // Show OTP modal after sending link
+          }, 1500)
+        } else {
+          // Handle specific error for email not registered
+          if (response.status === 404) {
+            setUnsuccessMessage(data.message || "Email not registered. Please create an account first.")
+          } else {
+            setUnsuccessMessage(data.message || "Failed to send magic link. Please try again.")
+          }
+          setShowUnsuccessModal(true)
+          setTimeout(() => setShowUnsuccessModal(false), 2000)
+        }
       }
     } catch (err) {
       console.error("Login error:", err)
@@ -246,16 +279,68 @@ function LoginAlt() {
     }
   }
 
-  const handleOtpVerification = () => {
-    console.log("OTP verified successfully for:", email)
-    setShowOtpModal(false)
-    setError("Successfully authenticated! Redirecting to dashboard...")
+  // New function to handle final login success after OTP and reCAPTCHA
+  const handleFinalLoginSuccess = useCallback((user: any) => {
+    setSuccessMessage("OTP verified successfully! Login successful.")
+    setShowSuccessModal(true)
+    localStorage.setItem("user", JSON.stringify(user))
+    // Assuming OTP verification also returns a token, save it here
+    console.log("User data from OTP verification:", user) // Debugging log
+    if (user.token) {
+      localStorage.setItem("token", user.token)
+      console.log("Token saved to localStorage from OTP verification:", user.token) // Debugging log
+    } else {
+      console.warn("No token received from OTP verification response.") // Debugging log
+    }
+    setShowOtpModal(false) // Close OTP modal
+
+    const userAccountType = user.accountType
+    let redirectPath = "/"
+    switch (userAccountType) {
+      case "customer":
+        redirectPath = "/"
+        break
+      case "coo":
+        redirectPath = "/coo"
+        break
+      case "admin":
+        redirectPath = "/admin"
+        break
+      case "provider":
+        redirectPath = "/provider"
+        break
+      default:
+        redirectPath = "/"
+    }
+
     setTimeout(() => {
-      console.log("Redirecting to dashboard...")
-      // For magic link, you might fetch user data and then redirect
-      window.location.href = "/" // Example redirect after magic link OTP
-    }, 2000)
-  }
+      setShowSuccessModal(false)
+      window.location.href = redirectPath
+    }, 1500)
+  }, [])
+
+  const handleResendOtp = useCallback(async (email: string) => {
+    try {
+      const response = await fetch("http://localhost:3000/api/users/send-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      })
+      const data = await response.json()
+      if (response.ok) {
+        console.log("Resend OTP successful:", data.message)
+        return true
+      } else {
+        console.error("Resend OTP failed:", data.message)
+        return false
+      }
+    } catch (error) {
+      console.error("Error during resend OTP:", error)
+      return false
+    }
+  }, [])
 
   const closeStatusModal = () => {
     setModalVisible(false)
@@ -414,7 +499,7 @@ function LoginAlt() {
 
         <div className="bg-white p-6 rounded-lg space-y-6">
           <div className="space-y-1.5">
-            <label htmlFor="email" className="text-sm font-medium">
+            <label htmlFor="email" className="block text-sm font-medium">
               Email
             </label>
             <input
@@ -557,8 +642,9 @@ function LoginAlt() {
       <OTP
         email={email}
         onClose={() => setShowOtpModal(false)}
-        onVerify={handleOtpVerification}
+        onOtpVerifiedSuccess={handleFinalLoginSuccess} // Changed prop name and function
         visible={showOtpModal}
+        onResendOtp={handleResendOtp} // Pass the new resend function
       />
 
       {showModal && (
@@ -697,6 +783,7 @@ function LoginAlt() {
             style={{
               opacity: modalVisible ? 1 : 0,
               transform: modalVisible ? "scale(1)" : "scale(0.95)",
+              boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
             }}
           >
             {/* Status icon at top */}

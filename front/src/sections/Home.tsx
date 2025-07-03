@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { ChevronLeft, ChevronRight, Search, X, ChevronDown, ChevronUp } from "lucide-react"
 import Footer from "../sections/Styles/Footer"
 import WorkersModal from "../sections/Styles/WorkersModal"
@@ -29,6 +30,8 @@ function Home() {
   const [, setShowWelcomeModal] = useState(false)
   const [isSuggestServiceModalOpen, setIsSuggestServiceModalOpen] = useState(false)
 
+  const navigate = useNavigate()
+
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % carouselItems.length)
   }
@@ -48,6 +51,13 @@ function Home() {
     const hasSeenWelcomeModal = localStorage.getItem("hasSeenWelcomeModal")
     if (!hasSeenWelcomeModal) {
       setShowWelcomeModal(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    const token = localStorage.getItem("token") // Assuming the token is stored in localStorage
+    if (!token) {
+      navigate("/proposition")
     }
   }, [])
 
@@ -125,7 +135,7 @@ function Home() {
       <div className="z-40 flex">
         <MyFloatingDockCustomer />
       </div>
-      
+
       <Welcome />
 
       <div className="relative">
@@ -307,10 +317,10 @@ function Home() {
       />
 
       {/* <WelcomeModal
-        isOpen={showWelcomeModal}
-        onClose={handleWelcomeModalClose}
-        onDoNotShowAgain={handleDoNotShowWelcomeAgain}
-      /> */}
+      isOpen={showWelcomeModal}
+      onClose={handleWelcomeModalClose}
+      onDoNotShowAgain={handleDoNotShowWelcomeAgain}
+    /> */}
 
       <SuggestServiceModal isOpen={isSuggestServiceModalOpen} onClose={() => setIsSuggestServiceModalOpen(false)} />
 

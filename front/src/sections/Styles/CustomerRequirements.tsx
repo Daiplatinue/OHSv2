@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   X,
+  XCircle,
 } from "lucide-react"
 import LocationSelector from "./LocationSelectorAuth"
 import ImagePopup from "../Styles/ImagePopup"
@@ -63,8 +64,6 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
   const [hasWarningBeenShownOnce, setHasWarningBeenShownOnce] = useState(false)
 
   // ID document state (only for full mode)
-  const [frontId, setFrontId] = useState<File | null>(null)
-  const [backId, setBackId] = useState<File | null>(null)
   const [frontIdPreview, setFrontIdPreview] = useState<string | null>(null)
   const [backIdPreview, setBackIdPreview] = useState<string | null>(null)
 
@@ -73,14 +72,16 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
   const [showLocationModal, setShowLocationModal] = useState(false)
 
   // Profile state (only for full mode)
-  const [profilePicture, setProfilePicture] = useState<File | null>(null)
-  const [coverPhoto, setCoverPhoto] = useState<File | null>(null)
   const [profilePicturePreview, setProfilePicturePreview] = useState<string | null>(null)
   const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(null)
 
   const [secretQuestion, setSecretQuestion] = useState("")
   const [secretAnswer, setSecretAnswer] = useState("")
   const [secretCode, setSecretCode] = useState<string | null>(null)
+
+  const [showFileExistsModal, setShowFileExistsModal] = useState(false)
+  const [showGenericUploadErrorModal, setShowGenericUploadErrorModal] = useState(false)
+  const [genericUploadErrorMessage, setGenericUploadErrorMessage] = useState("")
 
   // Refs for file inputs (only for full mode)
   const frontIdRef = useRef<HTMLInputElement>(null)
@@ -105,13 +106,9 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
       setMobileNumber("")
       setGender("")
       setBio("")
-      setFrontId(null)
-      setBackId(null)
       setFrontIdPreview(null)
       setBackIdPreview(null)
       setSelectedLocation(null)
-      setProfilePicture(null)
-      setCoverPhoto(null)
       setProfilePicturePreview(null)
       setCoverPhotoPreview(null)
       setSecretQuestion("")
@@ -149,22 +146,63 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
     generateSecretCode()
   }, [secretQuestion, secretAnswer])
 
-  // Handle file selection and preview after confirmation
-  const handleActualFileChange = (
+  // Helper function to upload a file to the API
+  const uploadFile = async (file: File) => {
+    const formData = new FormData()
+    formData.append("file", file)
+    const response = await fetch("http://localhost:3000/api/upload/image", {
+      method: "POST",
+      body: formData,
+    })
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || `Failed to upload ${file.name}.`)
+    }
+    const data = await response.json()
+    return data.url
+  }
+
+  // Handle file selection, preview, and immediate upload
+  const handleActualFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    setter: React.Dispatch<React.SetStateAction<File | null>>,
     previewSetter: React.Dispatch<React.SetStateAction<string | null>>,
   ) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0]
-      setter(file)
 
-      // Create preview
+      // Reset error states before new upload attempt
+      setError("")
+      setShowFileExistsModal(false)
+      setShowGenericUploadErrorModal(false)
+
+      // Create local DataURL preview immediately for quick feedback
       const reader = new FileReader()
       reader.onloadend = () => {
         previewSetter(reader.result as string)
       }
       reader.readAsDataURL(file)
+
+      // Attempt to upload the file immediately to the server
+      try {
+        const uploadedUrl = await uploadFile(file)
+        previewSetter(uploadedUrl) // Update preview to the actual uploaded URL from the server
+      } catch (error: any) {
+        console.error("Upload error:", error)
+        // Check for specific error messages from the server
+        if (error.message === "File already exists. Please upload a different file or rename it.") {
+          setShowFileExistsModal(true)
+        } else {
+          setGenericUploadErrorMessage(error.message || "An unknown error occurred during file upload.")
+          setShowGenericUploadErrorModal(true)
+        }
+        previewSetter(null) // Clear the preview if upload fails
+        // Optionally, clear the file input value if the upload fails
+        if (e.target) {
+          e.target.value = ""
+        }
+      }
+    } else {
+      previewSetter(null) // Clear preview if no file is selected
     }
   }
 
@@ -282,12 +320,12 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
           accountType: accountType, // Use prop here
           minimalMode: false, // Full registration
           idDocuments: {
-            front: frontIdPreview || null, // Send null if empty
-            back: backIdPreview || null, // Send null if empty
+            front: frontIdPreview || null, // Now holds the uploaded URL or null
+            back: backIdPreview || null, // Now holds the uploaded URL or null
           },
           location: selectedLocation,
-          profilePicture: profilePicturePreview || null, // Send null if empty
-          coverPhoto: coverPhotoPreview || null, // Send null if empty
+          profilePicture: profilePicturePreview || null, // Now holds the uploaded URL or null
+          coverPhoto: coverPhotoPreview || null, // Now holds the uploaded URL or null
           secretQuestion: secretQuestion || null, // Send null if empty
           secretAnswer: secretAnswer || null, // Send null if empty
           secretCode: secretCode || null, // Send null if empty
@@ -376,24 +414,24 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
     <div className="py-4 px-2 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
       {/* Include animation keyframes */}
       <style>{`
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  @keyframes slideInUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  @keyframes bounceIn {
-    0% { transform: scale(0); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
-  }
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-  }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideInUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes bounceIn {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
 `}</style>
 
       <div className="max-w-4xl mx-auto">
@@ -710,7 +748,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
                             Front of ID (optional)
                           </label>
                           <div
-                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${frontId ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"}`}
+                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${frontIdPreview ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"}`}
                             onClick={() => handleIdUploadClick(frontIdRef.current)}
                           >
                             {frontIdPreview ? (
@@ -745,7 +783,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
                               ref={frontIdRef}
                               className="hidden"
                               accept=".jpg,.jpeg,.png,.pdf"
-                              onChange={(e) => handleActualFileChange(e, setFrontId, setFrontIdPreview)}
+                              onChange={(e) => handleActualFileChange(e, setFrontIdPreview)}
                             />
                           </div>
                         </div>
@@ -756,7 +794,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
                             Back of ID (optional)
                           </label>
                           <div
-                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${backId ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"}`}
+                            className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${backIdPreview ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"}`}
                             onClick={() => handleIdUploadClick(backIdRef.current)}
                           >
                             {backIdPreview ? (
@@ -791,7 +829,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
                               ref={backIdRef}
                               className="hidden"
                               accept=".jpg,.jpeg,.png,.pdf"
-                              onChange={(e) => handleActualFileChange(e, setBackId, setBackIdPreview)}
+                              onChange={(e) => handleActualFileChange(e, setBackIdPreview)}
                             />
                           </div>
                         </div>
@@ -1060,7 +1098,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
                               Cover Photo (optional)
                             </label>
                             <div
-                              className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors h-40 ${coverPhoto ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"}`}
+                              className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors h-40 ${coverPhotoPreview ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"}`}
                               onClick={() => coverPhotoRef.current?.click()}
                             >
                               {coverPhotoPreview ? (
@@ -1084,7 +1122,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
                                 ref={coverPhotoRef}
                                 className="hidden"
                                 accept=".jpg,.jpeg,.png"
-                                onChange={(e) => handleActualFileChange(e, setCoverPhoto, setCoverPhotoPreview)}
+                                onChange={(e) => handleActualFileChange(e, setCoverPhotoPreview)}
                               />
                             </div>
                           </div>
@@ -1095,7 +1133,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
                               Profile Picture (optional)
                             </label>
                             <div
-                              className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${profilePicture ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"}`}
+                              className={`border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer transition-colors ${profilePicturePreview ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-gray-400"}`}
                               onClick={() => profilePictureRef.current?.click()}
                             >
                               {profilePicturePreview ? (
@@ -1119,7 +1157,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
                                 ref={profilePictureRef}
                                 className="hidden"
                                 accept=".jpg,.jpeg,.png"
-                                onChange={(e) => handleActualFileChange(e, setProfilePicture, setProfilePicturePreview)}
+                                onChange={(e) => handleActualFileChange(e, setProfilePicturePreview)}
                               />
                             </div>
                           </div>
@@ -1622,6 +1660,86 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
           </div>
         )}
 
+        {/* File Already Exists Modal */}
+        {showFileExistsModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md"
+            style={{ animation: "fadeIn 0.3s ease-out" }}
+          >
+            <div
+              className="bg-white/90 backdrop-blur-xl rounded-3xl max-w-md w-full p-6 shadow-2xl border border-white/20"
+              style={{ animation: "slideInUp 0.4s ease-out" }}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center">
+                  <AlertTriangle className="h-6 w-6 text-red-500 mr-2" />
+                  <h3 className="text-lg font-medium text-gray-700">File Already Exists</h3>
+                </div>
+                <button onClick={() => setShowFileExistsModal(false)} className="text-gray-400 hover:text-gray-500">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-gray-600">
+                  A file with the same name has already been uploaded. Please upload a different file or rename the file
+                  you are trying to upload.
+                </p>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowFileExistsModal(false)}
+                  className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600"
+                >
+                  Got It
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Generic Upload Error Modal */}
+        {showGenericUploadErrorModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-md"
+            style={{ animation: "fadeIn 0.3s ease-out" }}
+          >
+            <div
+              className="bg-white/90 backdrop-blur-xl rounded-3xl max-w-md w-full p-6 shadow-2xl border border-white/20"
+              style={{ animation: "slideInUp 0.4s ease-out" }}
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center">
+                  <XCircle className="h-6 w-6 text-red-500 mr-2" />
+                  <h3 className="text-lg font-medium text-gray-700">Upload Failed</h3>
+                </div>
+                <button
+                  onClick={() => setShowGenericUploadErrorModal(false)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-gray-600">
+                  {genericUploadErrorMessage || "There was an issue uploading your file. Please try again."}
+                </p>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowGenericUploadErrorModal(false)}
+                  className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Location selection modal */}
         {showLocationModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -1642,7 +1760,7 @@ export default function CustomerRequirements({ onClose, minimalMode = false, acc
           </div>
         )}
       </div>
-      {/* Image Popup */}
+
       <ImagePopup imageUrl={popupImage} isOpen={isImagePopupOpen} onClose={() => setIsImagePopupOpen(false)} />
     </div>
   )
