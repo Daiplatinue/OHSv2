@@ -185,31 +185,7 @@ const ThirdSection: React.FC = () => {
         </div>
       </div>,
 
-      // Layout 5: Vertical Stack with Circle Image (Original Layout 5)
-      <div
-        key={index}
-        className="w-screen h-full relative bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4 md:p-8"
-      >
-        <div className="text-center space-y-8 sm:space-y-12 max-w-4xl mx-auto">
-          <div
-            className="w-48 h-48 sm:w-60 sm:h-60 md:w-80 md:h-80 mx-auto rounded-full bg-cover bg-center shadow-xl"
-            style={{ backgroundImage: `url(${benefit.image})` }}
-          >
-            <div className="w-full h-full rounded-full bg-gradient-to-b from-transparent to-black/20"></div>
-          </div>
-          <div className="space-y-4 sm:space-y-6">
-            <p className="text-xs sm:text-sm uppercase tracking-widest text-gray-500">{benefit.subtitle}</p>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight text-gray-700 leading-none">
-              {benefit.title}
-            </h1>
-            <p className="text-base sm:text-lg md:text-xl text-gray-600 font-light leading-relaxed max-w-full md:max-w-2xl mx-auto">
-              {benefit.description}
-            </p>
-          </div>
-        </div>
-      </div>,
-
-      // Layout 6: Magazine Style (Original Layout 6)
+      // Layout 5: Magazine Style 
       <div key={index} className="w-screen h-full relative bg-white flex items-center justify-center p-4 md:p-8">
         <div className="relative w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-center">
           <div className="lg:col-span-2 order-2 lg:order-1 flex justify-center">
@@ -231,6 +207,30 @@ const ThirdSection: React.FC = () => {
             <div className="text-gray-500 text-xs sm:text-sm">
               0{index + 1} / 0{benefits.length}
             </div>
+          </div>
+        </div>
+      </div>,
+
+      // Layout 6: Vertical Stack with Circle Image 
+      <div
+        key={index}
+        className="w-screen h-full relative bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4 md:p-8"
+      >
+        <div className="text-center space-y-8 sm:space-y-12 max-w-4xl mx-auto">
+          <div
+            className="w-48 h-48 sm:w-60 sm:h-60 md:w-80 md:h-80 mx-auto rounded-full bg-cover bg-center shadow-xl"
+            style={{ backgroundImage: `url(${benefit.image})` }}
+          >
+            <div className="w-full h-full rounded-full bg-gradient-to-b from-transparent to-black/20"></div>
+          </div>
+          <div className="space-y-4 sm:space-y-6">
+            <p className="text-xs sm:text-sm uppercase tracking-widest text-gray-500">{benefit.subtitle}</p>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extralight text-gray-700 leading-none">
+              {benefit.title}
+            </h1>
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 font-light leading-relaxed max-w-full md:max-w-2xl mx-auto">
+              {benefit.description}
+            </p>
           </div>
         </div>
       </div>,

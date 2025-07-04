@@ -1,8 +1,7 @@
 import { useEffect, useState, useRef } from "react"
 import { X, Blend } from "lucide-react"
 import { aboutHandyGo } from "../sections/propositionData"
-import heroImage from '../assets/proposition/Creative Workspace Team.jpeg';
-
+import heroImage from "../assets/proposition/Creative Workspace Team.jpeg"
 
 import SecondSection from "../sections/Proposition_Sections/SecondSection"
 import ThirdSection from "../sections/Proposition_Sections/ThirdSection"
@@ -13,11 +12,12 @@ import EighthSection from "../sections/Proposition_Sections/EightSection"
 import NinthSection from "../sections/Proposition_Sections/NinethSection"
 import TenthSection from "../sections/Proposition_Sections/TenthSection"
 
-import img1 from "../assets/proposition/Aerial View of Lush Green Waterways.jpeg"
-import img2 from "../assets/proposition/Airplane Wing at Sunset.jpeg"
-import img3 from "../assets/proposition/Cheerful Man in Maroon Turtleneck.jpeg"
-import img4 from "../assets/proposition/Close-Up Dewy Face.jpeg"
-import img5 from "../assets/proposition/Contemplative Portrait (1).jpeg"
+import img1 from "../assets/proposition/Futuristic Abstract Figure.png"
+import img2 from "../assets/proposition/Futuristic Abstract Figure.png"
+import img3 from "../assets/proposition/Futuristic Abstract Figure.png"
+import img4 from "../assets/proposition/Futuristic Abstract Figure.png"
+import img5 from "../assets/proposition/Futuristic Abstract Figure.png"
+import img6 from "../assets/proposition/Futuristic Abstract Figure.png"
 
 function Proposition() {
   const [loading, setLoading] = useState(true)
@@ -49,6 +49,7 @@ function Proposition() {
     "VINCE EDWARD CAÑEDO MAÑACAP AS DEVELOPER": img3,
     "KYLE SELLOTE AS DEVELOPER": img4,
     "BART JUAREZ AS SYSTEM ANALYST": img5,
+    "JV ALMENDRAS AS DOCUMENTOR": img6,
   }
 
   const defaultImage = "https://images.pexels.com/photos/3214995/pexels-photo-3214995.jpeg"
@@ -286,8 +287,9 @@ function Proposition() {
     <>
       {/* Navigation Cloud */}
       <div
-        className={`fixed inset-0 z-[80] transition-all duration-500 ease-out font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] ${showNavigationCloud ? "opacity-100 backdrop-blur-sm" : "opacity-0 pointer-events-none"
-          }`}
+        className={`fixed inset-0 z-[80] transition-all duration-500 ease-out font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] ${
+          showNavigationCloud ? "opacity-100 backdrop-blur-sm" : "opacity-0 pointer-events-none"
+        }`}
       >
         <div className="absolute inset-0 bg-black/20" onClick={handleCloseNavigationCloud}></div>
 
@@ -309,8 +311,9 @@ function Proposition() {
                 <button
                   key={section.name}
                   onClick={() => scrollToSection(section.target)}
-                  className={`absolute bg-white hover:bg-sky-500 text-gray-700 hover:text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border border-gray-200 group w-32 ${showNavigationCloud && !isClosingCloud ? "fade-in" : isClosingCloud ? "fade-out" : "opacity-0"
-                    }`}
+                  className={`absolute bg-white hover:bg-sky-500 text-gray-700 hover:text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 border border-gray-200 group w-32 ${
+                    showNavigationCloud && !isClosingCloud ? "fade-in" : isClosingCloud ? "fade-out" : "opacity-0"
+                  }`}
                   style={{
                     left: `calc(50% + ${x}px)`,
                     top: `calc(50% + ${y}px)`,
@@ -328,8 +331,9 @@ function Proposition() {
             {/* Center Close Button */}
             <button
               onClick={handleCloseNavigationCloud}
-              className={`absolute bg-sky-500 hover:bg-sky-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 ${showNavigationCloud && !isClosingCloud ? "fade-in" : isClosingCloud ? "fade-out" : "opacity-0"
-                }`}
+              className={`absolute bg-sky-500 hover:bg-sky-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 ${
+                showNavigationCloud && !isClosingCloud ? "fade-in" : isClosingCloud ? "fade-out" : "opacity-0"
+              }`}
               style={{
                 left: "50%",
                 top: "50%",
@@ -345,17 +349,19 @@ function Proposition() {
 
       {/* Floating Indicator */}
       <div
-        className={`fixed bottom-8 right-8 z-[70] transition-all duration-700 ease-out font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] ${showFloatingIndicator
-          ? "opacity-100 translate-y-0 scale-100"
-          : "opacity-0 translate-y-10 scale-75 pointer-events-none"
-          }`}
+        className={`fixed bottom-8 right-8 z-[70] transition-all duration-700 ease-out font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] ${
+          showFloatingIndicator
+            ? "opacity-100 translate-y-0 scale-100"
+            : "opacity-0 translate-y-10 scale-75 pointer-events-none"
+        }`}
       >
         {/* Speech Bubble */}
         <div
-          className={`absolute bottom-full right-0 mb-4 transition-all duration-500 ease-out ${showSpeechBubble
-            ? "opacity-100 translate-y-0 scale-100"
-            : "opacity-0 translate-y-4 scale-95 pointer-events-none"
-            }`}
+          className={`absolute bottom-full right-0 mb-4 transition-all duration-500 ease-out ${
+            showSpeechBubble
+              ? "opacity-100 translate-y-0 scale-100"
+              : "opacity-0 translate-y-4 scale-95 pointer-events-none"
+          }`}
         >
           <div className="relative bg-white px-4 py-3 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
             <div className="text-sm font-medium text-gray-700">Click me for easy navigation</div>
@@ -370,8 +376,9 @@ function Proposition() {
           onClick={handleFloatingIndicatorClick}
           onMouseEnter={handleFloatingIndicatorHover}
           onMouseLeave={handleFloatingIndicatorLeave}
-          className={`bg-sky-400 text-white p-3 rounded-full shadow-lg hover:bg-sky-500 cursor-pointer transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-75 hover:scale-110 active:scale-95 ${isFloatingIndicatorIdle ? "opacity-50 hover:opacity-100" : "opacity-100"
-            }`}
+          className={`bg-sky-400 text-white p-3 rounded-full shadow-lg hover:bg-sky-500 cursor-pointer transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-opacity-75 hover:scale-110 active:scale-95 ${
+            isFloatingIndicatorIdle ? "opacity-50 hover:opacity-100" : "opacity-100"
+          }`}
           aria-label="Navigate faster"
         >
           <Blend size={20} />
@@ -507,7 +514,7 @@ function Proposition() {
 
       {/* Main Content */}
       <div
-        className={`fixed inset-0 z-50 bg-black text-white transition-all duration-1000 overflow-y-auto font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] ${heroAnimationComplete ? "opacity-100 scale-100" : "opacity-0 scale-150"}`}
+        className={`fixed inset-0 z-50 bg-black text-white transition-all duration-1000 overflow-y-auto overflow-x-hidden font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] ${heroAnimationComplete ? "opacity-100" : "opacity-0"}`}
       >
         {/* First Section - Hero */}
         <section
@@ -518,7 +525,7 @@ function Proposition() {
           <img
             src={heroImage || "/placeholder.svg"}
             alt="Creative Workspace Team"
-            style={{ objectFit: 'cover', position: 'absolute', width: '100%', height: '100%' }}
+            style={{ objectFit: "cover", position: "absolute", width: "100%", height: "100%" }}
             className="object-cover" // Keep Tailwind classes if you have Tailwind set up in Vite
           />
           <div className="absolute inset-0 bg-black/50 bg-opacity-70 mix-blend-multiply"></div>
@@ -547,7 +554,7 @@ function Proposition() {
                 <div
                   className={`transition-transform duration-1000 delay-300 ${heroAnimationComplete ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0"}`}
                 >
-                  <span className="block text-gray-300 font-medium">
+                  <span className="block text-gray-300">
                     <span className="text-sky-400">SERVICES</span> BASED
                   </span>
                 </div>
@@ -631,58 +638,73 @@ function Proposition() {
           className={`relative min-h-screen transition-colors duration-700 ease-in-out ${aboutHandyGo[currentAboutSection].bgColor}`}
         >
           <div className="max-w-7xl mx-auto px-6 py-24">
-            <div className="grid grid-cols-12 gap-8">
-              {/* Left Side - Dynamic Typography with Enhanced Blur Animation */}
-              <div className="col-span-5 sticky top-60 h-fit mr-10 ml-[-2rem]">
-                <div className="space-y-5 overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mt-55 md:mt-15">
+              {/* Left Side - Dynamic Typography with Mobile Image */}
+              {/* On mobile: full width, text-centered, sticky, vertically centered. */}
+              {/* On desktop: md:col-span-5, md:top-60, md:h-fit, md:mr-10 md:ml-[-2rem], md:text-left */}
+              <div className="col-span-12 text-center sticky top-1/2 -translate-y-1/2 md:col-span-5 md:top-60 md:h-fit md:mr-10 md:ml-[-2rem] md:text-left">
+                {/* Mobile-only image, centered with typography */}
+                <img
+                  src={aboutHandyGo[currentAboutSection].image || "/placeholder.svg"}
+                  alt={aboutHandyGo[currentAboutSection].title}
+                  className={`w-full max-w-xs h-auto object-contain mb-8 block md:hidden transition-opacity duration-700 ${imageTransitioning ? "opacity-0" : "opacity-100"}`}
+                />
+                <div className="space-y-5 overflow-hidden flex flex-col items-center md:items-start mr-10 md:mr-0 md:mt-80">
                   <span
-                    className={`text-sm font-medium tracking-wide uppercase transition-all duration-700 ease-out block ${textAnimating
-                      ? "blur-lg opacity-0 transform translate-y-4"
-                      : "blur-0 opacity-100 transform translate-y-0"
-                      } ${aboutHandyGo[currentAboutSection].accentColor}`}
+                    className={`text-sm font-medium tracking-wide uppercase transition-all duration-700 ease-out block ${
+                      textAnimating
+                        ? "blur-lg opacity-0 transform translate-y-4"
+                        : "blur-0 opacity-100 transform translate-y-0"
+                    } ${aboutHandyGo[currentAboutSection].accentColor}`}
                   >
                     About HandyGo
                   </span>
                   <h2
-                    className={`text-4xl font-medium text-gray-600 leading-tight transition-all duration-700 ease-out block ${textAnimating
-                      ? "blur-lg opacity-0 transform translate-y-6"
-                      : "blur-0 opacity-100 transform translate-y-0"
-                      }`}
+                    className={`text-3xl sm:text-4xl lg:text-4xl font-medium text-gray-600 leading-tight transition-all duration-700 ease-out block ${
+                      textAnimating
+                        ? "blur-lg opacity-0 transform translate-y-6"
+                        : "blur-0 opacity-100 transform translate-y-0"
+                    }`}
                   >
                     {aboutHandyGo[currentAboutSection].title}
                   </h2>
                   <div
-                    className={`text-xl font-medium transition-all duration-700 ease-out block ${textAnimating
-                      ? "blur-lg opacity-0 transform translate-y-8"
-                      : "blur-0 opacity-100 transform translate-y-0"
-                      } ${aboutHandyGo[currentAboutSection].accentColor}`}
+                    className={`text-lg sm:text-xl lg:text-xl font-medium transition-all duration-700 ease-out block ${
+                      textAnimating
+                        ? "blur-lg opacity-0 transform translate-y-8"
+                        : "blur-0 opacity-100 transform translate-y-0"
+                    } ${aboutHandyGo[currentAboutSection].accentColor}`}
                   >
                     {aboutHandyGo[currentAboutSection].subtitle}
                   </div>
                   <p
-                    className={`text-lg text-gray-600 transition-all duration-700 ease-out block ${textAnimating
-                      ? "blur-lg opacity-0 transform translate-y-10"
-                      : "blur-0 opacity-100 transform translate-y-0"
-                      }`}
+                    className={`text-base sm:text-lg lg:text-lg text-gray-600 transition-all duration-700 ease-out block ${
+                      textAnimating
+                        ? "blur-lg opacity-0 transform translate-y-10"
+                        : "blur-0 opacity-100 transform translate-y-0"
+                    }`}
                   >
                     {aboutHandyGo[currentAboutSection].description}
                   </p>
                 </div>
               </div>
 
-              {/* Right Side - Scrolling Images */}
-              <div className="col-span-7 space-y-[20vh]">
+              {/* Right Side - Scrolling Targets (images hidden on mobile, but container remains for scroll tracking) */}
+              {/* On mobile: col-span-12. On desktop: md:col-span-7 */}
+              <div className="col-span-12 md:col-span-7 space-y-[10vh] md:space-y-[20vh]">
                 {aboutHandyGo.map((item, index) => (
                   <div
                     key={item.id}
                     ref={(el) => {
                       aboutSectionRefs.current[index] = el
                     }}
-                    className="relative h-screen flex items-center"
+                    className="relative h-screen flex items-center justify-center"
                   >
+                    {/* Desktop-only image */}
                     <div
-                      className={`w-full bg-white rounded-2xl shadow-lg transition-all duration-700 ease-out hover:shadow-xl overflow-hidden transform ${index === currentAboutSection ? "scale-100 opacity-100" : "scale-95 opacity-50"
-                        }`}
+                      className={`w-full bg-white rounded-2xl shadow-lg transition-all duration-700 ease-out hover:shadow-xl overflow-hidden transform hidden md:block ${
+                        index === currentAboutSection ? "scale-100 opacity-100" : "scale-95 opacity-50"
+                      }`}
                     >
                       <img
                         src={item.image || "/placeholder.svg"}
@@ -709,7 +731,7 @@ function Proposition() {
 
         {/* Eighth Section - Services */}
         <div data-section="services">
-          <EighthSection />
+          <EighthSection onCardSelect={() => scrollToSection("get-started")} />
         </div>
 
         {/* Ninth Section - Join Now */}
@@ -724,79 +746,79 @@ function Proposition() {
       </div>
 
       <style>{`
-      @keyframes fade-in {
-        0% {
-          opacity: 0;
-        }
-        100% {
-          opacity: 1;
-        }
+    @keyframes fade-in {
+      0% {
+        opacity: 0;
       }
-      
-      @keyframes fade-out {
-        0% {
-          opacity: 1;
-        }
-        100% {
-          opacity: 0;
-        }
+      100% {
+        opacity: 1;
       }
-      
-      .fade-in {
-        animation: fade-in 0.4s ease-out forwards;
+    }
+    
+    @keyframes fade-out {
+      0% {
+        opacity: 1;
       }
-      
-      .fade-out {
-        animation: fade-out 0.4s ease-out forwards;
+      100% {
+        opacity: 0;
       }
-      
-      .contact-text {
-        animation: fadeSlideUp 0.8s ease-out forwards;
+    }
+    
+    .fade-in {
+      animation: fade-in 0.4s ease-out forwards;
+    }
+    
+    .fade-out {
+      animation: fade-out 0.4s ease-out forwards;
+    }
+    
+    .contact-text {
+      animation: fadeSlideUp 0.8s ease-out forwards;
+    }
+    
+    .contact-heading {
+      animation: fadeSlideUp 1s ease-out forwards;
+    }
+    
+    .contact-details {
+      animation: fadeSlideUp 1.2s ease-out forwards;
+    }
+    
+    .fade-slide-up {
+      animation: fadeSlideUp 0.8s ease-out forwards;
+    }
+    
+    .delay-1 {
+      animation-delay: 0.2s;
+    }
+    
+    .delay-2 {
+      animation-delay: 0.4s;
+    }
+    
+    .delay-3 {
+      animation-delay: 0.6s;
+    }
+    
+    .delay-4 {
+      animation-delay: 0.8s;
+    }
+    
+    .delay-5 {
+      animation-delay: 1s;
+    }
+    
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
       }
-      
-      .contact-heading {
-        animation: fadeSlideUp 1s ease-out forwards;
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
-      
-      .contact-details {
-        animation: fadeSlideUp 1.2s ease-out forwards;
-      }
-      
-      .fade-slide-up {
-        animation: fadeSlideUp 0.8s ease-out forwards;
-      }
-      
-      .delay-1 {
-        animation-delay: 0.2s;
-      }
-      
-      .delay-2 {
-        animation-delay: 0.4s;
-      }
-      
-      .delay-3 {
-        animation-delay: 0.6s;
-      }
-      
-      .delay-4 {
-        animation-delay: 0.8s;
-      }
-      
-      .delay-5 {
-        animation-delay: 1s;
-      }
-      
-      @keyframes fadeSlideUp {
-        from {
-          opacity: 0;
-          transform: translateY(30px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-    `}</style>
+    }
+  `}</style>
     </>
   )
 }

@@ -1,7 +1,6 @@
-import React from 'react';
+import type React from "react"
 
-interface NinthSectionProps {
-}
+type NinthSectionProps = {}
 
 const NinthSection: React.FC<NinthSectionProps> = () => {
   return (
@@ -17,43 +16,50 @@ const NinthSection: React.FC<NinthSectionProps> = () => {
               </h2>
             </div>
 
-            <p className="text-lg text-gray-600 leading-relaxed font-normal">
-              Join thousands of professionals who trust HandyGo for exceptional service experiences. Our network continues to expand, bringing quality solutions to more locations every day.
+            <p className="text-base sm:text-lg text-gray-600 leading-relaxed font-normal">
+              Join thousands of professionals who trust HandyGo for exceptional service experiences. Our network
+              continues to expand, bringing quality solutions to more locations every day.
             </p>
 
             <div className="space-y-6">
-              <div className="group p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="group p-4 sm:p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 h-12 w-12 bg-sky-500 rounded-2xl flex items-center justify-center text-white font-medium">
+                  <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 bg-sky-500 rounded-2xl flex items-center justify-center text-lg sm:text-xl text-white font-medium">
                     1
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-xl font-semibold text-gray-600">Register Your Account</h3>
-                    <p className="mt-1 text-gray-500">Complete a simple registration process with your basic details</p>
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-600">Register Your Account</h3>
+                    <p className="mt-1 text-sm sm:text-base text-gray-500">
+                      Complete a simple registration process with your basic details
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="group p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="group p-4 sm:p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 h-12 w-12 bg-sky-500 rounded-2xl flex items-center justify-center text-white font-medium">
+                  <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 bg-sky-500 rounded-2xl flex items-center justify-center text-lg sm:text-xl text-white font-medium">
                     2
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-xl font-semibold text-gray-600">Create Your Profile</h3>
-                    <p className="mt-1 text-gray-500">Set up your professional profile highlighting your expertise</p>
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-600">Create Your Profile</h3>
+                    <p className="mt-1 text-sm sm:text-base text-gray-500">
+                      Set up your professional profile highlighting your expertise
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="group p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="group p-4 sm:p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 h-12 w-12 bg-sky-500 rounded-2xl flex items-center justify-center text-white font-medium">
+                  <div className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 bg-sky-500 rounded-2xl flex items-center justify-center text-lg sm:text-xl text-white font-medium">
                     3
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-xl font-semibold text-gray-600">Start Your Journey</h3>
-                    <p className="mt-1 text-gray-500">Begin connecting with clients and growing your business</p>
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-600">Start Your Journey</h3>
+                    <p className="mt-1 text-sm sm:text-base text-gray-500">
+                      Begin connecting with clients and growing your business
+                    </p>
                   </div>
                 </div>
               </div>
@@ -62,13 +68,14 @@ const NinthSection: React.FC<NinthSectionProps> = () => {
 
           {/* Right Side - Features */}
           <div className="relative space-y-6">
-            <div className="absolute inset-0 bg-sky-100 rounded-[40px] transform rotate-3"></div>
-            <div className="relative bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
+            {/* Hidden on small screens, block on medium and up */}
+            <div className="absolute inset-0 bg-sky-100 rounded-[40px] transform rotate-3 hidden sm:block"></div>
+            <div className="relative bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100">
               <div className="space-y-8">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <h3 className="text-xl font-semibold text-gray-600">Professional Network</h3>
-                    <p className="text-sm text-gray-500">Connect with industry experts</p>
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-600">Professional Network</h3>
+                    <p className="text-xs sm:text-sm text-gray-500">Connect with industry experts</p>
                   </div>
                   <div className="flex -space-x-2">
                     {[1, 2, 3].map((i) => (
@@ -88,21 +95,21 @@ const NinthSection: React.FC<NinthSectionProps> = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 rounded-2xl bg-gray-50">
-                    <div className="text-2xl font-bold text-gray-600">5K+</div>
+                    <div className="text-xl sm:text-2xl font-bold text-gray-600">5K+</div>
                     <div className="text-sm text-gray-500">Active Members</div>
                   </div>
                   <div className="p-4 rounded-2xl bg-gray-50">
-                    <div className="text-2xl font-bold text-gray-600">95%</div>
+                    <div className="text-xl sm:text-2xl font-bold text-gray-600">95%</div>
                     <div className="text-sm text-gray-500">Success Rate</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="relative bg-white rounded-[32px] p-8 shadow-sm border border-gray-100">
+            <div className="relative bg-white rounded-[32px] p-6 sm:p-8 shadow-sm border border-gray-100">
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-semibold text-gray-600">Network Highlights</h3>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-600">Network Highlights</h3>
                   <span className="text-sm text-sky-600">View all</span>
                 </div>
 
@@ -113,7 +120,7 @@ const NinthSection: React.FC<NinthSectionProps> = () => {
                       <span className="text-sm text-sky-500">98%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-sky-500 h-2 rounded-full" style={{ width: '98%' }}></div>
+                      <div className="bg-sky-500 h-2 rounded-full" style={{ width: "98%" }}></div>
                     </div>
                   </div>
 
@@ -123,7 +130,7 @@ const NinthSection: React.FC<NinthSectionProps> = () => {
                       <span className="text-sm text-sky-500">95%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-sky-500 h-2 rounded-full" style={{ width: '95%' }}></div>
+                      <div className="bg-sky-500 h-2 rounded-full" style={{ width: "95%" }}></div>
                     </div>
                   </div>
 
@@ -133,7 +140,7 @@ const NinthSection: React.FC<NinthSectionProps> = () => {
                       <span className="text-sm text-sky-500">87%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-sky-500 h-2 rounded-full" style={{ width: '87%' }}></div>
+                      <div className="bg-sky-500 h-2 rounded-full" style={{ width: "87%" }}></div>
                     </div>
                   </div>
                 </div>
@@ -143,7 +150,7 @@ const NinthSection: React.FC<NinthSectionProps> = () => {
         </div>
       </div>
     </section>
-  );
-};
+  )
+}
 
-export default NinthSection;
+export default NinthSection
