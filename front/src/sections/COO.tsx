@@ -10,11 +10,22 @@ import {
   UserPlus,
   FolderPlus,
 } from "lucide-react"
+import { useEffect } from "react" 
+import { useNavigate } from "react-router-dom"
 
-import MyFloatingDockCeo from "./Styles/MyFloatingDock-Ceo"
+import MyFloatingDockCeo from "./Styles/MyFloatingDock-COO"
 import Footer from "./Styles/Footer"
 
 export default function Ceo() {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    if (!token) {
+      navigate("/proposition")
+    }
+  }, [])
+
   return (
     <div className="min-h-screen bg-[#f5f5f7] font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
       {/* Floating Dock */}
@@ -374,12 +385,13 @@ function ServiceRequestRow({ customer, service, date, status, provider }: any) {
       <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 font-light">{provider}</td>
       <td className="px-4 py-3 whitespace-nowrap">
         <span
-          className={`px-2 py-0.5 text-xs font-light rounded-full ${status === "Completed"
+          className={`px-2 py-0.5 text-xs font-light rounded-full ${
+            status === "Completed"
               ? "bg-[#E8F8EF] text-[#30D158]"
               : status === "In Progress"
                 ? "bg-[#E9F6FF] text-[#0A84FF]"
                 : "bg-[#FFF8E6] text-[#FF9500]"
-            }`}
+          }`}
         >
           {status}
         </span>

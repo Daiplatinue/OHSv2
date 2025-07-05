@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react"
-import MyFloatingDockCeo from "../Styles/MyFloatingDock-Ceo"
+import MyFloatingDockCeo from "../Styles/MyFloatingDock-COO"
 import {
   Bell,
   FileText,

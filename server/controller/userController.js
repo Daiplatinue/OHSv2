@@ -1,7 +1,7 @@
 import { User } from "../models/user.js"
 import bcrypt from "bcryptjs"
 import nodemailer from "nodemailer"
-import jwt from "jsonwebtoken" // Import jsonwebtoken
+import jwt from "jsonwebtoken"
 
 // Helper function for password validation
 const validatePassword = (password) => {
@@ -467,5 +467,108 @@ export const resetPassword = async (req, res) => {
   } catch (error) {
     console.error("Error resetting password:", error)
     res.status(500).json({ message: "Server error during password reset." })
+  }
+}
+
+// New: Get User Profile
+export const getUserProfile = async (req, res) => {
+  try {
+    // req.userId is set by the authenticateToken middleware
+    const user = await User.findById(req.userId).select("-password") // Exclude password
+
+    if (!user) {
+      return res.status(404).json({ message: "User profile not found." })
+    }
+
+    res.status(200).json({ user })
+  } catch (error) {
+    console.error("Error fetching user profile:", error)
+    res.status(500).json({ message: "Server error fetching user profile." })
+  }
+}
+
+// New: Update User Profile Image (profilePicture or coverPhoto)
+export const updateUserImage = async (req, res) => {
+  try {
+    const { imageType, imageUrl } = req.body
+    const userId = req.userId // From authenticateToken middleware
+
+    if (!userId || !imageType || !imageUrl) {
+      return res.status(400).json({ message: "User ID, image type, and image URL are required." })
+    }
+
+    const updateField = {}
+    if (imageType === "profilePicture") {
+      updateField.profilePicture = imageUrl
+    } else if (imageType === "coverPhoto") {
+      updateField.coverPhoto = imageUrl
+    } else {
+      return res
+        .status(400)
+        .json({ message: "Invalid image type specified. Must be 'profilePicture' or 'coverPhoto'." })
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateField },
+      { new: true, runValidators: true }, // Return the updated document and run schema validators
+    ).select("-password") // Exclude password from the returned user object
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found." })
+    }
+
+    res.status(200).json({ message: `${imageType} updated successfully!`, user: updatedUser })
+  } catch (error) {
+    console.error(`Error updating user ${req.body?.imageType || "image"}:`, error)
+    res.status(500).json({ message: "Failed to update image.", error: error.message })
+  }
+}
+
+// New: Update User Profile Details
+export const updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.userId // From authenticateToken middleware
+    const updates = req.body
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required." })
+    }
+
+    // Construct update object, handling nested fields like location
+    const updateFields = {}
+    for (const key in updates) {
+      if (updates.hasOwnProperty(key)) {
+        if (key === "location" && typeof updates[key] === "object" && updates[key] !== null) {
+          // Handle nested location object
+          for (const locKey in updates[key]) {
+            if (updates[key].hasOwnProperty(locKey)) {
+              updateFields[`location.${locKey}`] = updates[key][locKey]
+            }
+          }
+        } else {
+          updateFields[key] = updates[key]
+        }
+      }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateFields },
+      { new: true, runValidators: true }, // Return the updated document and run schema validators
+    ).select("-password") // Exclude password from the returned user object
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found." })
+    }
+
+    res.status(200).json({ message: "User profile updated successfully!", user: updatedUser })
+  } catch (error) {
+    console.error("Error updating user profile:", error)
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message)
+      return res.status(400).json({ message: messages.join(", ") })
+    }
+    res.status(500).json({ message: "Failed to update user profile.", error: error.message })
   }
 }

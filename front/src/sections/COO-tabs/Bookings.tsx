@@ -1,6 +1,6 @@
 import type React from "react"
 import { useState, useEffect } from "react"
-import MyFloatingDockCeo from "../Styles/MyFloatingDock-Ceo"
+import MyFloatingDockCeo from "../Styles/MyFloatingDock-COO"
 import { Dialog, Switch } from "@headlessui/react"
 import {
   MapPin,
@@ -42,7 +42,7 @@ import {
   userDetails,
 } from "./bookings-data"
 import Footer from "../Styles/Footer"
-import SubscriptionInfoCard from "../Manager-tabs/SubInfoCard" 
+import SubscriptionInfoCard from "./SubInfoCard"
 
 const keyframes = `
 @keyframes fadeIn {
@@ -95,7 +95,6 @@ function Bookings() {
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
   const [totalSteps] = useState(3)
-
   const [subscription, setSubscription] = useState<SubscriptionInfo>({
     tier: "free",
     maxServices: 3,
@@ -108,7 +107,6 @@ function Bookings() {
 
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false)
   const [isYearlyBilling, setIsYearlyBilling] = useState(false) // New state for billing toggle
-
   const [newService, setNewService] = useState<Partial<Service>>({
     name: "",
     price: 0,
@@ -116,13 +114,8 @@ function Bookings() {
     image: "",
     chargePerKm: 0,
   })
-
   const [requirements, setRequirements] = useState({
-    businessPermit: { met: false, previewUrl: null as string | null },
-    validID: { met: false, previewUrl: null as string | null },
-    certification: { met: false, previewUrl: null as string | null },
     backgroundCheck: { met: false, previewUrl: null as string | null },
-    insurance: { met: false, previewUrl: null as string | null },
     serviceAgreement: { met: false, previewUrl: null as string | null },
   })
 
@@ -142,6 +135,27 @@ function Bookings() {
   // Service creation processing state
   const [isProcessing, setIsProcessing] = useState(false)
 
+  // New states for service termination
+  const [isTerminationModalOpen, setIsTerminationModalOpen] = useState(false)
+  const [terminationStep, setTerminationStep] = useState(1) // 1: Strategic, 2: Legal, 3: Financial, 4: Scheduled
+  const [serviceToTerminate, setServiceToTerminate] = useState<Service | null>(null)
+  const [terminationReason, setTerminationReason] = useState("")
+  const [legalReviewNotes, setLegalReviewNotes] = useState("")
+  const [financialAuditNotes, setFinancialAuditNotes] = useState("")
+  const [terminationTimer, setTerminationTimer] = useState<number | null>(null) // seconds remaining
+  const [isTerminationScheduled, setIsTerminationScheduled] = useState(false)
+  const [terminationStartTime, setTerminationStartTime] = useState<number | null>(null) // timestamp
+
+  const TERMINATION_DURATION_MS = 2 * 24 * 60 * 60 * 1000 // 2 days in milliseconds
+
+  const terminationReasonsOptions = [
+    "Not Profitable",
+    "Outdated Service",
+    "Low Demand",
+    "Resource Constraints",
+    "Strategic Shift",
+    "Other",
+  ]
   const triggerCelebration = () => {
     const duration = 3000
     const animationEnd = Date.now() + duration
@@ -265,14 +279,42 @@ function Bookings() {
     setIsEditModalOpen(true)
   }
 
+  // MODIFIED: handle delete service to open new termination modal
   const handleDeleteService = (service: Service) => {
-    setSelectedService(service)
-    setIsDeleteConfirmOpen(true)
+    setServiceToTerminate(service)
+    setIsTerminationModalOpen(true)
+    setTerminationStep(1) // Start at the first step of the termination process
+    setTerminationReason("")
+    setLegalReviewNotes("")
+    setFinancialAuditNotes("")
+    setIsTerminationScheduled(false) // Ensure it's not scheduled initially
+    setTerminationTimer(null)
+    setTerminationStartTime(null)
   }
 
-  const handleSaveService = async () => {}
+  const handleSaveService = async () => {
+    // This function is currently a placeholder.
+    // In a real application, you would send the updated service data to your backend.
+    if (selectedService && editedService) {
+      const updatedServices = services.map((s) => (s.id === selectedService.id ? { ...s, ...editedService } : s))
+      setServices(updatedServices)
+      setIsEditModalOpen(false)
+      setSuccessMessage(`Service "${editedService.name}" updated successfully!`)
+      setIsSuccessModalOpen(true)
+    }
+  }
 
-  const handleConfirmDelete = async () => {}
+  // handleConfirmDelete is now only for Personal Info deletion
+  const handleConfirmDelete = async () => {
+    // This function is now only used for deleting personal info.
+    // Service deletion is handled by the new termination flow.
+    if (!selectedInfo) return
+
+    const filteredInfo = personalInfo.filter((info) => info.id !== selectedInfo.id)
+
+    setPersonalInfo(filteredInfo)
+    setIsDeleteInfoConfirmOpen(false)
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -343,11 +385,7 @@ function Bookings() {
       chargePerKm: 0,
     })
     setRequirements({
-      businessPermit: { met: false, previewUrl: null as string | null },
-      validID: { met: false, previewUrl: null as string | null },
-      certification: { met: false, previewUrl: null as string | null },
       backgroundCheck: { met: false, previewUrl: null as string | null },
-      insurance: { met: false, previewUrl: null as string | null },
       serviceAgreement: { met: false, previewUrl: null as string | null },
     })
   }
@@ -445,7 +483,7 @@ function Bookings() {
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Service Information</h3>
+              <h3 className="text-2xl font-medium text-gray-700 mb-2">Service Information</h3>
               <p className="text-gray-600">Enter the basic details about your service</p>
             </div>
 
@@ -503,7 +541,7 @@ function Bookings() {
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Pricing Information</h3>
+              <h3 className="text-2xl font-medium text-gray-700 mb-2">Pricing Information</h3>
               <p className="text-gray-600">Set your service rates and charges</p>
             </div>
 
@@ -568,22 +606,14 @@ function Bookings() {
         return (
           <div className="space-y-6">
             <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Service Requirements</h3>
+              <h3 className="text-2xl font-medium text-gray-700 mb-2">Service Requirements</h3>
               <p className="text-gray-600">Confirm you have all required documents and qualifications</p>
             </div>
 
             <div className="bg-gray-50 rounded-xl p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                 {[
-                  { key: "businessPermit", label: "Business Permit", desc: "Valid business registration or permit" },
-                  { key: "validID", label: "Valid ID", desc: "Government-issued identification" },
-                  {
-                    key: "certification",
-                    label: "Professional Certification",
-                    desc: "Relevant certifications for your service area",
-                  },
                   { key: "backgroundCheck", label: "Background Check", desc: "Consent to background verification" },
-                  { key: "insurance", label: "Liability Insurance", desc: "Professional liability coverage" },
                   {
                     key: "serviceAgreement",
                     label: "Service Agreement",
@@ -716,13 +746,63 @@ function Bookings() {
                     </div>
                   </div>
                 )}
+
+                {isTerminationScheduled && service.id === serviceToTerminate?.id ? (
+                  <div
+                    className="absolute inset-0 bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden transform transition-all border border-gray-400/50 p-6 z-20 flex flex-col items-center justify-center text-center"
+                    style={{ animation: "fadeIn 0.5s ease-out" }}
+                  >
+                    <div
+                      className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mb-6"
+                      style={{ animation: "pulse 2s ease-in-out infinite" }}
+                    >
+                      <Trash2 className="h-10 w-10 text-red-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
+                    </div>
+
+                    <h3
+                      className="text-xl font-medium text-gray-900 mb-2"
+                      style={{ animation: "slideInUp 0.4s ease-out" }}
+                    >
+                      Termination Scheduled!
+                    </h3>
+
+                    <p className="text-gray-600 mb-4" style={{ animation: "fadeIn 0.5s ease-out 0.2s both" }}>
+                      This service will be permanently removed in:
+                    </p>
+
+                    <div
+                      className="text-3xl font-medium text-red-500 tracking-tight mb-6"
+                      style={{ animation: "fadeIn 0.5s ease-out 0.3s both" }}
+                    >
+                      {formatTime(terminationTimer)}
+                    </div>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation() // Prevent opening the service details modal
+                        setIsTerminationModalOpen(true)
+                        setTerminationStep(4) // Ensure it opens to the scheduled view
+                      }}
+                      className="px-6 py-3 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all"
+                      style={{ animation: "fadeIn 0.5s ease-out 0.4s both" }}
+                    >
+                      View Details / Cancel
+                    </button>
+                  </div>
+                ) : null}
+
                 <div className="absolute top-4 right-4 flex space-x-2 z-10">
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
                       handleEditService(service)
                     }}
-                    className="bg-white/80 backdrop-blur-sm p-1.5 rounded-full hover:bg-white transition-all text-gray-600"
+                    className={`bg-white/80 backdrop-blur-sm p-1.5 rounded-full hover:bg-white transition-all text-gray-600 ${
+                      isTerminationScheduled && service.id === serviceToTerminate?.id
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
+                    disabled={isTerminationScheduled && service.id === serviceToTerminate?.id}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -745,7 +825,12 @@ function Bookings() {
                       e.stopPropagation()
                       handleDeleteService(service)
                     }}
-                    className="bg-white/80 backdrop-blur-sm p-1.5 rounded-full hover:bg-white transition-all text-red-500"
+                    className={`bg-white/80 backdrop-blur-sm p-1.5 rounded-full hover:bg-white transition-all text-red-500 ${
+                      isTerminationScheduled && service.id === serviceToTerminate?.id
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
+                    disabled={isTerminationScheduled && service.id === serviceToTerminate?.id}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -1278,6 +1363,131 @@ function Bookings() {
     setCreateServiceStep(1)
   }
 
+  // New functions for service termination
+  const handleScheduleTermination = () => {
+    if (!serviceToTerminate) return
+
+    const startTime = Date.now()
+    setTerminationStartTime(startTime)
+    setIsTerminationScheduled(true)
+    setTerminationTimer(Math.ceil(TERMINATION_DURATION_MS / 1000)) // Set initial timer in seconds
+    setTerminationStep(4) // Move to scheduled view
+    // setIsTerminationModalOpen(false); // Keep modal open to show timer
+
+    // Store in localStorage for persistence
+    localStorage.setItem("terminationServiceId", serviceToTerminate.id.toString())
+    localStorage.setItem("terminationStartTime", startTime.toString())
+    localStorage.setItem("terminationReason", terminationReason)
+    localStorage.setItem("legalReviewNotes", legalReviewNotes)
+    localStorage.setItem("financialAuditNotes", financialAuditNotes)
+  }
+
+  const handleCancelTermination = () => {
+    setIsTerminationScheduled(false)
+    setTerminationTimer(null)
+    setTerminationStartTime(null)
+    setServiceToTerminate(null)
+    localStorage.removeItem("terminationServiceId")
+    localStorage.removeItem("terminationStartTime")
+    localStorage.removeItem("terminationReason")
+    localStorage.removeItem("legalReviewNotes")
+    localStorage.removeItem("financialAuditNotes")
+    setIsTerminationModalOpen(false) // Close the modal
+    setSuccessMessage("Service termination cancelled successfully.")
+    setIsSuccessModalOpen(true)
+  }
+
+  // useEffect for timer countdown and actual deletion
+  useEffect(() => {
+    let timerInterval: NodeJS.Timeout | null = null
+
+    if (isTerminationScheduled && terminationStartTime !== null) {
+      timerInterval = setInterval(() => {
+        const elapsed = Date.now() - terminationStartTime
+        const remaining = TERMINATION_DURATION_MS - elapsed
+
+        if (remaining <= 0) {
+          // Time's up, perform actual deletion
+          setServices((prevServices) => prevServices.filter((s) => s.id !== serviceToTerminate?.id))
+          setIsTerminationScheduled(false)
+          setTerminationTimer(null)
+          setTerminationStartTime(null)
+          setServiceToTerminate(null)
+          localStorage.removeItem("terminationServiceId")
+          localStorage.removeItem("terminationStartTime")
+          localStorage.removeItem("terminationReason")
+          localStorage.removeItem("legalReviewNotes")
+          localStorage.removeItem("financialAuditNotes")
+          setIsTerminationModalOpen(false) // Close the termination modal
+          setIsSuccessModalOpen(true)
+          setSuccessMessage(`Service "${serviceToTerminate?.name}" has been successfully terminated.`)
+          if (timerInterval) clearInterval(timerInterval)
+        } else {
+          setTerminationTimer(Math.ceil(remaining / 1000))
+        }
+      }, 1000)
+    } else if (timerInterval) {
+      clearInterval(timerInterval)
+    }
+
+    return () => {
+      if (timerInterval) clearInterval(timerInterval)
+    }
+  }, [isTerminationScheduled, terminationStartTime, serviceToTerminate, setServices])
+
+  // useEffect to load termination state from localStorage on mount
+  useEffect(() => {
+    const storedServiceId = localStorage.getItem("terminationServiceId")
+    const storedStartTime = localStorage.getItem("terminationStartTime")
+    const storedReason = localStorage.getItem("terminationReason")
+    const storedLegalNotes = localStorage.getItem("legalReviewNotes")
+    const storedFinancialNotes = localStorage.getItem("financialAuditNotes")
+
+    if (storedServiceId && storedStartTime) {
+      const service = initialServices.find((s) => s.id === Number.parseInt(storedServiceId))
+      if (service) {
+        setServiceToTerminate(service)
+        setTerminationStartTime(Number.parseInt(storedStartTime))
+        setIsTerminationScheduled(true)
+        setTerminationReason(storedReason || "")
+        setLegalReviewNotes(storedLegalNotes || "")
+        setFinancialAuditNotes(storedFinancialNotes || "")
+
+        const elapsed = Date.now() - Number.parseInt(storedStartTime)
+        const remaining = TERMINATION_DURATION_MS - elapsed
+        if (remaining <= 0) {
+          // If already expired, delete immediately
+          setServices((prevServices) => prevServices.filter((s) => s.id !== service.id))
+          setIsTerminationScheduled(false)
+          setTerminationTimer(null)
+          setTerminationStartTime(null)
+          setServiceToTerminate(null)
+          localStorage.removeItem("terminationServiceId")
+          localStorage.removeItem("terminationStartTime")
+          localStorage.removeItem("terminationReason")
+          localStorage.removeItem("legalReviewNotes")
+          localStorage.removeItem("financialAuditNotes")
+          setIsSuccessModalOpen(true)
+          setSuccessMessage(`Service "${service.name}" was terminated.`)
+        } else {
+          setTerminationTimer(Math.ceil(remaining / 1000))
+          setIsTerminationModalOpen(true) // Re-open modal if termination is ongoing
+          setTerminationStep(4) // Go directly to scheduled view
+        }
+      }
+    }
+  }, []) // Run only once on mount
+
+  // Helper to format time
+  const formatTime = (seconds: number | null) => {
+    if (seconds === null || seconds < 0) return "0d 00h 00m 00s"
+    const days = Math.floor(seconds / (24 * 3600))
+    const hours = Math.floor((seconds % (24 * 3600)) / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = seconds % 60
+    return `${days}d ${hours.toString().padStart(2, "0")}h ${minutes.toString().padStart(2, "0")}m ${secs.toString().padStart(2, "0")}s`
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
       <style>{keyframes}</style>
@@ -1762,7 +1972,7 @@ function Bookings() {
               <div className="md:w-3/5 p-8 border-t md:border-t-0 md:border-l border-gray-200/50">
                 <div className="flex justify-between items-start mb-8">
                   <div>
-                    <Dialog.Title className="text-2xl font-bold text-gray-900">Create New Service</Dialog.Title>
+                    <Dialog.Title className="text-2xl font-medium text-gray-700">Create New Service</Dialog.Title>
                     <p className="text-gray-600 mt-1">
                       Step {createServiceStep} of {totalSteps}
                     </p>
@@ -2047,7 +2257,7 @@ function Bookings() {
         </div>
       </Dialog>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal (for Personal Info) */}
       <Dialog open={isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(false)} className="relative z-50">
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
 
@@ -2076,7 +2286,7 @@ function Bookings() {
                       Cancel
                     </button>
                     <button
-                      onClick={handleConfirmDelete}
+                      onClick={handleConfirmDelete} // This will now only be used for personal info deletion
                       className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                     >
                       Delete
@@ -2474,15 +2684,15 @@ function Bookings() {
                 <Switch
                   checked={isYearlyBilling}
                   onChange={setIsYearlyBilling}
-                  className={`{
-                    isYearlyBilling ? "bg-blue-600" : "bg-gray-300"
-                  } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                  className={`
+                    ${isYearlyBilling ? "bg-blue-600" : "bg-gray-300"}
+                   relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                 >
                   <span className="sr-only">Enable yearly billing</span>
                   <span
-                    className={`{
-                      isYearlyBilling ? "translate-x-6" : "translate-x-1"
-                    } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                    className={`
+                      ${isYearlyBilling ? "translate-x-6" : "translate-x-1"}
+                     inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                   />
                 </Switch>
                 <span className="text-gray-700 font-medium ml-3">Pay Yearly</span>
@@ -2580,7 +2790,7 @@ function Bookings() {
                 className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6"
                 style={{ animation: "pulse 2s ease-in-out infinite" }}
               >
-                {successMessage.includes("upgraded") ? (
+                {successMessage.includes("upgraded") || successMessage.includes("terminated") ? (
                   <Sparkles className="h-10 w-10 text-green-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
                 ) : (
                   <CheckCircle2 className="h-10 w-10 text-green-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
@@ -2591,7 +2801,9 @@ function Bookings() {
                 className="text-xl font-medium text-gray-900 mb-2"
                 style={{ animation: "slideInUp 0.4s ease-out" }}
               >
-                {successMessage.includes("upgraded") ? "Congratulations!" : "Success!"}
+                {successMessage.includes("upgraded") || successMessage.includes("terminated")
+                  ? "Congratulations!"
+                  : "Success!"}
               </Dialog.Title>
 
               <p className="text-gray-600 mb-6" style={{ animation: "fadeIn 0.5s ease-out 0.2s both" }}>
@@ -2612,6 +2824,247 @@ function Bookings() {
           </Dialog.Panel>
         </div>
       </Dialog>
+
+      {/* Service Termination Modal */}
+      <Dialog open={isTerminationModalOpen} onClose={() => setIsTerminationModalOpen(false)} className="relative z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
+
+        <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
+          <Dialog.Panel className="mx-auto max-w-2xl w-full bg-white rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-6">
+                <Dialog.Title className="text-xl font-medium text-gray-700">
+                  {isTerminationScheduled ? "Service Termination Scheduled" : "Terminate Service: Strategic Review"}
+                </Dialog.Title>
+                <button onClick={() => setIsTerminationModalOpen(false)} className="text-gray-400 hover:text-gray-500">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {serviceToTerminate && (
+                <>
+                  {!isTerminationScheduled && (
+                    <div className="mb-6">
+                      <p className="text-gray-600">
+                        You are initiating the termination process for service:{" "}
+                        <span className="font-semibold">{serviceToTerminate.name}</span>.
+                      </p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        This process requires a 2-day countdown, during which the termination can be cancelled.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Progress Indicator */}
+                  {!isTerminationScheduled && (
+                    <div className="mb-8">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div
+                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${terminationStep >= 1 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"}`}
+                          >
+                            1
+                          </div>
+                          <div className={`h-1 w-16 ${terminationStep >= 2 ? "bg-red-500" : "bg-gray-200"}`}></div>
+                        </div>
+                        <div className="flex items-center">
+                          <div
+                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${terminationStep >= 2 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"}`}
+                          >
+                            2
+                          </div>
+                          <div className={`h-1 w-16 ${terminationStep >= 3 ? "bg-red-500" : "bg-gray-200"}`}></div>
+                        </div>
+                        <div className="flex items-center">
+                          <div
+                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${terminationStep >= 3 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"}`}
+                          >
+                            3
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-between mt-3 text-xs text-gray-500">
+                        <span>Strategic Review</span>
+                        <span>Legal Review</span>
+                        <span>Financial Audit</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step Content */}
+                  {terminationStep === 1 && !isTerminationScheduled && (
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="terminationReason" className="block text-sm font-medium text-gray-700 mb-1">
+                          Reason for Termination (COO)
+                        </label>
+                        <select
+                          id="terminationReason"
+                          value={terminationReason}
+                          onChange={(e) => setTerminationReason(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                          required
+                        >
+                          <option value="">Select a reason</option>
+                          {terminationReasonsOptions.map((reason) => (
+                            <option key={reason} value={reason}>
+                              {reason}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label htmlFor="strategicNotes" className="block text-sm font-medium text-gray-700 mb-1">
+                          Additional Strategic Notes
+                        </label>
+                        <textarea
+                          id="strategicNotes"
+                          value={legalReviewNotes} // Reusing legalReviewNotes for general notes
+                          onChange={(e) => setLegalReviewNotes(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[80px]"
+                          placeholder="Enter any additional notes for strategic review..."
+                        />
+                      </div>
+                      <div className="flex justify-end pt-4">
+                        <button
+                          onClick={() => setTerminationStep(2)}
+                          disabled={!terminationReason}
+                          className={`px-6 py-3 text-white rounded-full transition-all ${
+                            !terminationReason ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"
+                          }`}
+                        >
+                          Next: Legal Review
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {terminationStep === 2 && !isTerminationScheduled && (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Legal Review</h3>
+                        <p className="text-gray-600 mb-4">
+                          Consider the legal implications and existing Service Level Agreements (SLAs).
+                        </p>
+                        <label htmlFor="legalNotes" className="block text-sm font-medium text-gray-700 mb-1">
+                          Legal Notes / Implications
+                        </label>
+                        <textarea
+                          id="legalNotes"
+                          value={legalReviewNotes}
+                          onChange={(e) => setLegalReviewNotes(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[120px]"
+                          placeholder="Document any legal effects or considerations..."
+                          required
+                        />
+                      </div>
+                      <div className="flex items-center">
+                        <input type="checkbox" id="slaCheck" className="mr-2" />
+                        <label htmlFor="slaCheck" className="text-sm text-gray-700">
+                          Confirmed review of customer SLAs and agreements.
+                        </label>
+                      </div>
+                      <div className="flex justify-between pt-4">
+                        <button
+                          onClick={() => setTerminationStep(1)}
+                          className="px-6 py-3 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 transition-colors"
+                        >
+                          Back
+                        </button>
+                        <button
+                          onClick={() => setTerminationStep(3)}
+                          disabled={!legalReviewNotes.trim()}
+                          className={`px-6 py-3 text-white rounded-full transition-all ${
+                            !legalReviewNotes.trim() ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"
+                          }`}
+                        >
+                          Next: Financial Audit
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {terminationStep === 3 && !isTerminationScheduled && (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Financial Audit</h3>
+                        <p className="text-gray-600 mb-4">
+                          Ensure all financial obligations, including refunds for pre-booked services, are addressed.
+                        </p>
+                        <label htmlFor="financialNotes" className="block text-sm font-medium text-gray-700 mb-1">
+                          Financial Audit Notes
+                        </label>
+                        <textarea
+                          id="financialNotes"
+                          value={financialAuditNotes}
+                          onChange={(e) => setFinancialAuditNotes(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[120px]"
+                          placeholder="Document refund plans, outstanding payments, etc."
+                          required
+                        />
+                      </div>
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-yellow-800 text-sm">
+                        <p className="font-medium">Important:</p>
+                        <p className="mt-1">
+                          All customers with existing bookings for this service will be automatically refunded upon
+                          final termination.
+                        </p>
+                      </div>
+                      <div className="flex justify-between pt-4">
+                        <button
+                          onClick={() => setTerminationStep(2)}
+                          className="px-6 py-3 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 transition-colors"
+                        >
+                          Back
+                        </button>
+                        <button
+                          onClick={handleScheduleTermination}
+                          disabled={!financialAuditNotes.trim()}
+                          className={`px-6 py-3 text-white rounded-full transition-all ${
+                            !financialAuditNotes.trim()
+                              ? "bg-gray-400 cursor-not-allowed"
+                              : "bg-red-500 hover:bg-red-600"
+                          }`}
+                        >
+                          Schedule Termination
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {isTerminationScheduled && terminationStep === 4 && (
+                    <div className="text-center space-y-6">
+                      <div className="w-24 h-24 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4 animate-pulse">
+                        <Trash2 className="h-12 w-12 text-red-500" />
+                      </div>
+                      <h3 className="text-2xl font-medium text-red-500">Termination Scheduled!</h3>
+                      <p className="text-gray-700">
+                        The service "<span className="font-semibold">{serviceToTerminate.name}</span>" is scheduled for
+                        termination and will be permanently removed in:
+                      </p>
+                      <div className="text-4xl font-medium text-red-500 tracking-tight">
+                        {formatTime(terminationTimer)}
+                      </div>
+                      <p className="text-gray-600">
+                        Reason for termination: <span className="font-medium">{terminationReason}</span>
+                      </p>
+                      <div className="flex justify-center space-x-4 mt-6">
+                        <button
+                          onClick={handleCancelTermination}
+                          className="px-6 py-3 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 transition-colors"
+                        >
+                          Cancel Termination
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+
       <Footer />
     </div>
   )

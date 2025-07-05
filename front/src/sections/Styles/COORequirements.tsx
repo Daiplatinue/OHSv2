@@ -28,6 +28,7 @@ import LocationSelector from "./LocationSelectorAuth"
 import ImagePopup from "./ImagePopup"
 import ConfirmationModal from "./ConfirmationModal"
 import { isPointInCircle, forwardGeocode } from "../LocationUtils/LocationUtil"
+import { Link } from "react-router-dom"
 
 interface Location {
   name: string
@@ -268,7 +269,14 @@ to { transform: translateY(0); opacity: 1; }
   ) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0]
-      setter(file) // Keep the file in state if needed, but the URL is what matters for submission
+      setter(file)
+
+      // Create local DataURL preview immediately for quick feedback
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        previewSetter(reader.result as string)
+      }
+      reader.readAsDataURL(file)
 
       setLoading(true) // Set global loading for upload
       setError("") // Clear previous errors
@@ -297,10 +305,9 @@ to { transform: translateY(0); opacity: 1; }
           throw new Error(data.message || "File upload failed.")
         }
 
-        previewSetter(data.url) // Set the preview to the Vercel Blob URL
+        previewSetter(data.url) // Update preview to the actual uploaded URL from the server
       } catch (err) {
         console.error("Upload error:", err)
-        // Error message is already set by the if (!response.ok) block or the specific BlobError check
         previewSetter(null) // Clear preview on error
         setter(null) // Clear file on error
       } finally {
@@ -317,6 +324,16 @@ to { transform: translateY(0); opacity: 1; }
   ) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0]
+
+      // Create local DataURL preview immediately for quick feedback
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setter((prev) => ({
+          ...prev,
+          preview: reader.result as string,
+        }))
+      }
+      reader.readAsDataURL(file)
 
       setLoading(true) // Set global loading for upload
       setError("") // Clear previous errors
@@ -348,11 +365,10 @@ to { transform: translateY(0); opacity: 1; }
         setter((prev) => ({
           ...prev,
           file: file, // Keep the file in state if needed
-          preview: data.url, // Set the preview to the Vercel Blob URL
+          preview: data.url, // Update preview to the actual uploaded URL from the server
         }))
       } catch (err) {
         console.error("Upload error:", err)
-        // Error message is already set by the if (!response.ok) block or the specific BlobError check
         setter((prev) => ({
           ...prev,
           file: null,
@@ -643,6 +659,85 @@ to { transform: translateY(0); opacity: 1; }
     setSkipVerification(true) // Skipping verification
     // Skip to profile setup instead of review
     animateStepChange("next", 5)
+  }
+
+  const resetFormFields = () => {
+    // Step 1 - Business Information
+    setBusinessName("")
+    setEmail("")
+    setPassword("")
+    setConfirmPassword("")
+    setFoundedDate("")
+    setAboutCompany("")
+    setTeamSize("")
+    setCompanyNumber("")
+    setShowPassword(false)
+    setShowConfirmPassword(false)
+
+    // Step 2 - Location Information
+    setCompanyLocation(null)
+    setShowLocationModal(false)
+    setTinNumber("")
+    setShowTinNumber(false)
+    setCityCoverage([])
+    setNewCity("")
+    setCityCoverageError(null)
+
+    // Step 3 - Business Permits
+    setSecRegistration(null)
+    setSecRegistrationPreview(null)
+    setBusinessPermit(null)
+    setBusinessPermitPreview(null)
+    setBirRegistration(null)
+    setBirRegistrationPreview(null)
+    setEccCertificate(null)
+    setEccCertificatePreview(null)
+
+    // Step 4 - Insurance and Liability Coverage
+    setGeneralLiability({ file: null, preview: null })
+    setWorkersComp({ file: null, preview: null })
+    setProfessionalIndemnity({ file: null, preview: null })
+    setPropertyDamage({ file: null, preview: null })
+    setBusinessInterruption({ file: null, preview: null })
+    setBondingInsurance({ file: null, preview: null })
+
+    // Step 5 - Profile Setup
+    setProfilePicture(null)
+    setProfilePicturePreview(null)
+    setCoverPhoto(null)
+    setCoverPhotoPreview(null)
+    setSecretQuestion("")
+    setSecretAnswer("")
+    setSecretCode(null)
+
+    // Other states to reset
+    setCurrentStep(1) // Reset to first step
+    setLoading(false)
+    setError("")
+    setSuccess(false)
+    setUserData(null)
+    setIsConfirmationModalOpen(false)
+    setSkipVerification(false)
+    setShowWarningModal(false)
+    setCurrentUploadType("")
+    setUploadWarningShown({
+      sec: false,
+      business: false,
+      bir: false,
+      ecc: false,
+      generalLiability: false,
+      workersComp: false,
+      professionalIndemnity: false,
+      propertyDamage: false,
+      businessInterruption: false,
+      bondingInsurance: false,
+    })
+    setShowFileExistsModal(false)
+    setShowGenericUploadErrorModal(false)
+    setGenericUploadErrorMessage("")
+    setPopupImage(null)
+    setIsImagePopupOpen(false)
+    setShowReviewTinNumber(false)
   }
 
   return (
@@ -2402,13 +2497,17 @@ to { transform: translateY(0); opacity: 1; }
                 notified once approved.
               </p>
 
-              <button
-                onClick={() => setIsSuccessModalOpen(false)}
+              <Link
+                to="/login"
+                onClick={() => {
+                  setIsSuccessModalOpen(false)
+                  resetFormFields()
+                }}
                 className="px-8 py-3 bg-blue-500 text-white rounded-full font-medium shadow-sm hover:bg-blue-600 active:scale-95 transition-all duration-200"
                 style={{ animation: "fadeIn 0.5s ease-out 0.3s both" }}
               >
                 Continue
-              </button>
+              </Link>
             </div>
           </div>
         </div>

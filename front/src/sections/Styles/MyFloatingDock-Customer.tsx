@@ -29,7 +29,7 @@ import {
   PowerOff,
   Album,
 } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import ProviderTrackingMap from "./ProviderTrackingMap"
 import NotificationPopup, { type NotificationItem } from "../Customer_Tabs/Notification"
 
@@ -87,28 +87,31 @@ interface DockItemProps {
 
 const DockItem: React.FC<DockItemProps> = ({ icon, to, isActive, onClick, badge }) => {
   const [isHovered, setIsHovered] = useState(false)
+  const navigate = useNavigate() // Use useNavigate for programmatic navigation
 
   const handleClick = () => {
     if (onClick) {
       onClick()
     } else if (to === "/logout") {
-      window.location.href = "/login"
+      localStorage.removeItem("token")
+      navigate("/login") 
     } else if (to === "/profile") {
-      window.location.href = "/customer/profile"
+      navigate("/customer/profile") 
     } else if (to === "/") {
-      window.location.href = "/"
+      navigate("/")
     } else {
       console.log(`Navigate to: ${to}`)
     }
   }
 
-  return (
-    <div
-      className="relative flex items-center justify-center w-10 h-10 cursor-pointer transition-all duration-200 ease-in-out hover:scale-110"
-      onClick={handleClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+  const commonProps = {
+    className: `relative flex items-center justify-center w-10 h-10 cursor-pointer transition-all duration-200 ease-in-out hover:scale-110`,
+    onMouseEnter: () => setIsHovered(true),
+    onMouseLeave: () => setIsHovered(false),
+  }
+
+  const content = (
+    <>
       <div
         className={`flex items-center justify-center transition-all duration-200 ${
           isActive ? "text-primary" : isHovered ? "text-primary/80" : "text-gray-400"
@@ -157,8 +160,25 @@ const DockItem: React.FC<DockItemProps> = ({ icon, to, isActive, onClick, badge 
                       ? "Logout"
                       : to}
       </div>
-    </div>
+    </>
   )
+
+  // If it's an action button (has onClick or is a special internal link like # or /notification)
+  // or if it's a logout/profile/home link that needs custom logic before navigation, use a div with onClick.
+  // Otherwise, use react-router-dom's Link component.
+  if (onClick || to === "#" || to === "/notification" || to === "/logout" || to === "/profile" || to === "/") {
+    return (
+      <div {...commonProps} onClick={handleClick}>
+        {content}
+      </div>
+    )
+  } else {
+    return (
+      <Link to={to} {...commonProps}>
+        {content}
+      </Link>
+    )
+  }
 }
 
 interface StatCardProps {
@@ -230,7 +250,7 @@ interface Booking {
 }
 
 const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
-  const navigate = useNavigate()
+  const navigate = useNavigate() // Use useNavigate from react-router-dom
   const [timeLeft, setTimeLeft] = useState<number>(30)
   const [status, setStatus] = useState(booking.status)
   const [paymentComplete] = useState(booking.paymentComplete || false)
@@ -964,7 +984,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", damping: 25 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               <div className="flex flex-col items-center text-center">
                 <motion.div

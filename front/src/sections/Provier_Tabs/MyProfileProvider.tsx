@@ -2,9 +2,10 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import axios from "axios"
 import { Dialog } from "@headlessui/react"
-import { MapPin, Camera, X } from "lucide-react"
+import { MapPin, Camera, X, Loader2 } from "lucide-react" // Added Loader2 for loading spinner
 
-import MyFloatingDockCustomer from "../Styles/MyFloatingDock-Customer"
+import MyFloatingDockCustomer from "../Styles/MyFloatingDock-Provider"
+import { EditProfileDetailsModal } from "../ProviderComponents/Modal/EditProfileDetailsModal" // Import the new modal
 
 interface PersonalInfo {
   id: number
@@ -53,6 +54,13 @@ function MyProfile() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null)
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [isUploadingProfilePicture, setIsUploadingProfilePicture] = useState(false)
+  const [isUploadingCoverPhoto, setIsUploadingCoverPhoto] = useState(false)
+  const [originalProfilePicture, setOriginalProfilePicture] = useState<string | undefined>(undefined)
+  const [originalCoverPhoto, setOriginalCoverPhoto] = useState<string | undefined>(undefined)
+  const [isResettingImages, setIsResettingImages] = useState(false)
+  const [isEditDetailsModalOpen, setIsEditDetailsModalOpen] = useState(false) // New state for edit details modal
 
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo[]>([
     {
@@ -122,40 +130,40 @@ function MyProfile() {
   ])
 
   // Fetch current user details from API
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      try {
-        setLoading(true)
-        const token = localStorage.getItem("token")
+  const fetchUserDetails = async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem("token")
 
-        if (!token) {
-          setError("You are not logged in. Please log in to view your profile.")
-          setLoading(false)
-          return
-        }
-
-        // Hardcoded API URL for local development
-        const API_BASE_URL = "http://localhost:3000"
-
-        const response = await axios.get(`${API_BASE_URL}/api/user/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        setUserDetails(response.data.user)
+      if (!token) {
+        setError("You are not logged in. Please log in to view your profile.")
         setLoading(false)
-      } catch (err: any) {
-        console.error("Error fetching user details:", err)
-        if (err.response && err.response.data && err.response.data.message) {
-          setError(`Failed to load user profile: ${err.response.data.message}`)
-        } else {
-          setError("Failed to load user profile. Please try again later.")
-        }
-        setLoading(false)
+        return
       }
-    }
 
+      // Hardcoded API URL for local development
+      const API_BASE_URL = "http://localhost:3000"
+
+      const response = await axios.get(`${API_BASE_URL}/api/user/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      setUserDetails(response.data.user)
+      setLoading(false)
+    } catch (err: any) {
+      console.error("Error fetching user details:", err)
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(`Failed to load user profile: ${err.response.data.message}`)
+      } else {
+        setError("Failed to load user profile. Please try again later.")
+      }
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     fetchUserDetails()
   }, [])
 
@@ -193,16 +201,130 @@ function MyProfile() {
     })
   }
 
+  const uploadImageAndSaveToProfile = async (file: File, imageType: "profilePicture" | "coverPhoto") => {
+    const API_BASE_URL = "http://localhost:3000"
+    const token = localStorage.getItem("token")
+
+    if (!token) {
+      setError("Authentication token missing. Please log in.")
+      return
+    }
+
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      // Step 1: Upload image to Vercel Blob
+      const uploadResponse = await axios.post(`${API_BASE_URL}/api/upload/image`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`, // Ensure token is sent for upload if needed
+        },
+      })
+      const imageUrl = uploadResponse.data.url
+
+      // Step 2: Update user profile with the new image URL
+      const updateResponse = await axios.put(
+        `${API_BASE_URL}/api/user/update-image`,
+        {
+          imageType,
+          imageUrl,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+
+      setUserDetails(updateResponse.data.user)
+      setError(null) // Clear any previous errors
+    } catch (err: any) {
+      console.error(`Error uploading or updating ${imageType}:`, err)
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(`Failed to update ${imageType}: ${err.response.data.message}`)
+      } else {
+        setError(`Failed to update ${imageType}. Please try again.`)
+      }
+    }
+  }
+
   const handleProfilePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      alert("Profile picture upload functionality is not yet implemented on the client-side.")
+      setIsUploadingProfilePicture(true)
+      await uploadImageAndSaveToProfile(e.target.files[0], "profilePicture")
+      setIsUploadingProfilePicture(false)
     }
   }
 
   const handleCoverPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      alert("Cover photo upload functionality is not yet implemented on the client-side.")
+      setIsUploadingCoverPhoto(true)
+      await uploadImageAndSaveToProfile(e.target.files[0], "coverPhoto")
+      setIsUploadingCoverPhoto(false)
     }
+  }
+
+  const handleResetImages = async () => {
+    setIsResettingImages(true)
+    const API_BASE_URL = "http://localhost:3000"
+    const token = localStorage.getItem("token")
+
+    if (!token) {
+      setError("Authentication token missing. Please log in.")
+      setIsResettingImages(false)
+      return
+    }
+
+    try {
+      // Reset profile picture
+      const profilePicResetResponse = await axios.put(
+        `${API_BASE_URL}/api/user/update-image`,
+        {
+          imageType: "profilePicture",
+          imageUrl: originalProfilePicture || null, // Use null if original was undefined/null
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+      setUserDetails(profilePicResetResponse.data.user) // Update userDetails after first reset
+
+      // Reset cover photo
+      const coverPhotoResetResponse = await axios.put(
+        `${API_BASE_URL}/api/user/update-image`,
+        {
+          imageType: "coverPhoto",
+          imageUrl: originalCoverPhoto || null, // Use null if original was undefined/null
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+      setUserDetails(coverPhotoResetResponse.data.user) // Update userDetails after second reset
+
+      setIsEditingProfile(false) // Exit editing mode
+      setError(null) // Clear any previous errors
+    } catch (err: any) {
+      console.error("Error resetting images:", err)
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(`Failed to reset images: ${err.response.data.message}`)
+      } else {
+        setError("Failed to reset images. Please try again.")
+      }
+    } finally {
+      setIsResettingImages(false)
+    }
+  }
+
+  const handleProfileDetailsSaveSuccess = (updatedUser: UserDetails) => {
+    setUserDetails(updatedUser)
+    setIsEditDetailsModalOpen(false)
+    setError(null) // Clear any previous errors
   }
 
   const renderTabContent = () => {
@@ -562,13 +684,13 @@ function MyProfile() {
                         <div className="block h-6 bg-gray-300 rounded-full w-10"></div>
                         <div className="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
                         <style>{`
-                          input:checked ~ .dot {
-                            transform: translateX(100%);
-                          }
-                          input:checked ~ .block {
-                            background-color: #3b82f6;
-                          }
-                        `}</style>
+                        input:checked ~ .dot {
+                          transform: translateX(100%);
+                        }
+                        input:checked ~ .block {
+                          background-color: #3b82f6;
+                        }
+                      `}</style>
                       </div>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
@@ -700,19 +822,22 @@ function MyProfile() {
             alt="Cover"
             className="w-full h-full object-cover"
           />
-          <label
-            htmlFor="cover-photo-upload"
-            className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-all cursor-pointer"
-          >
-            <Camera className="h-5 w-5" />
-            <input
-              id="cover-photo-upload"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleCoverPhotoChange}
-            />
-          </label>
+          {isEditingProfile && (
+            <label
+              htmlFor="cover-photo-upload"
+              className="absolute bottom-4 right-4 bg-white/20 backdrop-blur-sm text-white p-2 rounded-full hover:bg-white/30 transition-all cursor-pointer"
+            >
+              {isUploadingCoverPhoto ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
+              <input
+                id="cover-photo-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleCoverPhotoChange}
+                disabled={isUploadingCoverPhoto}
+              />
+            </label>
+          )}
         </div>
 
         {/* Profile Info with Stats */}
@@ -722,23 +847,30 @@ function MyProfile() {
               <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-white">
                 <img
                   src={userDetails?.profilePicture || "/placeholder.svg?height=128&width=128"}
-                  alt={userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : "Customer"}
+                  alt={userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : "Provider"}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <label
-                htmlFor="profile-picture-upload"
-                className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-md hover:bg-gray-50 cursor-pointer"
-              >
-                <Camera className="h-4 w-4 text-gray-600" />
-                <input
-                  id="profile-picture-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleProfilePictureChange}
-                />
-              </label>
+              {isEditingProfile && (
+                <label
+                  htmlFor="profile-picture-upload"
+                  className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-md hover:bg-gray-50 cursor-pointer"
+                >
+                  {isUploadingProfilePicture ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-600" />
+                  ) : (
+                    <Camera className="h-4 w-4 text-gray-600" />
+                  )}
+                  <input
+                    id="profile-picture-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleProfilePictureChange}
+                    disabled={isUploadingProfilePicture}
+                  />
+                </label>
+              )}
             </div>
           </div>
 
@@ -747,14 +879,14 @@ function MyProfile() {
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl font-medium text-gray-700">
-                    {userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : "Customer"}
+                    {userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : "Provider"}
                   </h1>
                   <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
-                    {userDetails?.type === "customer"
-                      ? "Customer"
-                      : userDetails?.type === "manager"
-                        ? "Manager"
-                        : userDetails?.type || "Customer"}
+                    {userDetails?.type === "Provider"
+                      ? "Provider"
+                      : userDetails?.type === "Provider"
+                        ? "Provider"
+                        : userDetails?.type || "Provider"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 mt-1 text-gray-600">
@@ -762,15 +894,29 @@ function MyProfile() {
                   <span>{userDetails?.location?.name || "Location not specified"}</span>
                 </div>
               </div>
-              <button
-                onClick={() => {
-                  // Implement edit profile functionality
-                  alert("Edit profile functionality will be implemented here")
-                }}
-                className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-all"
-              >
-                Edit Profile
-              </button>
+              <div className="flex gap-2">
+                {isEditingProfile && (
+                  <button
+                    onClick={handleResetImages}
+                    disabled={isResettingImages}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all flex items-center justify-center"
+                  >
+                    {isResettingImages ? <Loader2 className="h-5 w-5 animate-spin" /> : "Reset"}
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (!isEditingProfile) {
+                      setOriginalProfilePicture(userDetails?.profilePicture)
+                      setOriginalCoverPhoto(userDetails?.coverPhoto)
+                    }
+                    setIsEditingProfile((prev) => !prev)
+                  }}
+                  className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-all"
+                >
+                  {isEditingProfile ? "Done Editing" : "Change Profile"}
+                </button>
+              </div>
             </div>
 
             <p className="text-gray-600 max-w-2xl mb-6">{userDetails?.bio || "No bio provided"}</p>
@@ -879,13 +1025,10 @@ function MyProfile() {
             </h2>
             {activeTab === "personal" && (
               <button
-                onClick={() => {
-                  // Implement edit profile functionality
-                  alert("Edit profile functionality will be implemented here")
-                }}
+                onClick={() => setIsEditDetailsModalOpen(true)} // Open the new modal
                 className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-all"
               >
-                Edit Profile
+                Edit Account Details
               </button>
             )}
           </div>
@@ -894,7 +1037,7 @@ function MyProfile() {
         </div>
       </div>
 
-      {/* Edit Info Modal */}
+      {/* Edit Info Modal (existing) */}
       <Dialog open={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} className="relative z-50">
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
 
@@ -1160,6 +1303,16 @@ function MyProfile() {
           </Dialog.Panel>
         </div>
       </Dialog>
+
+      {/* New Edit Profile Details Modal */}
+      {userDetails && (
+        <EditProfileDetailsModal
+          isOpen={isEditDetailsModalOpen}
+          onClose={() => setIsEditDetailsModalOpen(false)}
+          userDetails={userDetails}
+          onSaveSuccess={handleProfileDetailsSaveSuccess}
+        />
+      )}
     </div>
   )
 }

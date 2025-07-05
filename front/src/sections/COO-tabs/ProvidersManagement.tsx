@@ -25,7 +25,7 @@ import {
   Download,
 } from "lucide-react"
 import * as XLSX from "xlsx"
-import MyFloatingDock from "../Styles/MyFloatingDock-Ceo"
+import MyFloatingDock from "../Styles/MyFloatingDock-COO"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"

@@ -4,6 +4,7 @@ import dotenv from "dotenv"
 import cors from "cors"
 import multer from "multer"
 import { put } from "@vercel/blob"
+import jwt from "jsonwebtoken"
 import {
   registerCustomer,
   registerCOO,
@@ -14,6 +15,9 @@ import {
   verifySecretAnswer,
   verifySecretCode,
   resetPassword,
+  getUserProfile,
+  updateUserImage,
+  updateUserProfile,
 } from "./controller/userController.js"
 import fetch from "node-fetch"
 
@@ -40,6 +44,33 @@ app.use((req, res, next) => {
   next()
 })
 
+// New: Authentication Middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"]
+  const token = authHeader && authHeader.split(" ")[1] // Bearer TOKEN
+
+  if (token == null) {
+    return res.status(401).json({ message: "Authentication token required." })
+  }
+
+  const jwtSecret = process.env.JWT_SECRET
+  if (!jwtSecret) {
+    console.error("JWT_SECRET is not defined in environment variables.")
+    return res.status(500).json({ message: "Server configuration error: JWT secret missing." })
+  }
+
+  jwt.verify(token, jwtSecret, (err, user) => {
+    if (err) {
+      console.error("JWT verification error:", err)
+      return res.status(403).json({ message: "Invalid or expired token." })
+    }
+    req.userId = user.userId // Attach user ID to the request
+    req.userEmail = user.email // Attach user email to the request
+    req.accountType = user.accountType // Attach account type to the request
+    next()
+  })
+}
+
 // MongoDB Connection
 mongoose
   .connect(process.env.MONGO_URL)
@@ -58,6 +89,9 @@ app.post("/api/users/forgot-password/fetch-details", fetchSecretDetails)
 app.post("/api/users/forgot-password/verify-answer", verifySecretAnswer)
 app.post("/api/users/forgot-password/verify-code", verifySecretCode)
 app.post("/api/users/forgot-password/reset-password", resetPassword)
+
+// Protected route for fetching user profile
+app.get("/api/user/profile", authenticateToken, getUserProfile) // Apply middleware here
 
 // New route for image uploads using Vercel Blob
 app.post("/api/upload/image", upload.single("file"), async (req, res) => {
@@ -84,6 +118,12 @@ app.post("/api/upload/image", upload.single("file"), async (req, res) => {
       .json({ message: "File already exists. Please upload a different file or rename it.", error: error.message })
   }
 })
+
+// New route to update user profile/cover photo URL in DB
+app.put("/api/user/update-image", authenticateToken, updateUserImage) // Apply middleware and new controller function
+
+// New route to update user profile details
+app.put("/api/user/profile", authenticateToken, updateUserProfile) // Apply middleware and new controller function
 
 // Add the reCAPTCHA verification route
 app.post("/api/verify-recaptcha", async (req, res) => {

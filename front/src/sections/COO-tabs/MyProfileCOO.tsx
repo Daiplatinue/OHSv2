@@ -4,7 +4,7 @@ import axios from "axios"
 import { Dialog } from "@headlessui/react"
 import { MapPin, Camera, X } from "lucide-react"
 
-import MyFloatingDockCustomer from "../Styles/MyFloatingDock-Customer"
+import MyFloatingDockCustomer from "../Styles/MyFloatingDock-COO"
 
 interface PersonalInfo {
   id: number
@@ -722,7 +722,7 @@ function MyProfile() {
               <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-white">
                 <img
                   src={userDetails?.profilePicture || "/placeholder.svg?height=128&width=128"}
-                  alt={userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : "Customer"}
+                  alt={userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : "COO"}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -747,14 +747,14 @@ function MyProfile() {
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-2xl font-medium text-gray-700">
-                    {userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : "Customer"}
+                    {userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : "COO"}
                   </h1>
                   <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
-                    {userDetails?.type === "customer"
-                      ? "Customer"
-                      : userDetails?.type === "manager"
-                        ? "Manager"
-                        : userDetails?.type || "Customer"}
+                    {userDetails?.type === "COO"
+                      ? "COO"
+                      : userDetails?.type === "COO"
+                        ? "COO"
+                        : userDetails?.type || "COO"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 mt-1 text-gray-600">

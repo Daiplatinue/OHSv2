@@ -1,5 +1,5 @@
 import { CreditCard, ArrowUpRight, ArrowDownRight, DollarSign, Wallet, Repeat, ChevronRight, Plus } from "lucide-react"
-import MyFloatingDockCeo from "../Styles/MyFloatingDock-Ceo"
+import MyFloatingDockCeo from "../Styles/MyFloatingDock-COO"
 
 export default function MyBalance() {
   return (

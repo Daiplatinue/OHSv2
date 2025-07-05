@@ -1,17 +1,7 @@
 import type React from "react"
 import { useState } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import {
-  Home,
-  MessageCircleMore,
-  PowerOff,
-  Bell,
-  Newspaper,
-  Album,
-  ChevronUp,
-  Coffee,
-  UsersRound,
-} from "lucide-react"
+import { Home, MessageCircleMore, PowerOff, Bell, Newspaper, Album, ChevronUp, Coffee, UsersRound } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface DockItemProps {
@@ -26,6 +16,9 @@ const DockItem: React.FC<DockItemProps> = ({ icon, label, to, isActive }) => {
   const [isHovered, setIsHovered] = useState(false)
 
   const handleClick = () => {
+    if (to === "/login") {
+      localStorage.removeItem("token")
+    }
     navigate(to)
   }
 
@@ -101,8 +94,8 @@ const FloatingDock: React.FC = () => {
           <DockItem
             icon={<Home size={20} strokeWidth={1.5} color="gray" />}
             label="Home"
-            to="/ceo"
-            isActive={location.pathname === "/ceo"}
+            to="/coo"
+            isActive={location.pathname === "/coo"}
           />
           <DockItem
             icon={<Album size={20} strokeWidth={1.5} color="gray" />}
@@ -133,6 +126,12 @@ const FloatingDock: React.FC = () => {
             label="Employees"
             to="/ceo/employees"
             isActive={location.pathname === "/settings"}
+          />
+          <DockItem
+            icon={<UsersRound size={20} strokeWidth={1.5} color="gray" />}
+            label="Profile"
+            to="/coo/profile"
+            isActive={location.pathname === "/coo/profile"}
           />
           <DockItem
             icon={<PowerOff size={20} strokeWidth={1.5} color="gray" />}

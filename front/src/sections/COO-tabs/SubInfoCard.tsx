@@ -1,5 +1,5 @@
 import { Crown, CheckCircle2 } from "lucide-react"
-import type { SubscriptionInfo } from "../Manager-tabs/bookings-data"
+import type { SubscriptionInfo } from "./bookings-data"
 
 interface SubscriptionInfoCardProps {
   subscription: SubscriptionInfo

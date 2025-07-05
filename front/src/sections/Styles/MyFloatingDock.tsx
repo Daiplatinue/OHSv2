@@ -28,6 +28,9 @@ const DockItem: React.FC<DockItemProps> = ({ icon, label, to, isActive }) => {
   const [isHovered, setIsHovered] = useState(false)
 
   const handleClick = () => {
+    if (to === "/login") {
+      localStorage.removeItem("token")
+    }
     navigate(to)
   }
 

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Plus, Trash, Pencil, ChevronRight, Star, Info } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import ServiceCategoriesModal from "../ServiceCategoriesModal"
 import WorkersModal from "../WorkersModal"
 import { serviceSubcategories, sellers, products } from "../../Home-data"
@@ -23,8 +23,33 @@ import service5 from "../../../assets/Home/Warm Sunlit Kitchen Scene.jpeg"
 import service6 from "../../../assets/Home/Garden Community.jpeg"
 
 export default function Dashboard() {
-  const userName = "User"
-  const userEmail = "email@example.com"
+  const [dynamicFirstName, setDynamicFirstName] = useState("User")
+  const [dynamicUserEmail, setDynamicUserEmail] = useState("email@example.com")
+  const [greeting, setGreeting] = useState("Good Day")
+
+  useEffect(() => {
+    // Retrieve user data from localStorage
+    const userDataString = localStorage.getItem("user")
+    if (userDataString) {
+      try {
+        const userData = JSON.parse(userDataString)
+        setDynamicFirstName(userData.firstName || "User")
+        setDynamicUserEmail(userData.email || "email@example.com")
+      } catch (error) {
+        console.error("Failed to parse user data from localStorage:", error)
+      }
+    }
+
+    // Determine dynamic greeting
+    const currentHour = new Date().getHours()
+    if (currentHour >= 5 && currentHour < 12) {
+      setGreeting("Good Morning")
+    } else if (currentHour >= 12 && currentHour < 18) {
+      setGreeting("Good Afternoon")
+    } else {
+      setGreeting("Good Evening")
+    }
+  }, [])
 
   const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false)
   const [isWorkersModalOpen, setIsWorkersModalOpen] = useState(false)
@@ -211,8 +236,8 @@ export default function Dashboard() {
         <div className="absolute inset-0 z-10 bg-gradient-to-b from-transparent via-transparent to-gray-50"></div>
         <div className="absolute inset-0 flex flex-col items-center text-center justify-center z-20 text-white">
           <h1 className="text-3xl font-extralight text-gray-100 mb-20">
-            Good Afternoon, {userName} <br />
-            <span className="text-[17px]">{userEmail}</span>
+            {greeting}, {dynamicFirstName} <br />
+            <span className="text-[17px]">{dynamicUserEmail}</span>
           </h1>
         </div>
       </div>
@@ -404,7 +429,9 @@ export default function Dashboard() {
               {/* New "Nothing follows" section */}
               <div className="flex flex-col items-center mt-15 justify-center text-center py-4 text-gray-500">
                 <Info className="h-6 w-6 mb-2" />
-                <p className="text-sm">No more advertisements follows, <br /> create another service then advertise it</p>
+                <p className="text-sm">
+                  No more advertisements follows, <br /> create another service then advertise it
+                </p>
               </div>
             </CardContent>
           </Card>

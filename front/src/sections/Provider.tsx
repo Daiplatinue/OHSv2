@@ -1,5 +1,6 @@
 import type React from "react"
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import MyFloatingDockProvider from "../sections/Styles/MyFloatingDock-Provider"
 import {
   CalendarIcon,
@@ -105,6 +106,15 @@ function ProviderDashboard() {
   const [serviceBeingTracked, setServiceBeingTracked] = useState<Service | null>(null)
   const [showWorkersWaitingModal, setShowWorkersWaitingModal] = useState(false)
   const [isDetailedStatsModalOpen, setIsDetailedStatsModalOpen] = useState(false) // New state for detailed stats modal
+
+  const navigate = useNavigate() // Added navigate initialization
+
+  useEffect(() => {
+    const token = localStorage.getItem("token") // Assuming the token is stored in localStorage
+    if (!token) {
+      navigate("/proposition")
+    }
+  }, [])
 
   const [pendingServices, setPendingServices] = useState<Service[]>([
     {
@@ -611,7 +621,9 @@ function ProviderDashboard() {
             {/* Background Image */}
             <div
               className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: "url('https://cdn.pixabay.com/photo/2021/04/05/16/28/packages-6153947_1280.jpg')" }}
+              style={{
+                backgroundImage: "url('https://cdn.pixabay.com/photo/2021/04/05/16/28/packages-6153947_1280.jpg')",
+              }}
             ></div>
             {/* Dark Overlay */}
             <div className="absolute inset-0 bg-black/50"></div>
@@ -647,28 +659,31 @@ function ProviderDashboard() {
               <nav className="flex -mb-px overflow-x-auto">
                 <button
                   onClick={() => setActiveTab("pending")}
-                  className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "pending"
+                  className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
+                    activeTab === "pending"
                       ? "border-sky-500 text-sky-500"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
+                  }`}
                 >
                   Pending Services
                 </button>
                 <button
                   onClick={() => setActiveTab("ongoing")}
-                  className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "ongoing"
+                  className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
+                    activeTab === "ongoing"
                       ? "border-sky-500 text-sky-500"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
+                  }`}
                 >
                   Ongoing Services
                 </button>
                 <button
                   onClick={() => setActiveTab("completed")}
-                  className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "completed"
+                  className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
+                    activeTab === "completed"
                       ? "border-sky-500 text-sky-500"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
+                  }`}
                 >
                   Completed Services
                 </button>
@@ -708,7 +723,11 @@ function ProviderDashboard() {
                   ></div>
                 </div>
                 <Avatar className="w-[calc(100%)] h-[calc(100%)]">
-                  <AvatarImage className="object-cover" src="https://cdn.pixabay.com/photo/2019/03/05/05/45/man-4035612_1280.jpg" alt="Jason Ranti" />
+                  <AvatarImage
+                    className="object-cover"
+                    src="https://cdn.pixabay.com/photo/2019/03/05/05/45/man-4035612_1280.jpg"
+                    alt="Jason Ranti"
+                  />
                   <AvatarFallback>JR</AvatarFallback>
                 </Avatar>
               </div>
@@ -791,8 +810,9 @@ function ProviderDashboard() {
                         {Array.from({ length: 5 }).map((_, i) => (
                           <Star
                             key={i}
-                            className={`h-4 w-4 ${i < customer.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-                              }`}
+                            className={`h-4 w-4 ${
+                              i < customer.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                            }`}
                           />
                         ))}
                         <span className="ml-2 text-xs text-gray-600 italic line-clamp-1">"{customer.review}"</span>
@@ -863,12 +883,13 @@ function ProviderDashboard() {
                     <h3 className="text-2xl font-light text-white tracking-tight">{selectedService.serviceName}</h3>
                     <div
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 
-                      ${selectedService.status === "pending"
+                      ${
+                        selectedService.status === "pending"
                           ? "bg-yellow-100 text-yellow-800"
                           : selectedService.status === "ongoing"
                             ? "bg-sky-100 text-sky-800"
                             : "bg-green-100 text-green-800"
-                        }`}
+                      }`}
                     >
                       {selectedService.status === "pending"
                         ? "Pending"
@@ -919,12 +940,13 @@ function ProviderDashboard() {
                           <Users className="h-4 w-4 text-gray-400 mr-2" />
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                            ${(selectedService.workersAssigned || 0) === 0
+                            ${
+                              (selectedService.workersAssigned || 0) === 0
                                 ? "bg-gray-100 text-gray-800"
                                 : (selectedService.workersAssigned || 0) < (selectedService.workersRequired || 1)
                                   ? "bg-yellow-100 text-yellow-800"
                                   : "bg-green-100 text-green-800"
-                              }`}
+                            }`}
                           >
                             {selectedService.workersAssigned || 0}/{selectedService.workersRequired || 1} Workers
                           </span>
@@ -961,8 +983,9 @@ function ProviderDashboard() {
                           {Array.from({ length: 5 }).map((_, i) => (
                             <Star
                               key={i}
-                              className={`h-5 w-5 ${i < selectedService.rating! ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-                                }`}
+                              className={`h-5 w-5 ${
+                                i < selectedService.rating! ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                              }`}
                             />
                           ))}
                         </div>
@@ -1019,10 +1042,11 @@ function ProviderDashboard() {
                         <button
                           onClick={() => handleAcceptService(selectedService.id)}
                           disabled={isLoading}
-                          className={`flex-1 px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${isLoading
+                          className={`flex-1 px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${
+                            isLoading
                               ? "bg-sky-400 cursor-wait"
                               : "bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-200"
-                            }`}
+                          }`}
                         >
                           {isLoading ? (
                             <span className="flex items-center justify-center">
@@ -1107,12 +1131,13 @@ function ProviderDashboard() {
           >
             <div className="flex flex-col items-center text-center">
               <div
-                className={`w-20 h-20 rounded-full ${successMessage.includes("cancelled")
+                className={`w-20 h-20 rounded-full ${
+                  successMessage.includes("cancelled")
                     ? "bg-yellow-100"
                     : successMessage.includes("Waiting")
                       ? "bg-sky-100"
                       : "bg-green-100"
-                  } flex items-center justify-center mb-6 animate-[pulse_2s_ease-in-out_infinite]`}
+                } flex items-center justify-center mb-6 animate-[pulse_2s_ease-in-out_infinite]`}
               >
                 {successMessage.includes("cancelled") ? (
                   <AlertCircle className="h-10 w-10 text-yellow-500 animate-[bounceIn_0.6s_ease-out]" />
@@ -1124,12 +1149,13 @@ function ProviderDashboard() {
               </div>
 
               <Dialog.Title
-                className={`text-xl font-medium ${successMessage.includes("cancelled")
+                className={`text-xl font-medium ${
+                  successMessage.includes("cancelled")
                     ? "text-yellow-600"
                     : successMessage.includes("Waiting")
                       ? "text-sky-600"
                       : "text-gray-900"
-                  } mb-2 animate-[slideInUp_0.4s_ease-out]`}
+                } mb-2 animate-[slideInUp_0.4s_ease-out]`}
               >
                 {successMessage.includes("cancelled")
                   ? "Warning"
@@ -1218,7 +1244,7 @@ function ProviderDashboard() {
       </Dialog>
 
       {/* Account Suspension Warning Modal (Existing) */}
-      <Dialog open={showSuspensionWarning} onClose={() => { }} className="relative z-50">
+      <Dialog open={showSuspensionWarning} onClose={() => {}} className="relative z-50">
         <div className="fixed inset-0 bg-black/50 backdrop-blur-md" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
@@ -1244,7 +1270,7 @@ function ProviderDashboard() {
 
       {/* Map Simulation Modal (Existing) */}
       {showMapSimulation && serviceBeingTracked && (
-        <Dialog open={showMapSimulation} onClose={() => { }} className="relative z-50">
+        <Dialog open={showMapSimulation} onClose={() => {}} className="relative z-50">
           <div className="fixed inset-0 bg-black/30 backdrop-blur-md" aria-hidden="true" />
 
           <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
@@ -1306,8 +1332,9 @@ function ProviderDashboard() {
                               {Array.from({ length: 5 }).map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`h-4 w-4 ${i < service.rating! ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-                                    }`}
+                                  className={`h-4 w-4 ${
+                                    i < service.rating! ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                                  }`}
                                 />
                               ))}
                             </div>

@@ -1,16 +1,7 @@
 import type React from "react"
 import { useState } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import {
-  Home,
-  PowerOff,
-  ChevronUp,
-  Coffee,
-  User,
-  Bell,
-  Newspaper,
-  MessageCircleMore,
-} from "lucide-react"
+import { Home, PowerOff, ChevronUp, Coffee, User, Bell, Newspaper, MessageCircleMore } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface DockItemProps {
@@ -25,28 +16,34 @@ const DockItem: React.FC<DockItemProps> = ({ icon, label, to, isActive }) => {
   const [isHovered, setIsHovered] = useState(false)
 
   const handleClick = () => {
+    if (to === "/login") {
+      localStorage.removeItem("token")
+    }
     navigate(to)
   }
 
   return (
     <div
-      className={`relative flex items-center justify-center w-10 h-10 cursor-pointer transition-all duration-200 ease-in-out ${isHovered ? "scale-110" : "scale-100"
-        }`}
+      className={`relative flex items-center justify-center w-10 h-10 cursor-pointer transition-all duration-200 ease-in-out ${
+        isHovered ? "scale-110" : "scale-100"
+      }`}
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`flex items-center justify-center transition-all duration-200 ${isActive ? "text-white" : isHovered ? "text-white" : "text-gray-400"
-          }`}
+        className={`flex items-center justify-center transition-all duration-200 ${
+          isActive ? "text-white" : isHovered ? "text-white" : "text-gray-400"
+        }`}
       >
         {icon}
       </div>
 
       {/* Label with animation */}
       <div
-        className={`absolute -top-8 bg-sky-400 text-white text-xs px-2 py-1 rounded-md opacity-0 transition-all duration-200 ${isHovered ? "opacity-100 transform translate-y-0" : "transform translate-y-2"
-          }`}
+        className={`absolute -top-8 bg-sky-400 text-white text-xs px-2 py-1 rounded-md opacity-0 transition-all duration-200 ${
+          isHovered ? "opacity-100 transform translate-y-0" : "transform translate-y-2"
+        }`}
       >
         {label}
       </div>

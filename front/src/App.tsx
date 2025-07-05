@@ -5,6 +5,7 @@ import LoginAlt from './sections/LoginAlt';
 import Transaction from './sections/Transaction';
 import MyProfileCustomer from './sections/Customer_Tabs/MyProfileCustomer';
 
+
 import ChatRTC from './sections/Styles/ChatRTC';
 
 import Admin from './sections/Admin';
@@ -17,14 +18,16 @@ import MyEmailsAdmin from './sections/Admin_Tabs/MyEmailsAdmin';
 import MyNotificationsAdmin from './sections/Admin_Tabs/MyNotificationsAdmin';
 
 import COO from './sections/COO';
-import MyBalance from './sections/Manager-tabs/MyBalance';
-import Bookings from './sections/Manager-tabs/Bookings';
-import EmailCeo from './sections/Manager-tabs/MyEmailsCeo';
-import NotificationCeo from './sections/Manager-tabs/MyNotificationsCeo';
-import NewsCeo from './sections/Manager-tabs/NewsCeo';
-import Employee from './sections/Manager-tabs/ProvidersManagement';
+import MyProfileCOO from './sections/COO-tabs/MyProfileCOO';
+import MyBalance from './sections/COO-tabs/MyBalance';
+import Bookings from './sections/COO-tabs/Bookings';
+import EmailCeo from './sections/COO-tabs/MyEmailsCeo';
+import NotificationCeo from './sections/COO-tabs/MyNotificationsCeo';
+import NewsCeo from './sections/COO-tabs/NewsCeo';
+import Employee from './sections/COO-tabs/ProvidersManagement';
 
 import Provider from './sections/Provider';
+import MyProfileProvider from './sections/Provier_Tabs/MyProfileProvider';
 
 import Proposition from './sections/Proposition';
 
@@ -53,7 +56,7 @@ const App: React.FC = () => {
         <Route path='/admin/emails' element={<MyEmailsAdmin />} />
         <Route path='/admin/notifications' element={<MyNotificationsAdmin />} />
 
-        {/* Ceo Tabs */}
+        {/* COO Tabs */}
         <Route path='/coo' element={<COO />} />
         <Route path='/ceo/my-balance' element={<MyBalance />} />
         <Route path='/ceo/bookings' element={<Bookings />} />
@@ -61,9 +64,11 @@ const App: React.FC = () => {
         <Route path='/ceo/notificaitons' element={<NotificationCeo />} />
         <Route path='/ceo/news' element={<NewsCeo />} />
         <Route path='/ceo/employees' element={<Employee />} />
+        <Route path='/coo/profile' element={<MyProfileCOO />} />
 
         {/* Provider */}
         <Route path='/provider' element={<Provider />} />
+        <Route path='/provider/profile' element={<MyProfileProvider />} />
 
         {/* Proposition */}
         <Route path='/proposition' element={<Proposition />} />
