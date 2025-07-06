@@ -9,7 +9,7 @@ const messageSchema = new mongoose.Schema(
     },
     text: {
       type: String,
-      required: true,
+      required: false, // FIX: Make text optional, as messages can now be just attachments
     },
     sender_id: {
       type: mongoose.Schema.Types.ObjectId,
@@ -36,6 +36,22 @@ const messageSchema = new mongoose.Schema(
     isPrivate: {
       type: Boolean,
       default: true,
+    },
+    attachmentUrls: {
+      // NEW: Field to store URLs of attached files
+      type: [String], // Array of strings
+      default: [], // Default to an empty array
+    },
+    status: {
+      // NEW: Message status (e.g., 'sent', 'delivered', 'read')
+      type: String,
+      enum: ["sent", "delivered", "read"], // Define possible statuses
+      default: "sent", // Default status when message is first sent
+    },
+    deleted: {
+      // NEW: Flag to mark message as deleted/unsent
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }, // Adds createdAt and updatedAt fields automatically

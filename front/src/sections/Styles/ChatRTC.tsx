@@ -2,6 +2,24 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { io, type Socket } from "socket.io-client"
 import { format } from "date-fns"
+import {
+  ChevronLeftIcon,
+  SettingsIcon,
+  SearchIcon,
+  PlusIcon,
+  MoreVerticalIcon,
+  PaperclipIcon,
+  SmileIcon,
+  SendIcon,
+  MessageSquareIcon,
+  XIcon,
+  PhoneCallIcon,
+  VideoIcon,
+  CheckIcon,
+  CheckCheckIcon,
+  Trash2Icon,
+} from "lucide-react"
+import { SharedFilesSidebar } from "../Styles/SharedFilesSIdebar" // Import the new sidebar
 
 interface Message {
   id: string
@@ -11,6 +29,9 @@ interface Message {
   receiver_id?: string
   timestamp: Date
   isPrivate?: boolean
+  attachmentUrls?: string[] // Added for attachments
+  status?: "sent" | "delivered" | "read" // NEW: Message status
+  deleted?: boolean // NEW: Flag for unsent messages
 }
 
 interface User {
@@ -36,6 +57,233 @@ function ChatRTC() {
   const [typingStatus, setTypingStatus] = useState<Record<string, boolean>>({}) // New state for typing status
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]) // New state for selected files
+  const fileInputRef = useRef<HTMLInputElement>(null) // Ref for file input
+
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false) // New state for emoji picker visibility
+  const emojiPickerRef = useRef<HTMLDivElement>(null) // Ref for emoji picker
+
+  const emojis = [
+    "😀",
+    "😃",
+    "😄",
+    "😁",
+    "😆",
+    "😅",
+    "😂",
+    "🤣",
+    "😊",
+    "😇",
+    "🙂",
+    "🙃",
+    "😉",
+    "😌",
+    "😍",
+    "🥰",
+    "😘",
+    "😗",
+    "😙",
+    "😚",
+    "😋",
+    "😛",
+    "😝",
+    "😜",
+    "🤪",
+    "🤨",
+    "🧐",
+    "🤓",
+    "😎",
+    "🤩",
+    "🥳",
+    "😏",
+    "😒",
+    "😞",
+    "😔",
+    "😟",
+    "😕",
+    "🙁",
+    "☹️",
+    "😣",
+    "😖",
+    "😫",
+    "😩",
+    "🥺",
+    "😢",
+    "😭",
+    "😤",
+    "😠",
+    "😡",
+    "🤬",
+    "🤯",
+    "😳",
+    "🥵",
+    "🥶",
+    "😱",
+    "😨",
+    "😰",
+    "😥",
+    "😓",
+    "🤗",
+    "🤔",
+    "🤫",
+    "🤭",
+    "🤥",
+    "😶",
+    "😐",
+    "😑",
+    "😬",
+    "🙄",
+    "😯",
+    "😦",
+    "😧",
+    "😮",
+    "😲",
+    "🥱",
+    "😴",
+    "🤤",
+    "😪",
+    "😵",
+    "🤐",
+    "🤢",
+    "🤮",
+    "🤧",
+    "😷",
+    "🤒",
+    "🤕",
+    "🤑",
+    "🤠",
+    "😈",
+    "👿",
+    "👹",
+    "👺",
+    "🤡",
+    "💩",
+    "👻",
+    "💀",
+    "👽",
+    "👾",
+    "🤖",
+    "🎃",
+    "😺",
+    "😸",
+    "😹",
+    "😻",
+    "😼",
+    "😽",
+    "🙀",
+    "😿",
+    "😾",
+    "👋",
+    "🤚",
+    "🖐️",
+    "✋",
+    "🖖",
+    "👌",
+    "🤏",
+    "✌️",
+    "🤞",
+    "🤟",
+    "🤘",
+    "🤙",
+    "👈",
+    "👉",
+    "👆",
+    "🖕",
+    "👇",
+    "☝️",
+    "👍",
+    "👎",
+    "✊",
+    "👊",
+    "🤛",
+    "🤜",
+    "👏",
+    "🙌",
+    "👐",
+    "🤲",
+    "🤝",
+    "🙏",
+    "✍️",
+    "💅",
+    "🤳",
+    "💪",
+    "🦾",
+    "🦵",
+    "🦶",
+    "👂",
+    "👃",
+    "🧠",
+    "🫀",
+    "🫁",
+    "🦷",
+    "🦴",
+    "👀",
+    "👁️",
+    "👅",
+    "👄",
+    "💋",
+    "🩸",
+    "👶",
+    "👧",
+    "👦",
+    "🧒",
+    "🧑",
+    "👱",
+    "👨",
+    "🧔",
+    "👩",
+    "🧓",
+    "👴",
+    "👵",
+    "🙍",
+    "🙎",
+    "🙅",
+    "🙆",
+    "💁",
+    "🙋",
+    "🙇",
+    "🤦",
+    "🤷",
+    "🧑‍⚕️",
+    "🧑‍🎓",
+    "🧑‍🏫",
+    "🧑‍⚖️",
+    "🧑‍🌾",
+    "🧑‍🍳",
+    "🧑‍🔧",
+    "🧑‍🏭",
+    "🧑‍💼",
+    "🧑‍🔬",
+    "🧑‍💻",
+    "🧑‍🎤",
+    "🧑‍🎨",
+    "🧑‍✈️",
+    "🧑‍🚀",
+    "🧑‍🚒",
+    "👮",
+    "🕵️",
+    "💂",
+    "👷",
+    "🤴",
+    "👸",
+    "🤵",
+    "👰",
+    "🦸",
+    "🦹",
+    "🧙",
+    "🧚",
+    "🧛",
+    "🧜",
+    "🧝",
+    "🧞",
+    "🧟",
+    "🧌",
+    "🫂",
+    "🗣️",
+    "👤",
+    "👥",
+  ]
 
   // Initialize user data from localStorage
   useEffect(() => {
@@ -110,9 +358,6 @@ function ChatRTC() {
       console.log("Online users updated:", users)
       // Filter out current user and ensure no duplicates
       const filteredUsers = users.filter((u) => u.id !== user.id)
-      // The backend now sends full user details including username and profilePicture
-      // No need to reconstruct username here
-
       setOnlineUsers(filteredUsers)
     })
 
@@ -137,6 +382,75 @@ function ChatRTC() {
         })
       }
     })
+
+    // NEW: Listen for message status updates (e.g., delivered, read)
+    newSocket.on(
+      "message_status_update",
+      ({
+        messageId,
+        status,
+        receiverId,
+        senderId,
+        messagesUpdated,
+      }: {
+        messageId?: string
+        status: "sent" | "delivered" | "read"
+        receiverId?: string
+        senderId?: string
+        messagesUpdated?: boolean
+      }) => {
+        setMessages((prev) => {
+          const targetConversationId = messageId ? (prev[receiverId || ""] ? receiverId : senderId) : senderId // Determine which conversation to update
+
+          if (!targetConversationId || !prev[targetConversationId]) {
+            return prev
+          }
+
+          const conversationMessages = prev[targetConversationId]
+          let updatedMessages: Message[]
+
+          if (messagesUpdated) {
+            // If messagesUpdated is true, it means multiple messages were marked as read
+            updatedMessages = conversationMessages.map((msg) =>
+              msg.sender_id === targetConversationId && msg.status !== "read" && !msg.deleted
+                ? { ...msg, status: "read" as "read" }
+                : msg,
+            )
+          } else if (messageId) {
+            // Single message status update
+            updatedMessages = conversationMessages.map((msg) =>
+              msg.id === messageId ? { ...msg, status: status as "sent" | "delivered" | "read" } : msg,
+            )
+          } else {
+            return prev // No specific message ID or bulk update flag
+          }
+
+          return {
+            ...prev,
+            [targetConversationId]: updatedMessages,
+          }
+        })
+      },
+    )
+
+    // NEW: Listen for message unsent event
+    newSocket.on(
+      "message_unsent",
+      ({ messageId, receiverId, text }: { messageId: string; receiverId: string; text: string }) => {
+        console.log(`Message ${messageId} unsent. Updating UI.`)
+        setMessages((prev) => {
+          const conversationId = receiverId // The receiverId here is the other user's ID in the conversation
+          const conversationMessages = prev[conversationId] || []
+          const updatedMessages = conversationMessages.map((msg) =>
+            msg.id === messageId ? { ...msg, deleted: true, text: text, attachmentUrls: [] } : msg,
+          )
+          return {
+            ...prev,
+            [conversationId]: updatedMessages,
+          }
+        })
+      },
+    )
 
     // Listen for typing status updates
     newSocket.on("typing_status", ({ userId, isTyping }: { userId: string; isTyping: boolean }) => {
@@ -164,6 +478,19 @@ function ChatRTC() {
     }
   }, [socket])
 
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [emojiPickerRef])
+
   const handleUserSelect = (user: User) => {
     setSelectedUser(user)
 
@@ -180,17 +507,58 @@ function ChatRTC() {
               ...prev,
               [user.id]: response.messages,
             }))
+            // NEW: Mark messages as read when chat is opened
+            socket.emit("mark_messages_as_read", { otherUserId: user.id }, (readResponse: { success: boolean }) => {
+              if (readResponse.success) {
+                console.log(`Messages with ${user.username} marked as read.`)
+              } else {
+                console.error(`Failed to mark messages with ${user.username} as read.`)
+              }
+            })
           }
         },
       )
     }
   }
 
-  const sendMessage = (e: React.FormEvent) => {
+  const uploadFile = async (file: File): Promise<string | null> => {
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch("http://localhost:3000/api/upload/image", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        // Throw an error with the status for better debugging
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data.url
+    } catch (error) {
+      console.error("Error uploading file:", error)
+      return null
+    }
+  }
+
+  const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!messageInput.trim() || !socket || !isConnected || !selectedUser || !currentUser) {
+    if (!messageInput.trim() && selectedFiles.length === 0) {
+      return // Don't send empty messages or messages without attachments
+    }
+    if (!socket || !isConnected || !selectedUser || !currentUser) {
       return
+    }
+
+    let attachmentUrls: string[] = []
+    if (selectedFiles.length > 0) {
+      const uploadPromises = selectedFiles.map((file) => uploadFile(file))
+      const urls = await Promise.all(uploadPromises)
+      attachmentUrls = urls.filter(Boolean) as string[] // Filter out nulls
     }
 
     const messageData = {
@@ -198,6 +566,9 @@ function ChatRTC() {
       sender_id: currentUser.id,
       receiver_id: selectedUser.id,
       isPrivate: true,
+      attachmentUrls: attachmentUrls, // Include attachment URLs
+      status: "sent", // NEW: Set initial status to 'sent'
+      deleted: false, // NEW: Message is not deleted initially
     }
 
     console.log("Sending private message:", messageData)
@@ -205,6 +576,10 @@ function ChatRTC() {
       if (response.success) {
         console.log("Message sent successfully")
         setMessageInput("")
+        setSelectedFiles([]) // Clear selected files
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "" // Clear file input
+        }
         // Clear typing status after sending message
         if (typingTimeoutRef.current) {
           clearTimeout(typingTimeoutRef.current)
@@ -227,6 +602,48 @@ function ChatRTC() {
         console.error("Failed to send message")
       }
     })
+  }
+
+  // NEW: Handle unsend message
+  const handleUnsend = (messageId: string) => {
+    if (!socket || !selectedUser || !currentUser) return
+
+    // Optimistically update UI
+    setMessages((prev) => {
+      const conversationMessages = prev[selectedUser.id] || []
+      const updatedMessages = conversationMessages.map((msg) =>
+        msg.id === messageId ? { ...msg, deleted: true, text: "[Message unsent]", attachmentUrls: [] } : msg,
+      )
+      return {
+        ...prev,
+        [selectedUser.id]: updatedMessages,
+      }
+    })
+
+    socket.emit(
+      "unsend_message",
+      { messageId, receiverId: selectedUser.id },
+      (response: { success: boolean; error?: string }) => {
+        if (!response.success) {
+          console.error("Failed to unsend message:", response.error)
+          // Revert optimistic update if unsend failed (optional, but good for robustness)
+          setMessages((prev) => {
+            const conversationMessages = prev[selectedUser.id] || []
+            const originalMessage = conversationMessages.find((msg) => msg.id === messageId)
+            if (originalMessage) {
+              const revertedMessages = conversationMessages.map((msg) =>
+                msg.id === messageId ? { ...originalMessage, deleted: false } : msg,
+              )
+              return {
+                ...prev,
+                [selectedUser.id]: revertedMessages,
+              }
+            }
+            return prev
+          })
+        }
+      },
+    )
   }
 
   const handleLogout = () => {
@@ -299,6 +716,24 @@ function ChatRTC() {
     }, 1500) // 1.5 seconds after last key press
   }
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setSelectedFiles(Array.from(event.target.files))
+    }
+  }
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index))
+    if (selectedFiles.length === 1 && fileInputRef.current) {
+      fileInputRef.current.value = "" // Clear the input if no files left
+    }
+  }
+
+  const handleEmojiClick = (emoji: string) => {
+    setMessageInput((prev) => prev + emoji)
+    setShowEmojiPicker(false)
+  }
+
   // Loading state
   if (isLoading) {
     return (
@@ -349,46 +784,66 @@ function ChatRTC() {
     )
   }
 
+  const isImageUrl = (url: string) => {
+    return url.match(/\.(jpeg|jpg|gif|png|svg|webp)$/i) !== null
+  }
+
+  const truncateFileName = (fileName: string, maxLength = 15) => {
+    if (fileName.length <= maxLength) {
+      return fileName
+    }
+    const extensionIndex = fileName.lastIndexOf(".")
+    let name = fileName
+    let ext = ""
+
+    if (extensionIndex > -1) {
+      name = fileName.substring(0, extensionIndex)
+      ext = fileName.substring(extensionIndex)
+    }
+
+    const charsToShow = maxLength - ext.length - 3 // -3 for "..."
+    if (charsToShow <= 0) {
+      return `...${ext}` // If name part is too short, just show ellipsis and extension
+    }
+
+    return `${name.substring(0, charsToShow)}...${ext}`
+  }
+
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar - User List */}
+    <div className="flex h-screen bg-[#F7F8FA]">
+      {/* Left Sidebar - Chat List */}
       <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="flex items-center">
+            <ChevronLeftIcon className="h-5 w-5 text-gray-500 mr-2" />
+            <h2 className="text-lg font-medium text-gray-700">Chat Feature</h2>{" "}
+            <p className="text-gray-500 ml-2">beta</p>
+          </div>
+          <SettingsIcon className="h-5 w-5 text-gray-500 cursor-pointer" onClick={handleLogout} />
+        </div>
+
         {/* Current user info */}
         <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              {currentUser?.profilePicture ? (
-                <img
-                  src={currentUser.profilePicture || "/placeholder.svg"}
-                  alt={`${currentUser.username}'s profile`}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-                  {currentUser?.username.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div className="ml-3">
-                <p className="font-medium text-gray-900">{currentUser?.username}</p>
-                <p className="text-xs text-green-500">Online</p>
+          <div className="flex items-center mb-3">
+            {currentUser?.profilePicture ? (
+              <img
+                src={currentUser.profilePicture || "/placeholder.svg?height=64&width=64"}
+                alt={`${currentUser.username}'s profile`}
+                className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white text-2xl font-medium border-2 border-white shadow-sm">
+                {currentUser?.username.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="ml-4">
+              <p className="font-bold text-lg text-gray-900">{currentUser?.username}</p>
+              <div className="flex items-center text-sm text-green-500">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                <span>online</span>
               </div>
             </div>
-            <button onClick={handleLogout} className="text-gray-500 hover:text-gray-700">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
-              </svg>
-            </button>
           </div>
         </div>
 
@@ -398,32 +853,25 @@ function ChatRTC() {
             <input
               type="text"
               placeholder="Search users..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
             />
             <div className="absolute left-3 top-2.5 text-gray-400">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+              <SearchIcon className="h-5 w-5" />
             </div>
           </div>
         </div>
 
-        {/* Online users */}
+        {/* Online users / Last chats */}
         <div className="flex-1 overflow-y-auto">
-          <h3 className="px-4 pt-4 pb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            Online Users ({onlineUsers.length})
-          </h3>
+          <div className="flex items-center justify-between px-4 pt-4 pb-2">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              recent chats ({onlineUsers.length})
+            </h3>
+            <div className="flex items-center space-x-2">
+              <PlusIcon className="h-5 w-5 text-gray-500 cursor-pointer" />
+              <MoreVerticalIcon className="h-5 w-5 text-gray-500 cursor-pointer" />
+            </div>
+          </div>
           <div className="space-y-1 px-2">
             {onlineUsers.length === 0 ? (
               <p className="text-center text-gray-500 py-4">No users online</p>
@@ -439,7 +887,7 @@ function ChatRTC() {
                   <div className="relative">
                     {user.profilePicture ? (
                       <img
-                        src={user.profilePicture || "/placeholder.svg"}
+                        src={user.profilePicture || "/placeholder.svg?height=40&width=40"}
                         alt={`${user.username}'s profile`}
                         className="w-10 h-10 rounded-full object-cover"
                       />
@@ -450,10 +898,21 @@ function ChatRTC() {
                     )}
                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                   </div>
-                  <div className="ml-3 text-left">
-                    <p className="font-medium">{user.username}</p>
-                    <p className="text-xs text-green-500">Online</p>
+                  <div className="ml-3 text-left flex-1">
+                    <p className="font-medium text-gray-900">{user.username}</p>
+                    <p className="text-xs text-gray-500">
+                      {typingStatus[user.id] ? (
+                        <span className="text-blue-500 animate-pulse">typing...</span>
+                      ) : (
+                        "Online"
+                      )}
+                    </p>
                   </div>
+                  <span className="text-xs text-gray-400">
+                    {messages[user.id] && messages[user.id].length > 0
+                      ? formatMessageTime(messages[user.id][messages[user.id].length - 1].timestamp)
+                      : ""}
+                  </span>
                 </button>
               ))
             )}
@@ -461,38 +920,53 @@ function ChatRTC() {
         </div>
       </div>
 
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col bg-[#F7F8FA]">
         {selectedUser ? (
           <>
             {/* Chat header */}
-            <div className="p-4 border-b border-gray-200 bg-white flex items-center">
-              {selectedUser.profilePicture ? (
-                <img
-                  src={selectedUser.profilePicture || "/placeholder.svg"}
-                  alt={`${selectedUser.username}'s profile`}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-medium">
-                  {selectedUser.username.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div className="ml-3">
-                <p className="font-medium text-gray-900">{selectedUser.username}</p>
-                {typingStatus[selectedUser.id] ? (
-                  <p className="text-xs text-blue-500 animate-pulse">Typing...</p>
+            <div className="p-4 border-b border-gray-200 bg-white flex items-center justify-between">
+              <div className="flex items-center">
+                {selectedUser.profilePicture ? (
+                  <img
+                    src={selectedUser.profilePicture || "/placeholder.svg?height=40&width=40"}
+                    alt={`${selectedUser.username}'s profile`}
+                    className="w-10 h-10 rounded-full object-cover mr-3"
+                  />
                 ) : (
-                  <p className="text-xs text-green-500">Online</p>
+                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-medium mr-3">
+                    {selectedUser.username.charAt(0).toUpperCase()}
+                  </div>
                 )}
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-800">{selectedUser.username}</h2>
+                  {onlineUsers.some((u) => u.id === selectedUser.id) ? (
+                    <div className="flex items-center text-sm text-green-500">
+                      <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                      <span>Online</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-sm text-gray-500">
+                      <span className="w-2 h-2 bg-gray-400 rounded-full mr-1"></span>
+                      <span>Offline</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                {" "}
+                {/* Added wrapper for icons */}
+                <PhoneCallIcon className="h-5 w-5 text-gray-500 cursor-pointer" /> {/* Call Icon */}
+                <VideoIcon className="h-5 w-5 text-gray-500 cursor-pointer" /> {/* Video Call Icon */}
+                <MoreVerticalIcon className="h-5 w-5 text-gray-500 cursor-pointer" />
               </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+            <div className="flex-1 overflow-y-auto p-6">
               {Object.entries(getGroupedMessages()).map(([date, dateMessages]) => (
                 <div key={date} className="mb-6">
-                  <div className="flex items-center justify-center mb-4">
+                  <div className="flex items-center justify-center my-4">
                     <div className="bg-gray-200 rounded-full px-3 py-1 text-xs text-gray-600">{date}</div>
                   </div>
 
@@ -502,73 +976,196 @@ function ChatRTC() {
                       ? currentUser
                       : onlineUsers.find((u) => u.id === message.sender_id) || selectedUser
 
+                    // Determine if the message is only attachments (images or files)
+                    const hasAttachments = (message.attachmentUrls ?? []).length > 0 // FIX: Use ?? []
+                    const hasText = message.text && message.text.trim().length > 0
+
+                    const isImageOnlyMessage =
+                      isCurrentUser &&
+                      hasAttachments &&
+                      !hasText &&
+                      (message.attachmentUrls ?? []).every((url) => isImageUrl(url)) // FIX: Use ?? []
+
+                    const isFileOnlyMessage =
+                      isCurrentUser &&
+                      hasAttachments &&
+                      !hasText &&
+                      (message.attachmentUrls ?? []).every((url) => !isImageUrl(url)) // FIX: Use ?? []
+
+                    const bubbleClasses = `max-w-xs lg:max-w-md rounded-xl ${
+                      isCurrentUser
+                        ? isImageOnlyMessage || isFileOnlyMessage // Apply transparent style for image-only or file-only
+                          ? "bg-transparent p-0"
+                          : "bg-blue-500 text-white rounded-br-none px-4 py-2"
+                        : "bg-white text-gray-800 rounded-tl-none shadow-sm px-4 py-2"
+                    }`
+
+                    // Don't render if message is deleted and has no text/attachments
+                    if (message.deleted && !message.text && (message.attachmentUrls ?? []).length === 0) {
+                      return null
+                    }
+
                     return (
                       <div
                         key={message.id || index}
                         className={`flex mb-4 ${isCurrentUser ? "justify-end" : "justify-start"}`}
                       >
-                        {!isCurrentUser &&
-                          (senderUser?.profilePicture ? (
-                            <img
-                              src={senderUser.profilePicture || "/placeholder.svg"}
-                              alt={`${senderUser.username}'s profile`}
-                              className="w-8 h-8 rounded-full object-cover mr-2 flex-shrink-0"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-medium mr-2 flex-shrink-0">
-                              {message.sender.charAt(0).toUpperCase()}
-                            </div>
-                          ))}
+                        {!isCurrentUser && (
+                          <div className="flex-shrink-0 mr-3">
+                            {senderUser?.profilePicture ? (
+                              <img
+                                src={senderUser.profilePicture || "/placeholder.svg?height=32&width=32"}
+                                alt={`${senderUser.username}'s profile`}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 text-sm font-medium">
+                                {message.sender.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                        )}
 
-                        <div
-                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                            isCurrentUser
-                              ? "bg-blue-500 text-white rounded-br-none"
-                              : "bg-white text-gray-800 rounded-bl-none"
-                          }`}
-                        >
-                          <p>{message.text}</p>
-                          <p className={`text-xs mt-1 ${isCurrentUser ? "text-blue-100" : "text-gray-500"}`}>
-                            {formatMessageTime(message.timestamp)}
-                          </p>
+                        <div className="flex flex-col">
+                          {!isCurrentUser && (
+                            <p className="text-xs text-gray-500 mb-1 ml-1">
+                              {message.sender} <span className="ml-2">{formatMessageTime(message.timestamp)}</span>
+                            </p>
+                          )}
+                          <div className={bubbleClasses}>
+                            {message.deleted ? (
+                              <p className={`italic ${isCurrentUser ? "text-white" : "text-gray-500"}`}>
+                                {message.text}
+                              </p>
+                            ) : (
+                              message.text && <p className="break-words">{message.text}</p>
+                            )}
+                            {(message.attachmentUrls ?? []).length > 0 && ( // FIX: Use ?? []
+                              <div className={`grid gap-2 ${isImageOnlyMessage ? "grid-cols-1" : "grid-cols-2 mt-2"}`}>
+                                {(message.attachmentUrls ?? []).map(
+                                  (
+                                    url,
+                                    attIndex, // FIX: Use ?? []
+                                  ) => (
+                                    <a key={attIndex} href={url} target="_blank" rel="noopener noreferrer">
+                                      {isImageUrl(url) ? (
+                                        <img
+                                          src={url || "/placeholder.svg"}
+                                          alt={`Attachment ${attIndex + 1}`}
+                                          className={`max-w-full h-auto object-cover ${isImageOnlyMessage ? "rounded-xl" : "rounded-md"}`}
+                                        />
+                                      ) : (
+                                        // Extract file name and extension
+                                        (() => {
+                                          try {
+                                            const urlObj = new URL(url)
+                                            const fileNameWithExtension = urlObj.pathname.split("/").pop() || "File"
+                                            const truncatedName = truncateFileName(fileNameWithExtension)
+
+                                            return (
+                                              <div className="flex items-center justify-center p-2 bg-gray-100 rounded-md text-gray-600 text-sm min-w-0">
+                                                <PaperclipIcon className="h-4 w-4 flex-shrink-0 mr-1" />
+                                                <span className="truncate">{truncatedName}</span>
+                                              </div>
+                                            )
+                                          } catch (e) {
+                                            console.error("Error parsing attachment URL:", e)
+                                            return (
+                                              <div className="flex items-center justify-center p-2 bg-gray-100 rounded-md text-gray-600 text-sm">
+                                                <PaperclipIcon className="h-4 w-4 mr-1" /> File
+                                              </div>
+                                            )
+                                          }
+                                        })()
+                                      )}
+                                    </a>
+                                  ),
+                                )}
+                              </div>
+                            )}
+                            {isCurrentUser && (
+                              <div className="flex items-center justify-end text-xs mt-1">
+                                {message.status === "sent" && (
+                                  <CheckIcon
+                                    className={`h-3 w-3 mr-1 ${isImageOnlyMessage || isFileOnlyMessage ? "text-gray-500" : "text-blue-100"}`}
+                                  />
+                                )}
+                                {message.status === "delivered" && (
+                                  <CheckCheckIcon
+                                    className={`h-3 w-3 mr-1 ${isImageOnlyMessage || isFileOnlyMessage ? "text-gray-500" : "text-blue-100"}`}
+                                  />
+                                )}
+                                {message.status === "read" && (
+                                  <CheckCheckIcon
+                                    className={`h-3 w-3 mr-1 ${isImageOnlyMessage || isFileOnlyMessage ? "text-blue-500" : "text-blue-300"}`}
+                                  />
+                                )}
+                                <span
+                                  className={`${isImageOnlyMessage || isFileOnlyMessage ? "text-gray-500" : "text-blue-100"}`}
+                                >
+                                  {formatMessageTime(message.timestamp)}
+                                </span>
+                                {!message.deleted && ( // Only show unsend option for non-deleted messages
+                                  <button
+                                    onClick={() => handleUnsend(message.id)}
+                                    className={`ml-2 p-1 rounded-full ${isImageOnlyMessage || isFileOnlyMessage ? "text-gray-500 hover:bg-gray-200" : "text-blue-100 hover:bg-blue-600"} transition-colors`}
+                                    title="Unsend message"
+                                  >
+                                    <Trash2Icon className="h-3 w-3" />
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        {isCurrentUser &&
-                          (currentUser?.profilePicture ? (
-                            <img
-                              src={currentUser.profilePicture || "/placeholder.svg"}
-                              alt={`${currentUser.username}'s profile`}
-                              className="w-8 h-8 rounded-full object-cover ml-2 flex-shrink-0"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium ml-2 flex-shrink-0">
-                              {currentUser?.username.charAt(0).toUpperCase()}
-                            </div>
-                          ))}
+                        {isCurrentUser && (
+                          <div className="flex-shrink-0 ml-3">
+                            {currentUser?.profilePicture ? (
+                              <img
+                                src={currentUser.profilePicture || "/placeholder.svg?height=32&width=32"}
+                                alt={`${currentUser.username}'s profile`}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
+                                {currentUser?.username.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )
                   })}
                 </div>
               ))}
 
+              {typingStatus[selectedUser.id] && (
+                <div className="flex items-center mb-4">
+                  <div className="flex-shrink-0 mr-3">
+                    {selectedUser?.profilePicture ? (
+                      <img
+                        src={selectedUser.profilePicture || "/placeholder.svg?height=32&width=32"}
+                        alt={`${selectedUser.username}'s profile`}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 text-sm font-medium">
+                        {selectedUser.username.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="bg-white text-gray-800 px-4 py-2 rounded-xl rounded-tl-none shadow-sm">
+                    <p className="text-sm text-blue-500 animate-pulse">{selectedUser.username} is typing...</p>
+                  </div>
+                </div>
+              )}
+
               {(!selectedUser || !messages[selectedUser.id] || messages[selectedUser.id].length === 0) && (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-12 w-12 mb-4 text-gray-300"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
-                  <p>No messages yet</p>
-                  <p className="text-sm">Send a message to start the conversation</p>
+                  <MessageSquareIcon className="h-16 w-16 mb-4 text-gray-300" />
+                  <h3 className="text-xl font-medium mb-2">Your Messages</h3>
+                  <p className="text-center max-w-sm">Select a user from the list to start a conversation</p>
                 </div>
               )}
 
@@ -577,7 +1174,62 @@ function ChatRTC() {
 
             {/* Message input */}
             <div className="p-4 bg-white border-t border-gray-200">
-              <form onSubmit={sendMessage} className="flex items-center">
+              {selectedFiles.length > 0 && (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {selectedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center bg-gray-100 rounded-full px-3 py-1 text-sm text-gray-700"
+                    >
+                      <span>{file.name}</span>
+                      <button onClick={() => removeFile(index)} className="ml-2 text-gray-500 hover:text-gray-700">
+                        <XIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <form onSubmit={sendMessage} className="flex items-center space-x-3">
+                <div className="relative">
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileChange}
+                    ref={fileInputRef}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label htmlFor="file-upload" className="text-gray-500 hover:text-gray-700 cursor-pointer">
+                    <PaperclipIcon className="h-6 w-6" />
+                  </label>
+                </div>
+
+                <div className="relative" ref={emojiPickerRef}>
+                  <button
+                    type="button"
+                    className="text-gray-500 hover:text-gray-700"
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  >
+                    <SmileIcon className="h-6 w-6" />
+                  </button>
+                  {showEmojiPicker && (
+                    <div className="absolute bottom-full mb-2 left-0 bg-white border border-gray-200 rounded-lg shadow-lg p-2 grid grid-cols-8 gap-1 max-h-60 overflow-y-auto z-10 w-64">
+                      {" "}
+                      {/* Adjusted width and left-0 */}
+                      {emojis.map((emoji, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          className="p-1 hover:bg-gray-100 rounded-md text-xl"
+                          onClick={() => handleEmojiClick(emoji)}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <input
                   type="text"
                   value={messageInput}
@@ -593,42 +1245,30 @@ function ChatRTC() {
                       socket.emit("typing_stop", { receiverId: selectedUser.id })
                     }
                   }}
-                  placeholder="Type a message..."
-                  className="flex-1 border border-gray-300 rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Write your message..."
+                  className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                 />
                 <button
                   type="submit"
-                  disabled={!messageInput.trim()}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+                  disabled={!messageInput.trim() && selectedFiles.length === 0}
+                  className="bg-blue-500 text-white p-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                  </svg>
+                  <SendIcon className="h-6 w-6" />
                 </button>
               </form>
             </div>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full bg-gray-50 text-gray-500">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-16 w-16 mb-4 text-gray-300"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
+          <div className="flex flex-col items-center justify-center h-full bg-[#F7F8FA] text-gray-500">
+            <MessageSquareIcon className="h-16 w-16 mb-4 text-gray-300" />
             <h3 className="text-xl font-medium mb-2">Your Messages</h3>
             <p className="text-center max-w-sm">Select a user from the list to start a conversation</p>
           </div>
         )}
       </div>
+
+      {/* Right Sidebar - Shared Files */}
+      <SharedFilesSidebar />
     </div>
   )
 }

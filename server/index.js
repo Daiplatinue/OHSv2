@@ -3,7 +3,7 @@ import mongoose from "mongoose"
 import dotenv from "dotenv"
 import cors from "cors"
 import multer from "multer"
-import { put } from "@vercel/blob"
+import { put, BlobAccessError } from "@vercel/blob" // Import BlobAccessError
 import jwt from "jsonwebtoken"
 import { createServer } from "http"
 import { Server } from "socket.io"
@@ -22,7 +22,13 @@ import {
   updateUserImage,
   updateUserProfile,
 } from "./controller/userController.js"
-import { saveMessage, getPrivateMessages } from "./controller/chatController.js" // Import new chat functions
+import {
+  saveMessage,
+  getPrivateMessages,
+  deleteMessage,
+  updateMessageStatus,
+  markMessagesAsRead,
+} from "./controller/chatController.js" // Import new chat functions
 import { User } from "./models/user.js" // Import User model to fetch full details
 import fetch from "node-fetch"
 
@@ -179,11 +185,11 @@ io.on("connection", async (socket) => {
 
   socket.on("send_private_message", async (messageData, callback) => {
     try {
-      const { text, sender_id, receiver_id } = messageData
-      if (!text || !sender_id || !receiver_id) {
+      const { text, sender_id, receiver_id, attachmentUrls } = messageData // Destructure attachmentUrls
+      if ((!text && (!attachmentUrls || attachmentUrls.length === 0)) || !sender_id || !receiver_id) {
         return callback({
           success: false,
-          error: "Missing required fields",
+          error: "Missing required fields (text or attachment, sender_id, receiver_id)",
         })
       }
 
@@ -193,21 +199,36 @@ io.on("connection", async (socket) => {
         text,
         sender_id,
         receiver_id,
-        sender: users[socket.id].username, // Sender's username
+        sender: socket.user.username, // FIX: Use socket.user.username for sender's username
         room: "private",
         timestamp: new Date(),
         isPrivate: true,
+        attachmentUrls: attachmentUrls || [], // Include attachmentUrls, default to empty array
+        status: "sent", // NEW: Set initial status to 'sent'
+        deleted: false, // NEW: Message is not deleted initially
       }
 
-      await saveMessage(message) // Save message to DB
+      const savedMessage = await saveMessage(message) // Save message to DB
+
+      // Emit to sender immediately
+      socket.emit("private_message", savedMessage)
 
       if (receiverSocket) {
-        socket.to(receiverSocket.socketId).emit("private_message", message)
-      }
-      // Also emit to sender so they see their own message immediately
-      socket.emit("private_message", message)
+        // Emit to receiver
+        socket.to(receiverSocket.socketId).emit("private_message", savedMessage)
 
-      callback({ success: true, message })
+        // Update status to 'delivered' for the sender's view and DB
+        const deliveredMessage = await updateMessageStatus(savedMessage.id, "delivered")
+        if (deliveredMessage) {
+          socket.emit("message_status_update", {
+            messageId: deliveredMessage.id,
+            status: deliveredMessage.status,
+            receiverId: deliveredMessage.receiver_id, // Ensure receiverId is passed for client-side filtering
+          })
+        }
+      }
+
+      callback({ success: true, message: savedMessage })
     } catch (error) {
       console.error("Error sending private message:", error)
       callback({ success: false, error: "Failed to send message" })
@@ -216,7 +237,8 @@ io.on("connection", async (socket) => {
 
   socket.on("get_private_message_history", async ({ userId }, callback) => {
     try {
-      const currentUserId = users[socket.id].id
+      // FIX: Use socket.user.id for the current user's ID, which is set during authentication
+      const currentUserId = socket.user.id
       if (!currentUserId || !userId) {
         return callback({
           success: false,
@@ -234,6 +256,65 @@ io.on("connection", async (socket) => {
     } catch (error) {
       console.error("Error getting private message history:", error)
       callback({ success: false, error: "Failed to get message history" })
+    }
+  })
+
+  // NEW: Handle unsend message event
+  socket.on("unsend_message", async ({ messageId, receiverId }, callback) => {
+    try {
+      const senderId = socket.user.id
+      const updatedMessage = await deleteMessage(messageId, senderId) // Mark message as deleted in DB
+
+      if (updatedMessage) {
+        // Notify sender and receiver about the unsent message
+        const receiverSocket = Object.values(users).find((user) => user.id === receiverId)
+
+        // Emit to sender
+        socket.emit("message_unsent", {
+          messageId: updatedMessage.id,
+          receiverId: updatedMessage.receiver_id,
+          text: updatedMessage.text,
+        })
+
+        // Emit to receiver if online
+        if (receiverSocket) {
+          socket.to(receiverSocket.socketId).emit("message_unsent", {
+            messageId: updatedMessage.id,
+            receiverId: updatedMessage.sender_id,
+            text: updatedMessage.text,
+          })
+        }
+        callback({ success: true })
+      } else {
+        callback({ success: false, error: "Failed to unsend message or message not found." })
+      }
+    } catch (error) {
+      console.error("Error unsending message:", error)
+      callback({ success: false, error: "Failed to unsend message" })
+    }
+  })
+
+  // NEW: Handle marking messages as read
+  socket.on("mark_messages_as_read", async ({ otherUserId }, callback) => {
+    try {
+      const currentUserId = socket.user.id
+      const modifiedCount = await markMessagesAsRead(otherUserId, currentUserId) // Mark messages from otherUser to currentUser as read
+
+      if (modifiedCount > 0) {
+        // Notify the sender (otherUserId) that their messages have been read
+        const senderSocket = Object.values(users).find((user) => user.id === otherUserId)
+        if (senderSocket) {
+          io.to(senderSocket.socketId).emit("message_status_update", {
+            senderId: currentUserId, // The user who read the messages
+            status: "read",
+            messagesUpdated: true, // Indicate that multiple messages might have been updated
+          })
+        }
+      }
+      callback({ success: true, modifiedCount })
+    } catch (error) {
+      console.error("Error marking messages as read:", error)
+      callback({ success: false, error: "Failed to mark messages as read" })
     }
   })
 
@@ -273,7 +354,8 @@ io.on("connection", async (socket) => {
     )
     // Also clear any typing status for this disconnected user
     typingUsers.forEach((senders, receiverId) => {
-      if (senders.has(socket.user.id)) {
+      if (socket.user && senders.has(socket.user.id)) {
+        // Add check for socket.user
         senders.delete(socket.user.id)
         const receiverSocket = Object.values(users).find((user) => user.id === receiverId)
         if (receiverSocket) {
@@ -287,6 +369,44 @@ io.on("connection", async (socket) => {
 // Connection Check for HTTP server
 app.get("/", (req, res) => {
   res.send("Online Home Service Backend is running!")
+})
+
+// New API endpoint for shared files data
+app.get("/api/shared-files", (req, res) => {
+  // Simulate a delay for network request
+  setTimeout(() => {
+    const data = {
+      totalFiles: 231,
+      totalLinks: 45,
+      fileTypes: [
+        {
+          name: "Documents",
+          count: 126,
+          sizeMB: 193,
+          icon: "FileTextIcon",
+        },
+        {
+          name: "Photos",
+          count: 53,
+          sizeMB: 321,
+          icon: "ImageIcon",
+        },
+        {
+          name: "Movies",
+          count: 3,
+          sizeMB: 210,
+          icon: "FilmIcon",
+        },
+        {
+          name: "Other",
+          count: 49,
+          sizeMB: 194,
+          icon: "FolderIcon",
+        },
+      ],
+    }
+    res.json(data)
+  }, 500)
 })
 
 // Routes
@@ -315,19 +435,18 @@ app.post("/api/upload/image", upload.single("file"), async (req, res) => {
     // Upload the file buffer to Vercel Blob
     const { url } = await put(req.file.originalname, req.file.buffer, {
       access: "public",
+      addRandomSuffix: true, // FIX: Add random suffix to prevent "blob already exists" error
       contentType: req.file.mimetype,
     })
 
     res.status(200).json({ url })
   } catch (error) {
     console.error("Error uploading file to Vercel Blob:", error)
-    // Check for the specific BlobError for existing files
-    if (error && error.name === "BlobError" && error.code === "BLOB_ALREADY_EXISTS") {
+    // FIX: Ensure BlobAccessError is imported and used correctly
+    if (error instanceof BlobAccessError && error.code === "BLOB_ALREADY_EXISTS") {
       return res.status(409).json({ message: "File already exists. Please upload a different file or rename it." })
     }
-    res
-      .status(500)
-      .json({ message: "File already exists. Please upload a different file or rename it.", error: error.message })
+    res.status(500).json({ message: "An unexpected error occurred during file upload.", error: error.message })
   }
 })
 
