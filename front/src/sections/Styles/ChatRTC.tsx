@@ -15,7 +15,11 @@ interface Message {
 
 interface User {
   id: string
-  username: string
+  firstName: string
+  lastName: string
+  middleName?: string
+  username: string // Still keep for convenience, derived
+  profilePicture?: string // Added profile picture field
   status?: "online" | "offline"
 }
 
@@ -29,6 +33,8 @@ function ChatRTC() {
   const [isConnected, setIsConnected] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
+  const [typingStatus, setTypingStatus] = useState<Record<string, boolean>>({}) // New state for typing status
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Initialize user data from localStorage
@@ -39,14 +45,21 @@ function ChatRTC() {
     if (storedUser && token) {
       try {
         const user = JSON.parse(storedUser)
+        // Construct username from first, middle, last names
+        const username = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(" ")
+
         setCurrentUser({
           id: user.id,
-          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          middleName: user.middleName,
+          username: username,
+          profilePicture: user.profilePicture, // Pass profile picture
           status: "online",
         })
 
-        // Initialize socket with auth data
-        initializeSocket(user)
+        // Initialize socket with auth data, passing the constructed username
+        initializeSocket({ ...user, username })
       } catch (error) {
         console.error("Failed to parse stored user", error)
         setError("Authentication error. Please log in again.")
@@ -62,10 +75,10 @@ function ChatRTC() {
   const initializeSocket = (user: any) => {
     console.log("Initializing socket with user:", user)
 
-    const newSocket = io("http://localhost:3006", {
+    const newSocket = io("http://localhost:3000", {
       transports: ["websocket"],
       auth: {
-        username: user.username,
+        username: user.username, // Use the constructed username
         userId: user.id,
         token: localStorage.getItem("token"),
       },
@@ -97,6 +110,9 @@ function ChatRTC() {
       console.log("Online users updated:", users)
       // Filter out current user and ensure no duplicates
       const filteredUsers = users.filter((u) => u.id !== user.id)
+      // The backend now sends full user details including username and profilePicture
+      // No need to reconstruct username here
+
       setOnlineUsers(filteredUsers)
     })
 
@@ -120,6 +136,14 @@ function ChatRTC() {
           return prev
         })
       }
+    })
+
+    // Listen for typing status updates
+    newSocket.on("typing_status", ({ userId, isTyping }: { userId: string; isTyping: boolean }) => {
+      setTypingStatus((prev) => ({
+        ...prev,
+        [userId]: isTyping,
+      }))
     })
 
     return newSocket
@@ -181,6 +205,11 @@ function ChatRTC() {
       if (response.success) {
         console.log("Message sent successfully")
         setMessageInput("")
+        // Clear typing status after sending message
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current)
+        }
+        socket.emit("typing_stop", { receiverId: selectedUser.id })
 
         // Add message to the conversation immediately from the response
         setMessages((prev) => {
@@ -250,6 +279,26 @@ function ChatRTC() {
     return grouped
   }
 
+  // Handle typing events
+  const handleTyping = () => {
+    if (!socket || !selectedUser || !currentUser) return
+
+    if (!typingStatus[currentUser.id]) {
+      // Only emit typing_start if not already typing
+      socket.emit("typing_start", { receiverId: selectedUser.id })
+    }
+
+    // Clear any existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+
+    // Set a new timeout to emit typing_stop after a delay
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit("typing_stop", { receiverId: selectedUser.id })
+    }, 1500) // 1.5 seconds after last key press
+  }
+
   // Loading state
   if (isLoading) {
     return (
@@ -308,9 +357,17 @@ function ChatRTC() {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
-                {currentUser?.username.charAt(0).toUpperCase()}
-              </div>
+              {currentUser?.profilePicture ? (
+                <img
+                  src={currentUser.profilePicture || "/placeholder.svg"}
+                  alt={`${currentUser.username}'s profile`}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
+                  {currentUser?.username.charAt(0).toUpperCase()}
+                </div>
+              )}
               <div className="ml-3">
                 <p className="font-medium text-gray-900">{currentUser?.username}</p>
                 <p className="text-xs text-green-500">Online</p>
@@ -380,14 +437,22 @@ function ChatRTC() {
                   }`}
                 >
                   <div className="relative">
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-medium">
-                      {user.username.charAt(0).toUpperCase()}
-                    </div>
+                    {user.profilePicture ? (
+                      <img
+                        src={user.profilePicture || "/placeholder.svg"}
+                        alt={`${user.username}'s profile`}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-medium">
+                        {user.username.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                   </div>
                   <div className="ml-3 text-left">
                     <p className="font-medium">{user.username}</p>
-                    <p className="text-xs text-gray-500">Click to chat</p>
+                    <p className="text-xs text-green-500">Online</p>
                   </div>
                 </button>
               ))
@@ -402,12 +467,24 @@ function ChatRTC() {
           <>
             {/* Chat header */}
             <div className="p-4 border-b border-gray-200 bg-white flex items-center">
-              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-medium">
-                {selectedUser.username.charAt(0).toUpperCase()}
-              </div>
+              {selectedUser.profilePicture ? (
+                <img
+                  src={selectedUser.profilePicture || "/placeholder.svg"}
+                  alt={`${selectedUser.username}'s profile`}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-medium">
+                  {selectedUser.username.charAt(0).toUpperCase()}
+                </div>
+              )}
               <div className="ml-3">
                 <p className="font-medium text-gray-900">{selectedUser.username}</p>
-                <p className="text-xs text-green-500">Online</p>
+                {typingStatus[selectedUser.id] ? (
+                  <p className="text-xs text-blue-500 animate-pulse">Typing...</p>
+                ) : (
+                  <p className="text-xs text-green-500">Online</p>
+                )}
               </div>
             </div>
 
@@ -421,17 +498,27 @@ function ChatRTC() {
 
                   {dateMessages.map((message, index) => {
                     const isCurrentUser = message.sender_id === currentUser?.id
+                    const senderUser = isCurrentUser
+                      ? currentUser
+                      : onlineUsers.find((u) => u.id === message.sender_id) || selectedUser
 
                     return (
                       <div
                         key={message.id || index}
                         className={`flex mb-4 ${isCurrentUser ? "justify-end" : "justify-start"}`}
                       >
-                        {!isCurrentUser && (
-                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-medium mr-2 flex-shrink-0">
-                            {message.sender.charAt(0).toUpperCase()}
-                          </div>
-                        )}
+                        {!isCurrentUser &&
+                          (senderUser?.profilePicture ? (
+                            <img
+                              src={senderUser.profilePicture || "/placeholder.svg"}
+                              alt={`${senderUser.username}'s profile`}
+                              className="w-8 h-8 rounded-full object-cover mr-2 flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-700 font-medium mr-2 flex-shrink-0">
+                              {message.sender.charAt(0).toUpperCase()}
+                            </div>
+                          ))}
 
                         <div
                           className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
@@ -446,11 +533,18 @@ function ChatRTC() {
                           </p>
                         </div>
 
-                        {isCurrentUser && (
-                          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium ml-2 flex-shrink-0">
-                            {currentUser.username.charAt(0).toUpperCase()}
-                          </div>
-                        )}
+                        {isCurrentUser &&
+                          (currentUser?.profilePicture ? (
+                            <img
+                              src={currentUser.profilePicture || "/placeholder.svg"}
+                              alt={`${currentUser.username}'s profile`}
+                              className="w-8 h-8 rounded-full object-cover ml-2 flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium ml-2 flex-shrink-0">
+                              {currentUser?.username.charAt(0).toUpperCase()}
+                            </div>
+                          ))}
                       </div>
                     )
                   })}
@@ -487,7 +581,18 @@ function ChatRTC() {
                 <input
                   type="text"
                   value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
+                  onChange={(e) => {
+                    setMessageInput(e.target.value)
+                    handleTyping()
+                  }}
+                  onBlur={() => {
+                    if (socket && selectedUser) {
+                      if (typingTimeoutRef.current) {
+                        clearTimeout(typingTimeoutRef.current)
+                      }
+                      socket.emit("typing_stop", { receiverId: selectedUser.id })
+                    }
+                  }}
                   placeholder="Type a message..."
                   className="flex-1 border border-gray-300 rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />

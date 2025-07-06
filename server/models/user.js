@@ -57,10 +57,12 @@ const userSchema = new mongoose.Schema(
     firstName: {
       type: String,
       trim: true,
+      required: true, // Added required
     },
     lastName: {
       type: String,
       trim: true,
+      required: true, // Added required
     },
     middleName: {
       type: String,
@@ -133,8 +135,21 @@ const userSchema = new mongoose.Schema(
     businessInterruption: { type: String },
     bondingInsurance: { type: String },
   },
-  { timestamps: true },
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }, // Enable virtuals
 )
+
+// Virtual property for username
+userSchema.virtual("username").get(function () {
+  let fullName = this.firstName || "" // Initialize fullName with firstName or empty string
+
+  if (this.middleName) {
+    fullName += ` ${this.middleName}`
+  }
+  if (this.lastName) {
+    fullName += ` ${this.lastName}`
+  }
+  return fullName.trim()
+})
 
 // Hash password before saving the user
 userSchema.pre("save", async function (next) {

@@ -2,10 +2,10 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import axios from "axios"
 import { Dialog } from "@headlessui/react"
-import { MapPin, Camera, X, Loader2 } from "lucide-react" // Added Loader2 for loading spinner
+import { MapPin, Camera, X, Loader2 } from "lucide-react"
 
 import MyFloatingDockCustomer from "../Styles/MyFloatingDock-Provider"
-import { EditProfileDetailsModal } from "../ProviderComponents/Modal/EditProfileDetailsModal" // Import the new modal
+import { EditProfileDetailsModal } from "../ProviderComponents/Modal/EditProfileDetailsModal"
 
 interface PersonalInfo {
   id: number
