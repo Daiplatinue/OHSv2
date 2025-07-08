@@ -11,9 +11,49 @@ import MoreFeatures from "../sections/Styles/HomeComponents/MoreFeatures"
 import Welcome from "../sections/Styles/HomeComponents/Welcome"
 import Popular from "../sections/Styles/HomeComponents/Popular"
 import BestCompanies from "./Styles/HomeComponents/BestCompanies"
-import { serviceSubcategories, sellers, carouselItems, products } from "../sections/Home-data"
-// import WelcomeModal from "../sections/Styles/HomeComponents/WelcomeMsg"
+import {
+  serviceSubcategories as staticServiceSubcategories,
+  sellers,
+  carouselItems,
+  products as staticProducts,
+} from "../sections/Home-data"
 import SuggestServiceModal from "../sections/Styles/SuggestServiceModal"
+
+// Define a type for services fetched from the backend
+interface BackendService {
+  id: string
+  name: string
+  price: number
+  description: string
+  image: string
+  chargePerKm: number
+  mainCategory: string
+  subCategory: string
+  cooId: string
+}
+
+// Define a type for the combined product list for display
+interface DisplayProduct {
+  id: string | number
+  name: string
+  price: number
+  category: string
+  image: string
+  description: string
+}
+
+// Define a type for the combined subcategories for the modal
+interface CombinedServiceSubcategories {
+  [key: string]: {
+    id: number
+    name: string
+    description: string
+    price: number
+    image: string
+    workerCount: number
+    estimatedTime: string
+  }[]
+}
 
 function Home() {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -26,9 +66,13 @@ function Home() {
   const [, setSelectedSubcategory] = useState<string>("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [showAllServices, setShowAllServices] = useState(false)
-  // const [showWelcomeModal, setShowWelcomeModal] = useState(false)
   const [, setShowWelcomeModal] = useState(false)
   const [isSuggestServiceModalOpen, setIsSuggestServiceModalOpen] = useState(false)
+
+  const [, setDynamicServices] = useState<BackendService[]>([])
+  const [combinedProducts, setCombinedProducts] = useState<DisplayProduct[]>([])
+  const [combinedServiceSubcategories, setCombinedServiceSubcategories] =
+    useState<CombinedServiceSubcategories>(staticServiceSubcategories)
 
   const navigate = useNavigate()
 
@@ -61,9 +105,102 @@ function Home() {
     }
   }, [])
 
-  const categories = Array.from(new Set(products.map((product) => product.category)))
+  // NEW: Fetch dynamic services from backend and combine with static data
+  useEffect(() => {
+    const fetchAndCombineServices = async () => {
+      try {
+        // Fetch all services from the backend (no authentication needed for public view)
+        console.log("Attempting to fetch services from backend...")
+        const response = await fetch("http://localhost:3000/api/services")
 
-  const filteredProducts = products.filter((product) => {
+        if (response.ok) {
+          const data = await response.json()
+          console.log("Services fetched successfully:", data.services)
+          setDynamicServices(data.services)
+
+          // Create a mutable copy of static data
+          const tempCombinedProducts: DisplayProduct[] = [...staticProducts]
+          const tempCombinedSubcategories: CombinedServiceSubcategories = { ...staticServiceSubcategories }
+
+          // Process dynamic services
+          data.services.forEach((service: BackendService) => {
+            // Add to combinedProducts if mainCategory is new or service name is "Suggest a Service"
+            const existingProduct = tempCombinedProducts.find((p) => p.name === service.mainCategory)
+            if (!existingProduct && service.mainCategory !== "Suggest a Service") {
+              // Create a new "product" entry for the new main category
+              tempCombinedProducts.push({
+                id: service.id, // Use service ID as product ID for dynamic ones
+                name: service.mainCategory,
+                price: service.price, // Use the service's price as a representative price for the category
+                category: service.mainCategory,
+                image: service.image || "/placeholder.svg?height=48&width=48", // Use service image or placeholder
+                description: `Explore services related to ${service.mainCategory}.`,
+              })
+            }
+
+            // Add service to combinedServiceSubcategories
+            if (!tempCombinedSubcategories[service.mainCategory]) {
+              tempCombinedSubcategories[service.mainCategory] = []
+            }
+            // Ensure no duplicates when adding to subcategories
+            const subcategoryExists = tempCombinedSubcategories[service.mainCategory].some(
+              (sub) => sub.name === service.subCategory,
+            )
+            if (!subcategoryExists) {
+              // CRITICAL FIX: Ensure service.id is a string before slicing.
+              // If service.id is undefined or too short, use Date.now() as a fallback for the subcategory ID.
+              const subcategoryId =
+                typeof service.id === "string" && service.id.length >= 8
+                  ? Number.parseInt(service.id.slice(0, 8), 16)
+                  : Date.now()
+
+              tempCombinedSubcategories[service.mainCategory].push({
+                id: subcategoryId,
+                name: service.subCategory,
+                description: service.description,
+                price: service.price,
+                image: service.image || "/placeholder.svg?height=48&width=48",
+                workerCount: 1, // Default for dynamically added
+                estimatedTime: "Varies", // Default for dynamically added
+              })
+            }
+          })
+
+          // Ensure "Suggest a Service" is always at the end and unique
+          const suggestServiceIndex = tempCombinedProducts.findIndex((p) => p.name === "Suggest a Service")
+          if (suggestServiceIndex !== -1) {
+            const suggestService = tempCombinedProducts.splice(suggestServiceIndex, 1)[0]
+            tempCombinedProducts.push(suggestService)
+          } else {
+            // Add it if it was somehow missing (e.g., if staticProducts was empty)
+            tempCombinedProducts.push({
+              id: 11,
+              name: "Suggest a Service",
+              price: 0,
+              category: "Community",
+              image: "/placeholder.svg?height=48&width=48", // Use a generic placeholder
+              description: "Can't find what you're looking for? Suggest a new service and help us grow our offerings!",
+            })
+          }
+
+          setCombinedProducts(tempCombinedProducts)
+          setCombinedServiceSubcategories(tempCombinedSubcategories)
+        } else {
+          console.error("Failed to fetch dynamic services:", response.status, response.statusText)
+          const errorData = await response.json()
+          console.error("Error details:", errorData)
+        }
+      } catch (error) {
+        console.error("Network error fetching dynamic services:", error)
+      }
+    }
+
+    fetchAndCombineServices()
+  }, []) // Run once on mount
+
+  const categories = Array.from(new Set(combinedProducts.map((product) => product.category)))
+
+  const filteredProducts = combinedProducts.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description.toLowerCase().includes(searchQuery.toLowerCase())
@@ -101,7 +238,7 @@ function Home() {
   const handleSeeMore = (productName: string) => {
     if (productName === "Suggest a Service") {
       setIsSuggestServiceModalOpen(true)
-    } else if (serviceSubcategories[productName as keyof typeof serviceSubcategories]) {
+    } else if (combinedServiceSubcategories[productName as keyof typeof combinedServiceSubcategories]) {
       setSelectedCategory(productName)
       setIsCategoriesModalOpen(true)
     } else {
@@ -120,15 +257,6 @@ function Home() {
   const toggleShowAllServices = () => {
     setShowAllServices((prev) => !prev)
   }
-
-  // const handleWelcomeModalClose = () => {
-  //   setShowWelcomeModal(false)
-  // }
-
-  // const handleDoNotShowWelcomeAgain = () => {
-  //   localStorage.setItem("hasSeenWelcomeModal", "true")
-  //   setShowWelcomeModal(false)
-  // }
 
   return (
     <div className="min-h-screen bg-white/90 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
@@ -305,7 +433,9 @@ function Home() {
         isOpen={isCategoriesModalOpen}
         onClose={() => setIsCategoriesModalOpen(false)}
         categoryName={selectedCategory}
-        subcategories={serviceSubcategories[selectedCategory as keyof typeof serviceSubcategories] || []}
+        subcategories={
+          combinedServiceSubcategories[selectedCategory as keyof typeof combinedServiceSubcategories] || []
+        }
         onSelectSubcategory={handleSubcategorySelect}
       />
 
@@ -315,12 +445,6 @@ function Home() {
         productName={selectedProduct}
         sellers={sellers[selectedProduct as keyof typeof sellers] || []}
       />
-
-      {/* <WelcomeModal
-      isOpen={showWelcomeModal}
-      onClose={handleWelcomeModalClose}
-      onDoNotShowAgain={handleDoNotShowWelcomeAgain}
-    /> */}
 
       <SuggestServiceModal isOpen={isSuggestServiceModalOpen} onClose={() => setIsSuggestServiceModalOpen(false)} />
 

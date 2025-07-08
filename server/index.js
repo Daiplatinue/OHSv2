@@ -3,7 +3,7 @@ import mongoose from "mongoose"
 import dotenv from "dotenv"
 import cors from "cors"
 import multer from "multer"
-import { put, BlobAccessError } from "@vercel/blob" // Import BlobAccessError
+import { put, BlobAccessError } from "@vercel/blob"
 import jwt from "jsonwebtoken"
 import { createServer } from "http"
 import { Server } from "socket.io"
@@ -22,20 +22,21 @@ import {
   updateUserImage,
   updateUserProfile,
 } from "./controller/userController.js"
+import { createService, getServices } from "./controller/serviceController.js" // NEW: Import getServices
 import {
   saveMessage,
   getPrivateMessages,
   deleteMessage,
   updateMessageStatus,
   markMessagesAsRead,
-} from "./controller/chatController.js" // Import new chat functions
-import { User } from "./models/user.js" // Import User model to fetch full details
+} from "./controller/chatController.js"
+import { User } from "./models/user.js"
 import fetch from "node-fetch"
 
 dotenv.config()
 
 const app = express()
-const PORT = process.env.PORT || 3006 // Explicitly set to 3006 to match client
+const PORT = process.env.PORT || 3000 // Changed to 3000
 
 const upload = multer({ storage: multer.memoryStorage() })
 
@@ -499,10 +500,15 @@ app.post("/api/verify-recaptcha", async (req, res) => {
   }
 })
 
+// NEW: Service creation route
+app.post("/api/services/create", authenticateToken, createService)
+// NEW: Service fetch route
+app.get("/api/services", getServices) // NEW: Add route to fetch services
+
 // Start the server using the HTTP server instance
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
   console.log(`Socket.IO server running on port ${PORT}`)
 })
 
-console.log(process.env.JWT_SECRET)
+console.log(process.env.OPENROUTER_API_KEY)

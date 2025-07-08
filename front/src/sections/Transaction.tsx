@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 
 import { useState, useEffect } from "react"
@@ -59,7 +57,7 @@ function Transaction() {
   const [, setIsComplete] = useState(false)
   const [redirectUrl, setRedirectUrl] = useState<string>("/")
   const [planName, setPlanName] = useState<string>("")
-  const [transactionType, setTransactionType] = useState<"subscription" | "booking">("subscription")
+  const [transactionType, setTransactionType] = useState<"subscription" | "booking" | "advertisement">("subscription")
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null)
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
@@ -69,28 +67,28 @@ function Transaction() {
 
   // Animation keyframes
   const keyframes = `
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    @keyframes bounceIn {
-      0% { transform: scale(0); opacity: 0; }
-      60% { transform: scale(1.2); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    
-    @keyframes slideInUp {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-      100% { transform: scale(1); }
-    }
-  `
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes bounceIn {
+    0% { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  
+  @keyframes slideInUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+`
 
   useEffect(() => {
     // Store the previous page URL for redirect
@@ -174,6 +172,21 @@ function Transaction() {
           break
         case "unlimited":
           setPlanName("Enterprise")
+          break
+        case "advertisement": // NEW: Handle advertisement plan
+          setTransactionType("advertisement")
+          setPlanName("Service Advertisement")
+          setSeller({
+            id: 1, // Dummy ID
+            name: "Online Home Services",
+            rating: 5,
+            reviews: 823.2,
+            location: "Cebu City Branches",
+            price: priceParam ? Number.parseFloat(priceParam) : 0,
+          })
+          if (priceParam) {
+            setTotalAmount(Number.parseFloat(priceParam))
+          }
           break
         default:
           setPlanName("")
@@ -320,6 +333,9 @@ function Transaction() {
       // Set success message based on transaction type
       if (transactionType === "subscription") {
         setSuccessMessage(`You've successfully subscribed to the ${planName} plan!`)
+      } else if (transactionType === "advertisement") {
+        // NEW: Handle advertisement success message
+        setSuccessMessage(`Your service "${planName}" is now being advertised!`)
       } else {
         setSuccessMessage("Payment completed successfully! You can now view your provider's location.")
       }
@@ -333,8 +349,9 @@ function Transaction() {
     setIsSuccessModalOpen(false)
 
     // Handle different redirect logic based on transaction type
-    if (transactionType === "subscription") {
-      // For subscription: redirect with the upgraded tier parameter
+    if (transactionType === "subscription" || transactionType === "advertisement") {
+      // NEW: Include advertisement
+      // For subscription/advertisement: redirect with the upgraded tier parameter
       const urlParams = new URLSearchParams(window.location.search)
       const planParam = urlParams.get("plan")
 

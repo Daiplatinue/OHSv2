@@ -2,6 +2,7 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { io, type Socket } from "socket.io-client"
 import { format } from "date-fns"
+import { useNavigate } from "react-router-dom"
 import {
   ChevronLeftIcon,
   SettingsIcon,
@@ -19,7 +20,7 @@ import {
   CheckCheckIcon,
   Trash2Icon,
 } from "lucide-react"
-import { SharedFilesSidebar } from "../Styles/SharedFilesSIdebar" // Import the new sidebar
+import { SharedFilesSidebar } from "../Styles/SharedFilesSIdebar" 
 
 interface Message {
   id: string
@@ -29,9 +30,9 @@ interface Message {
   receiver_id?: string
   timestamp: Date
   isPrivate?: boolean
-  attachmentUrls?: string[] // Added for attachments
-  status?: "sent" | "delivered" | "read" // NEW: Message status
-  deleted?: boolean // NEW: Flag for unsent messages
+  attachmentUrls?: string[]
+  status?: "sent" | "delivered" | "read"
+  deleted?: boolean
 }
 
 interface User {
@@ -39,12 +40,13 @@ interface User {
   firstName: string
   lastName: string
   middleName?: string
-  username: string // Still keep for convenience, derived
-  profilePicture?: string // Added profile picture field
+  username: string 
+  profilePicture?: string
   status?: "online" | "offline"
 }
 
 function ChatRTC() {
+  const navigate = useNavigate() // Initialize useNavigate
   const [socket, setSocket] = useState<Socket | null>(null)
   const [messages, setMessages] = useState<Record<string, Message[]>>({})
   const [messageInput, setMessageInput] = useState("")
@@ -54,15 +56,15 @@ function ChatRTC() {
   const [isConnected, setIsConnected] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
-  const [typingStatus, setTypingStatus] = useState<Record<string, boolean>>({}) // New state for typing status
+  const [typingStatus, setTypingStatus] = useState<Record<string, boolean>>({}) 
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]) // New state for selected files
-  const fileInputRef = useRef<HTMLInputElement>(null) // Ref for file input
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]) 
+  const fileInputRef = useRef<HTMLInputElement>(null) 
 
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false) // New state for emoji picker visibility
-  const emojiPickerRef = useRef<HTMLDivElement>(null) // Ref for emoji picker
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false) 
+  const emojiPickerRef = useRef<HTMLDivElement>(null)
 
   const emojis = [
     "😀",
@@ -153,136 +155,6 @@ function ChatRTC() {
     "🤕",
     "🤑",
     "🤠",
-    "😈",
-    "👿",
-    "👹",
-    "👺",
-    "🤡",
-    "💩",
-    "👻",
-    "💀",
-    "👽",
-    "👾",
-    "🤖",
-    "🎃",
-    "😺",
-    "😸",
-    "😹",
-    "😻",
-    "😼",
-    "😽",
-    "🙀",
-    "😿",
-    "😾",
-    "👋",
-    "🤚",
-    "🖐️",
-    "✋",
-    "🖖",
-    "👌",
-    "🤏",
-    "✌️",
-    "🤞",
-    "🤟",
-    "🤘",
-    "🤙",
-    "👈",
-    "👉",
-    "👆",
-    "🖕",
-    "👇",
-    "☝️",
-    "👍",
-    "👎",
-    "✊",
-    "👊",
-    "🤛",
-    "🤜",
-    "👏",
-    "🙌",
-    "👐",
-    "🤲",
-    "🤝",
-    "🙏",
-    "✍️",
-    "💅",
-    "🤳",
-    "💪",
-    "🦾",
-    "🦵",
-    "🦶",
-    "👂",
-    "👃",
-    "🧠",
-    "🫀",
-    "🫁",
-    "🦷",
-    "🦴",
-    "👀",
-    "👁️",
-    "👅",
-    "👄",
-    "💋",
-    "🩸",
-    "👶",
-    "👧",
-    "👦",
-    "🧒",
-    "🧑",
-    "👱",
-    "👨",
-    "🧔",
-    "👩",
-    "🧓",
-    "👴",
-    "👵",
-    "🙍",
-    "🙎",
-    "🙅",
-    "🙆",
-    "💁",
-    "🙋",
-    "🙇",
-    "🤦",
-    "🤷",
-    "🧑‍⚕️",
-    "🧑‍🎓",
-    "🧑‍🏫",
-    "🧑‍⚖️",
-    "🧑‍🌾",
-    "🧑‍🍳",
-    "🧑‍🔧",
-    "🧑‍🏭",
-    "🧑‍💼",
-    "🧑‍🔬",
-    "🧑‍💻",
-    "🧑‍🎤",
-    "🧑‍🎨",
-    "🧑‍✈️",
-    "🧑‍🚀",
-    "🧑‍🚒",
-    "👮",
-    "🕵️",
-    "💂",
-    "👷",
-    "🤴",
-    "👸",
-    "🤵",
-    "👰",
-    "🦸",
-    "🦹",
-    "🧙",
-    "🧚",
-    "🧛",
-    "🧜",
-    "🧝",
-    "🧞",
-    "🧟",
-    "🧌",
-    "🫂",
-    "🗣️",
-    "👤",
-    "👥",
   ]
 
   // Initialize user data from localStorage
@@ -413,7 +285,7 @@ function ChatRTC() {
             // If messagesUpdated is true, it means multiple messages were marked as read
             updatedMessages = conversationMessages.map((msg) =>
               msg.sender_id === targetConversationId && msg.status !== "read" && !msg.deleted
-                ? { ...msg, status: "read" as "read" }
+                ? { ...msg, status: "read" as const }
                 : msg,
             )
           } else if (messageId) {
@@ -653,7 +525,8 @@ function ChatRTC() {
 
     localStorage.removeItem("user")
     localStorage.removeItem("token")
-    window.location.href = "/login"
+    // For react-router-dom, you'd typically navigate to /login
+    navigate("/login")
   }
 
   const formatMessageTime = (timestamp: Date) => {
@@ -773,7 +646,7 @@ function ChatRTC() {
             <h3 className="text-lg font-medium text-gray-900">Connection Error</h3>
             <p className="mt-2 text-center text-gray-600">{error}</p>
             <button
-              onClick={() => (window.location.href = "/login")}
+              onClick={() => navigate("/login")} // Use navigate for login
               className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
             >
               Go to Login
@@ -809,6 +682,11 @@ function ChatRTC() {
     return `${name.substring(0, charsToShow)}...${ext}`
   }
 
+  // Function to handle going back
+  const handleGoBack = () => {
+    navigate(-1) // Navigates back one entry in the history stack
+  }
+
   return (
     <div className="flex h-screen bg-[#F7F8FA]">
       {/* Left Sidebar - Chat List */}
@@ -816,7 +694,8 @@ function ChatRTC() {
         {/* Header */}
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center">
-            <ChevronLeftIcon className="h-5 w-5 text-gray-500 mr-2" />
+            <ChevronLeftIcon className="h-5 w-5 text-gray-500 mr-2 cursor-pointer" onClick={handleGoBack} />{" "}
+            {/* Add onClick handler */}
             <h2 className="text-lg font-medium text-gray-700">Chat Feature</h2>{" "}
             <p className="text-gray-500 ml-2">beta</p>
           </div>

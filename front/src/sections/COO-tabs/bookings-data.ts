@@ -263,14 +263,6 @@ export const bookings: Booking[] = [
   },
 ]
 
-export const expenses: ExpenseItem[] = [
-  { name: "Tools and Equipment", estimatedCost: 5000, required: true },
-  { name: "Transportation", estimatedCost: 2000, required: true },
-  { name: "Materials", estimatedCost: 3000, required: false },
-  { name: "Labor", estimatedCost: 4000, required: true },
-  { name: "Insurance", estimatedCost: 1500, required: true },
-]
-
 export const subscriptionPlans = [
   {
     tier: "free",

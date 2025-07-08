@@ -1,7 +1,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import MyFloatingDockCeo from "../Styles/MyFloatingDock-COO"
-import { Dialog, Switch } from "@headlessui/react"
+import { Dialog, Switch, DialogPanel, DialogTitle } from "@headlessui/react"
 import {
   MapPin,
   ChevronRight,
@@ -25,6 +25,8 @@ import {
   ChevronLeft,
   Upload,
 } from "lucide-react"
+import PleaseWaitModal from "../Styles/PleaseWaitModal"
+import AdvertisementFlowModal from "../Styles/AdvertisementModal"
 import image1 from "../../assets/No_Image_Available.jpg"
 import confetti from "canvas-confetti"
 
@@ -34,7 +36,6 @@ import {
   type PersonalInfo,
   type SubscriptionTier,
   type SubscriptionInfo,
-  services as initialServices,
   bookings as initialBookings,
   personalInfo as initialPersonalInfo,
   subscriptionPlans,
@@ -58,7 +59,7 @@ to { opacity: 1; }
 
 @keyframes slideInUp {
 from { transform: translateY(20px); opacity: 0; }
-to { transform: translateY(0); opacity: 1; }
+to { opacity: 1; }
 }
 
 @keyframes shakeX {
@@ -88,7 +89,6 @@ function Bookings() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [editedService, setEditedService] = useState<Partial<Service>>({})
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
 
   const [isCreateServiceModalOpen, setIsCreateServiceModalOpen] = useState(false)
   const [createServiceStep, setCreateServiceStep] = useState(1)
@@ -120,11 +120,9 @@ function Bookings() {
   })
 
   const [selectedInfo] = useState<PersonalInfo | null>(null)
-  const [editedInfo, setEditedInfo] = useState<Partial<PersonalInfo>>({})
-  const [isEditInfoModalOpen, setIsEditInfoModalOpen] = useState(false)
   const [isDeleteInfoConfirmOpen, setIsDeleteInfoConfirmOpen] = useState(false)
 
-  const [services, setServices] = useState<Service[]>(initialServices)
+  const [services, setServices] = useState<Service[]>([])
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo[]>(initialPersonalInfo)
   const [bookings, setBookings] = useState<Booking[]>(initialBookings)
 
@@ -146,7 +144,15 @@ function Bookings() {
   const [isTerminationScheduled, setIsTerminationScheduled] = useState(false)
   const [terminationStartTime, setTerminationStartTime] = useState<number | null>(null) // timestamp
 
-  const TERMINATION_DURATION_MS = 2 * 24 * 60 * 60 * 1000 // 2 days in milliseconds
+  // Add new state variables for the advertisement flow modal
+  const [isAdvertiseFlowModalOpen, setIsAdvertiseFlowModalOpen] = useState(0) // Changed to number for step
+  const [advertiseFlowStep, setAdvertiseFlowStep] = useState(1) // 1: Ask to advertise, 2: Choose plan
+
+  // New state for please wait modal
+  const [isPleaseWaitModalOpen, setIsPleaseWaitModalOpen] = useState(false)
+
+  // const TERMINATION_DURATION_MS = 2 * 24 * 60 * 60 * 1000 = 2 days in milliseconds
+  const TERMINATION_DURATION_MS = 5
 
   const terminationReasonsOptions = [
     "Not Profitable",
@@ -159,6 +165,7 @@ function Bookings() {
   const triggerCelebration = () => {
     const duration = 3000
     const animationEnd = Date.now() + duration
+
     const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 }
 
     function randomInRange(min: number, max: number) {
@@ -190,6 +197,60 @@ function Bookings() {
     }, 250)
   }
 
+  // useEffect to fetch services on component mount
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const token = localStorage.getItem("token") // Get token from localStorage
+        const userId = localStorage.getItem("userId") // Get userId from localStorage
+
+        if (!token) {
+          console.warn("No authentication token found. Cannot fetch services.")
+          // Optionally, redirect to login or show a message
+          return
+        }
+
+        // For demonstration, log the userId from localStorage
+        console.log("Current user ID from localStorage:", userId)
+
+        const response = await fetch("http://localhost:3000/api/services", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          // Map _id to id and ensure image fallback, and include cooId
+          const fetchedServices: Service[] = data.services.map((s: any) => ({
+            id: s._id,
+            name: s.name,
+            price: s.price,
+            description: s.description,
+            image: s.image || image1, // Use image1 as fallback
+            chargePerKm: s.chargePerKm,
+            hasNotification: false, // Default for fetched services
+            notificationCount: 0, // Default for fetched services
+            cooId: s.cooId, // Include the cooId from the fetched service
+          }))
+          setServices(fetchedServices)
+        } else {
+          console.error("Failed to fetch services:", response.status, response.statusText)
+          // Handle specific error messages from backend if available
+          const errorData = await response.json()
+          setSuccessMessage(`Failed to load services: ${errorData.message || "Please try again."}`)
+          setIsSuccessModalOpen(true)
+        }
+      } catch (error) {
+        console.error("Network error fetching services:", error)
+        setSuccessMessage("Network error: Could not connect to the server to fetch services.")
+        setIsSuccessModalOpen(true)
+      }
+    }
+
+    fetchServices()
+  }, []) // Empty dependency array means this runs once on mount
+
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const upgradedTier = urlParams.get("upgradedTier")
@@ -219,7 +280,7 @@ function Bookings() {
         window.history.replaceState({}, document.title, window.location.pathname)
       }
     }
-  }, [isYearlyBilling]) // Add isYearlyBilling to dependency array
+  }, [isYearlyBilling])
 
   // Get current items for pagination
   const getCurrentItems = () => {
@@ -279,7 +340,7 @@ function Bookings() {
     setIsEditModalOpen(true)
   }
 
-  // MODIFIED: handle delete service to open new termination modal
+  // handle delete service to open new termination modal
   const handleDeleteService = (service: Service) => {
     setServiceToTerminate(service)
     setIsTerminationModalOpen(true)
@@ -302,18 +363,6 @@ function Bookings() {
       setSuccessMessage(`Service "${editedService.name}" updated successfully!`)
       setIsSuccessModalOpen(true)
     }
-  }
-
-  // handleConfirmDelete is now only for Personal Info deletion
-  const handleConfirmDelete = async () => {
-    // This function is now only used for deleting personal info.
-    // Service deletion is handled by the new termination flow.
-    if (!selectedInfo) return
-
-    const filteredInfo = personalInfo.filter((info) => info.id !== selectedInfo.id)
-
-    setPersonalInfo(filteredInfo)
-    setIsDeleteInfoConfirmOpen(false)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -405,28 +454,76 @@ function Bookings() {
   const handleSubmitNewService = async () => {
     if (!allRequirementsMet) return
 
-    setIsProcessing(true)
+    setIsPleaseWaitModalOpen(true) // Show please wait modal
+    setIsProcessing(true) // Indicate processing
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Retrieve the JWT token from localStorage or wherever it's stored
+      const token = localStorage.getItem("token") // Assuming token is stored in localStorage
 
-      // Simulate successful service creation by directly adding to local state
-      const createdService = {
-        _id: Date.now(), // Generate a unique ID for the simulated service
-        name: newService.name!,
-        price: newService.price!,
-        description: newService.description!,
-        image: newService.image || "/placeholder.svg?height=48&width=48", // Use a placeholder if no image
-        chargePerKm: newService.chargePerKm!,
-        hasNotification: false,
-        notificationCount: 0,
+      if (!token) {
+        console.error("Authentication token not found.")
+        setSuccessMessage("Error: Authentication required to create service.")
+        setIsSuccessModalOpen(true)
+        setIsPleaseWaitModalOpen(false) // Close please wait immediately
+        return
       }
 
-      handleSuccessfulServiceCreation({ service: createdService })
+      const response = await fetch("http://localhost:3000/api/services/create", {
+        // Use your backend URL
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+        },
+        body: JSON.stringify(newService),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Add the new service to the local state
+        const createdService = {
+          id: data.service._id || Date.now().toString(), // Fallback ID if _id is not available
+          name: data.service.name,
+          price: data.service.price,
+          description: data.service.description,
+          image: data.service.image || image1,
+          chargePerKm: data.service.chargePerKm,
+          hasNotification: false,
+          notificationCount: 0,
+          cooId: data.service.cooId, // Include the cooId
+        }
+
+        setServices((prevServices) => [...prevServices, createdService])
+        setIsCreateServiceModalOpen(false) // Close the creation form
+
+        // Check AI classification result
+        if (data.aiClassification && !data.aiClassification.isValid) {
+          setSuccessMessage(
+            `Service created, but AI flagged it as potentially invalid: ${data.aiClassification.reason || "No specific reason provided."} It will be listed under "Invalid Service".`,
+          )
+        } else {
+          setSuccessMessage("Service created successfully! AI is reviewing for optimal placement.")
+        }
+
+        // Wait for 5 seconds for the "Please Wait" modal
+        await new Promise((resolve) => setTimeout(resolve, 5000))
+
+        setIsPleaseWaitModalOpen(false) // Close please wait modal
+        setIsAdvertiseFlowModalOpen(1) // Open advertisement modal (step 1)
+        setAdvertiseFlowStep(1)
+      } else {
+        console.error("Error creating service:", data.message || "Unknown error")
+        setSuccessMessage(`Failed to create service: ${data.message || "Please try again."}`)
+        setIsSuccessModalOpen(true)
+        setIsPleaseWaitModalOpen(false) // Close please wait immediately on error
+      }
     } catch (error) {
-      console.error("Simulated error creating service:", error)
-      // Optionally, you could set an error message state here to display to the user
+      console.error("Network error creating service:", error)
+      setSuccessMessage("Network error: Could not connect to the server.")
+      setIsSuccessModalOpen(true)
+      setIsPleaseWaitModalOpen(false) // Close please wait immediately on network error
     } finally {
       setIsProcessing(false)
     }
@@ -441,15 +538,6 @@ function Bookings() {
     }
   }
 
-  const handleSaveInfo = () => {
-    if (!selectedInfo) return
-
-    const updatedInfo = personalInfo.map((info) => (info.id === selectedInfo.id ? { ...info, ...editedInfo } : info))
-
-    setPersonalInfo(updatedInfo)
-    setIsEditInfoModalOpen(false)
-  }
-
   const handleConfirmDeleteInfo = () => {
     if (!selectedInfo) return
 
@@ -457,22 +545,6 @@ function Bookings() {
 
     setPersonalInfo(filteredInfo)
     setIsDeleteInfoConfirmOpen(false)
-  }
-
-  const handleInfoInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setEditedInfo({
-      ...editedInfo,
-      [name]: value,
-    })
-  }
-
-  const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setEditedInfo({
-      ...editedInfo,
-      [name]: value,
-    })
   }
 
   const allRequirementsMet = Object.values(requirements).every((req) => req.met === true)
@@ -727,7 +799,9 @@ function Bookings() {
                 <p className="text-sm text-gray-600">
                   {services.length >= subscription.maxServices
                     ? "You've reached your service limit."
-                    : `You can add ${subscription.maxServices - services.length} more service${subscription.maxServices - services.length !== 1 ? "s" : ""}.`}
+                    : `You can add ${subscription.maxServices - services.length} more service${
+                        subscription.maxServices - services.length !== 1 ? "s" : ""
+                      }.`}
                 </p>
               </div>
             </div>
@@ -916,7 +990,7 @@ function Bookings() {
                 services.length >= subscription.maxServices
                   ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                   : "bg-sky-500 text-white hover:bg-sky-600"
-              } transition-all`}
+              }`}
               disabled={services.length >= subscription.maxServices}
             >
               <Plus className="h-4 w-4" />
@@ -1057,7 +1131,7 @@ function Bookings() {
                 <h4 className="text-sm font-medium text-gray-500 mb-1">Location</h4>
                 <p className="text-gray-900 flex items-center">
                   <MapPin className="h-4 w-4 text-gray-400 mr-1" />
-                  {userDetails.location}
+                  <span>{userDetails.location}</span>
                 </p>
               </div>
               <div>
@@ -1332,37 +1406,6 @@ function Bookings() {
     }, 5000)
   }
 
-  const handleSuccessfulServiceCreation = (data: {
-    service: { _id: any; name: any; price: any; description: any; image: any; chargePerKm: any }
-  }) => {
-    // Add the new service to the local state
-    const createdService = {
-      id: data.service._id || Date.now().toString(), // Fallback ID if _id is not available
-      name: data.service.name,
-      price: data.service.price,
-      description: data.service.description,
-      image: data.service.image || image1,
-      chargePerKm: data.service.chargePerKm,
-      hasNotification: false,
-      notificationCount: 0,
-    }
-
-    setServices([...services, createdService])
-    setIsCreateServiceModalOpen(false)
-    setSuccessMessage("Service created successfully!")
-    setIsSuccessModalOpen(true)
-
-    // Reset form
-    setNewService({
-      name: "",
-      price: 0,
-      description: "",
-      image: "",
-      chargePerKm: 0,
-    })
-    setCreateServiceStep(1)
-  }
-
   // New functions for service termination
   const handleScheduleTermination = () => {
     if (!serviceToTerminate) return
@@ -1444,7 +1487,8 @@ function Bookings() {
     const storedFinancialNotes = localStorage.getItem("financialAuditNotes")
 
     if (storedServiceId && storedStartTime) {
-      const service = initialServices.find((s) => s.id === Number.parseInt(storedServiceId))
+      // Only use the 'services' array to find the service to terminate
+      const service = services.find((s) => String(s.id) === storedServiceId)
       if (service) {
         setServiceToTerminate(service)
         setTerminationStartTime(Number.parseInt(storedStartTime))
@@ -1476,7 +1520,7 @@ function Bookings() {
         }
       }
     }
-  }, []) // Run only once on mount
+  }, [services])
 
   // Helper to format time
   const formatTime = (seconds: number | null) => {
@@ -1485,7 +1529,17 @@ function Bookings() {
     const hours = Math.floor((seconds % (24 * 3600)) / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
     const secs = seconds % 60
-    return `${days}d ${hours.toString().padStart(2, "0")}h ${minutes.toString().padStart(2, "0")}m ${secs.toString().padStart(2, "0")}s`
+    return `${days}d ${hours.toString().padStart(2, "0")}h ${minutes.toString().padStart(2, "0")}m ${secs
+      .toString()
+      .padStart(2, "0")}s`
+  }
+
+  const handleConfirmAdvertisement = () => {
+    setIsAdvertiseFlowModalOpen(0) // Close the advertisement flow modal
+    setSuccessMessage("Service created and advertisement confirmed!") // Set success message
+    setIsSuccessModalOpen(true) // Open success modal
+    // Redirect to transaction page with advertisement details
+    window.location.href = `/transaction?plan=advertisement&price=500&redirect=/ceo/bookings&userType=ceo`
   }
 
   return (
@@ -1672,7 +1726,7 @@ function Bookings() {
         <div className="fixed inset-0 bg-black/30 backdrop-blur-md" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
-          <Dialog.Panel className="mx-auto max-w-2xl w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20">
+          <DialogPanel className="mx-auto max-w-2xl w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20">
             {selectedBooking && (
               <div className="flex flex-col h-full">
                 {/* Image Section - Top */}
@@ -1689,13 +1743,13 @@ function Bookings() {
                     <h3 className="text-2xl font-light text-white tracking-tight">{selectedBooking.serviceName}</h3>
                     <div
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 
-            ${
-              selectedBooking.status === "pending"
-                ? "bg-yellow-100 text-yellow-800"
-                : selectedBooking.status === "ongoing"
-                  ? "bg-sky-100 text-sky-800"
-                  : "bg-green-100 text-green-800"
-            }`}
+          ${
+            selectedBooking.status === "pending"
+              ? "bg-yellow-100 text-yellow-800"
+              : selectedBooking.status === "ongoing"
+                ? "bg-sky-100 text-sky-800"
+                : "bg-green-100 text-green-800"
+          }`}
                     >
                       {selectedBooking.status === "pending"
                         ? "Pending"
@@ -1914,7 +1968,7 @@ function Bookings() {
                 </div>
               </div>
             )}
-          </Dialog.Panel>
+          </DialogPanel>
         </div>
       </Dialog>
 
@@ -1927,7 +1981,7 @@ function Bookings() {
         <div className="fixed inset-0 bg-black/30 backdrop-blur-md" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
-          <Dialog.Panel className="mx-auto max-w-6xl w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20">
+          <DialogPanel className="mx-auto max-w-6xl w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20">
             <div className="flex flex-col md:flex-row">
               {/* Preview Section - Left Side */}
               <div className="md:w-2/5 bg-gray-100/50 p-8 flex flex-col">
@@ -1972,7 +2026,7 @@ function Bookings() {
               <div className="md:w-3/5 p-8 border-t md:border-t-0 md:border-l border-gray-200/50">
                 <div className="flex justify-between items-start mb-8">
                   <div>
-                    <Dialog.Title className="text-2xl font-medium text-gray-700">Create New Service</Dialog.Title>
+                    <DialogTitle className="text-2xl font-medium text-gray-700">Create New Service</DialogTitle>
                     <p className="text-gray-600 mt-1">
                       Step {createServiceStep} of {totalSteps}
                     </p>
@@ -1990,7 +2044,9 @@ function Bookings() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div
-                        className={`flex items-center justify-center w-10 h-10 rounded-full ${createServiceStep >= 1 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"}`}
+                        className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                          createServiceStep >= 1 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"
+                        }`}
                       >
                         <FileText className="h-5 w-5" />
                       </div>
@@ -1998,7 +2054,9 @@ function Bookings() {
                     </div>
                     <div className="flex items-center">
                       <div
-                        className={`flex items-center justify-center w-10 h-10 rounded-full ${createServiceStep >= 2 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"}`}
+                        className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                          createServiceStep >= 2 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"
+                        }`}
                       >
                         <DollarSign className="h-5 w-5" />
                       </div>
@@ -2006,7 +2064,9 @@ function Bookings() {
                     </div>
                     <div className="flex items-center">
                       <div
-                        className={`flex items-center justify-center w-10 h-10 rounded-full ${createServiceStep >= 3 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"}`}
+                        className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                          createServiceStep >= 3 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"
+                        }`}
                       >
                         <Clipboard className="h-5 w-5" />
                       </div>
@@ -2089,7 +2149,7 @@ function Bookings() {
                 </div>
               </div>
             </div>
-          </Dialog.Panel>
+          </DialogPanel>
         </div>
       </Dialog>
 
@@ -2098,7 +2158,7 @@ function Bookings() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
-          <Dialog.Panel className="mx-auto max-w-4xl w-full bg-white rounded-2xl overflow-hidden shadow-xl">
+          <DialogPanel className="mx-auto max-w-4xl w-full bg-white rounded-2xl overflow-hidden shadow-xl">
             <div className="flex flex-col md:flex-row">
               {/* Preview Section */}
               <div className="md:w-2/5 bg-gray-50 p-6 flex flex-col">
@@ -2139,7 +2199,7 @@ function Bookings() {
               {/* Form Section */}
               <div className="md:w-3/5 p-6 border-t md:border-t-0 md:border-l border-gray-200">
                 <div className="flex justify-between items-start mb-6">
-                  <Dialog.Title className="text-xl font-medium">Edit Service</Dialog.Title>
+                  <DialogTitle className="text-xl font-medium">Edit Service</DialogTitle>
                   <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-gray-500">
                     <X className="h-5 w-5" />
                   </button>
@@ -2253,275 +2313,11 @@ function Bookings() {
                 )}
               </div>
             </div>
-          </Dialog.Panel>
+          </DialogPanel>
         </div>
       </Dialog>
 
       {/* Delete Confirmation Modal (for Personal Info) */}
-      <Dialog open={isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(false)} className="relative z-50">
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
-
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="mx-auto max-w-md w-full bg-white rounded-2xl overflow-hidden shadow-xl">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-6">
-                <Dialog.Title className="text-xl font-semibold text-gray-900">Delete Service</Dialog.Title>
-                <button onClick={() => setIsDeleteConfirmOpen(false)} className="text-gray-400 hover:text-gray-500">
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {selectedService && (
-                <div>
-                  <p className="text-gray-600 mb-6">
-                    Are you sure you want to delete <span className="font-semibold">{selectedService.name}</span>? This
-                    action cannot be undone.
-                  </p>
-
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={() => setIsDeleteConfirmOpen(false)}
-                      className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleConfirmDelete} // This will now only be used for personal info deletion
-                      className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </Dialog.Panel>
-        </div>
-      </Dialog>
-
-      {/* Edit Personal Info Modal */}
-      <Dialog open={isEditInfoModalOpen} onClose={() => setIsEditInfoModalOpen(false)} className="relative z-50">
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
-
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="mx-auto max-w-4xl w-full bg-white rounded-2xl overflow-hidden shadow-xl">
-            <div className="flex flex-col md:flex-row">
-              {/* Preview Section */}
-              <div className="md:w-2/5 bg-gray-50 p-6 flex flex-col">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Preview</h3>
-
-                <div className="flex-1 flex flex-col">
-                  <div className="relative w-full h-48 mb-4 rounded-xl overflow-hidden bg-gray-200 border border-gray-300">
-                    <img
-                      src={editedInfo.image || image1}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = image1
-                      }}
-                    />
-                  </div>
-
-                  <div className="bg-white rounded-xl p-4 shadow-sm flex-1">
-                    <h4 className="text-xl font-semibold mb-2">{editedInfo.title || "Title"}</h4>
-                    {editedInfo.organization && (
-                      <p className="text-gray-700 text-sm mb-1">
-                        {editedInfo.organization} {editedInfo.location && `• ${editedInfo.location}`}
-                      </p>
-                    )}
-                    {editedInfo.startDate && (
-                      <p className="text-gray-600 text-sm mb-3">
-                        {new Date(editedInfo.startDate).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                        })}{" "}
-                        -
-                        {editedInfo.endDate === "Present"
-                          ? " Present"
-                          : editedInfo.endDate
-                            ? ` ${new Date(editedInfo.endDate).toLocaleDateString("en-US", { year: "numeric", month: "short" })}`
-                            : ""}
-                      </p>
-                    )}
-                    <p className="text-gray-600 text-sm line-clamp-4">
-                      {editedInfo.description || "Description will appear here."}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Form Section */}
-              <div className="md:w-3/5 p-6 border-t md:border-t-0 md:border-l border-gray-200">
-                <div className="flex justify-between items-start mb-6">
-                  <Dialog.Title className="text-xl font-semibold">
-                    Edit{" "}
-                    {selectedInfo?.type
-                      ? selectedInfo.type.charAt(0).toUpperCase() + selectedInfo.type.slice(1)
-                      : "Info"}
-                  </Dialog.Title>
-                  <button onClick={() => setIsEditInfoModalOpen(false)} className="text-gray-400 hover:text-gray-500">
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-
-                {selectedInfo && (
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault()
-                      handleSaveInfo()
-                    }}
-                    className="space-y-4 max-h-[60vh] overflow-y-auto pr-2"
-                  >
-                    <div>
-                      <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                        Title
-                      </label>
-                      <input
-                        type="text"
-                        id="title"
-                        name="title"
-                        value={editedInfo.title || ""}
-                        onChange={handleInfoInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        required
-                      />
-                    </div>
-
-                    {(selectedInfo.type === "education" || selectedInfo.type === "experience") && (
-                      <>
-                        <div>
-                          <label htmlFor="organization" className="block text-sm font-medium text-gray-700 mb-1">
-                            {selectedInfo.type === "education" ? "Institution" : "Company"}
-                          </label>
-                          <input
-                            type="text"
-                            id="organization"
-                            name="organization"
-                            value={editedInfo.organization || ""}
-                            onChange={handleInfoInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-                            Location
-                          </label>
-                          <input
-                            type="text"
-                            id="location"
-                            name="location"
-                            value={editedInfo.location || ""}
-                            onChange={handleInfoInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
-                              Start Date
-                            </label>
-                            <input
-                              type="date"
-                              id="startDate"
-                              name="startDate"
-                              value={editedInfo.startDate || ""}
-                              onChange={handleInfoInputChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            />
-                          </div>
-
-                          <div>
-                            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
-                              End Date
-                            </label>
-                            <input
-                              type="date"
-                              id="endDate"
-                              name="endDate"
-                              value={editedInfo.endDate === "Present" ? "" : editedInfo.endDate || ""}
-                              onChange={handleInfoInputChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            />
-                            <div className="flex items-center mt-1">
-                              <input
-                                type="checkbox"
-                                id="currentlyHere"
-                                checked={editedInfo.endDate === "Present"}
-                                onChange={(e) => {
-                                  setEditedInfo({
-                                    ...editedInfo,
-                                    endDate: e.target.checked ? "Present" : "",
-                                  })
-                                }}
-                                className="mr-2"
-                              />
-                              <label htmlFor="currentlyHere" className="text-sm text-gray-600">
-                                Currently {selectedInfo.type === "education" ? "studying here" : "working here"}
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    )}
-
-                    <div>
-                      <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
-                        Image URL
-                      </label>
-                      <input
-                        type="text"
-                        id="image"
-                        name="image"
-                        value={editedInfo.image || ""}
-                        onChange={handleInfoInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        placeholder="Enter image URL or leave blank for default"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Enter a valid image URL to see the preview update in real-time
-                      </p>
-                    </div>
-
-                    <div>
-                      <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                        Description
-                      </label>
-                      <textarea
-                        id="description"
-                        name="description"
-                        value={editedInfo.description || ""}
-                        onChange={handleTextAreaChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 min-h-[120px]"
-                        required
-                      />
-                    </div>
-
-                    <div className="flex space-x-3 pt-4">
-                      <button
-                        type="button"
-                        onClick={() => setIsEditInfoModalOpen(false)}
-                        className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="flex-1 px-4 py-2.5 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors"
-                      >
-                        Save Changes
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </div>
-            </div>
-          </Dialog.Panel>
-        </div>
-      </Dialog>
-
-      {/* Delete Info Confirmation Modal */}
       <Dialog
         open={isDeleteInfoConfirmOpen}
         onClose={() => setIsDeleteInfoConfirmOpen(false)}
@@ -2530,13 +2326,13 @@ function Bookings() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="mx-auto max-w-md w-full bg-white rounded-2xl overflow-hidden shadow-xl">
+          <DialogPanel className="mx-auto max-w-md w-full bg-white rounded-2xl overflow-hidden shadow-xl">
             <div className="p-6">
               <div className="flex justify-between items-start mb-6">
-                <Dialog.Title className="text-xl font-semibold text-gray-900">
+                <DialogTitle className="text-xl font-semibold text-gray-900">
                   Delete{" "}
                   {selectedInfo?.type ? selectedInfo.type.charAt(0).toUpperCase() + selectedInfo.type.slice(1) : "Info"}
-                </Dialog.Title>
+                </DialogTitle>
                 <button onClick={() => setIsDeleteInfoConfirmOpen(false)} className="text-gray-400 hover:text-gray-500">
                   <X className="h-5 w-5" />
                 </button>
@@ -2566,7 +2362,7 @@ function Bookings() {
                 </div>
               )}
             </div>
-          </Dialog.Panel>
+          </DialogPanel>
         </div>
       </Dialog>
 
@@ -2575,10 +2371,10 @@ function Bookings() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="mx-auto max-w-md w-full bg-white rounded-2xl overflow-hidden shadow-xl">
+          <DialogPanel className="mx-auto max-w-md w-full bg-white rounded-2xl overflow-hidden shadow-xl">
             <div className="p-6">
               <div className="flex justify-between items-start mb-6">
-                <Dialog.Title className="text-xl font-semibold text-gray-900">Decline Booking</Dialog.Title>
+                <DialogTitle className="text-xl font-semibold text-gray-900">Decline Booking</DialogTitle>
                 <button onClick={() => setIsDeclineModalOpen(false)} className="text-gray-400 hover:text-gray-500">
                   <X className="h-5 w-5" />
                 </button>
@@ -2655,7 +2451,7 @@ function Bookings() {
                 </div>
               )}
             </div>
-          </Dialog.Panel>
+          </DialogPanel>
         </div>
       </Dialog>
 
@@ -2664,7 +2460,7 @@ function Bookings() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel className="mx-auto max-w-6xl w-full bg-white rounded-2xl overflow-hidden shadow-xl">
+          <DialogPanel className="mx-auto max-w-6xl w-full bg-white rounded-2xl overflow-hidden shadow-xl">
             <div className="p-8">
               <div className="flex justify-between items-start mb-6">
                 <div>
@@ -2685,14 +2481,14 @@ function Bookings() {
                   checked={isYearlyBilling}
                   onChange={setIsYearlyBilling}
                   className={`
-                    ${isYearlyBilling ? "bg-blue-600" : "bg-gray-300"}
-                   relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                ${isYearlyBilling ? "bg-blue-600" : "bg-gray-300"}
+               relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                 >
                   <span className="sr-only">Enable yearly billing</span>
                   <span
                     className={`
-                      ${isYearlyBilling ? "translate-x-6" : "translate-x-1"}
-                     inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                  ${isYearlyBilling ? "translate-x-6" : "translate-x-1"}
+                 inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                   />
                 </Switch>
                 <span className="text-gray-700 font-medium ml-3">Pay Yearly</span>
@@ -2706,7 +2502,7 @@ function Bookings() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {subscriptionPlans
-                  .filter((plan) => plan.tier !== "unlimited") // Filter out 'unlimited' as it's not in the image
+                  .filter((plan) => plan.tier !== "unlimited")
                   .map((plan) => (
                     <div
                       key={plan.tier}
@@ -2717,7 +2513,7 @@ function Bookings() {
                           ? plan.tier === "mid"
                             ? "ring-4 ring-blue-300"
                             : "ring-4 ring-blue-200"
-                          : "border border-gray-200" // Add border for non-blue cards
+                          : "border border-gray-200"
                       }
                       `}
                     >
@@ -2772,16 +2568,15 @@ function Bookings() {
                   ))}
               </div>
             </div>
-          </Dialog.Panel>
+          </DialogPanel>
         </div>
       </Dialog>
 
-      {/* Success Modal with Celebration */}
       <Dialog open={isSuccessModalOpen} onClose={() => setIsSuccessModalOpen(false)} className="relative z-50">
         <div className="fixed inset-0 bg-black/30 backdrop-blur-md" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
-          <Dialog.Panel
+          <DialogPanel
             className="mx-auto max-w-md w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20 p-6"
             style={{ animation: "fadeIn 0.5s ease-out" }}
           >
@@ -2797,19 +2592,21 @@ function Bookings() {
                 )}
               </div>
 
-              <Dialog.Title
+              <DialogTitle
                 className="text-xl font-medium text-gray-900 mb-2"
                 style={{ animation: "slideInUp 0.4s ease-out" }}
               >
                 {successMessage.includes("upgraded") || successMessage.includes("terminated")
                   ? "Congratulations!"
                   : "Success!"}
-              </Dialog.Title>
+              </DialogTitle>
 
               <p className="text-gray-600 mb-6" style={{ animation: "fadeIn 0.5s ease-out 0.2s both" }}>
                 {successMessage ||
                   (subscription.tier !== "free"
-                    ? `You've successfully upgraded to the ${subscription.name} plan! You can now add up to ${subscription.maxServices === Number.POSITIVE_INFINITY ? "unlimited" : subscription.maxServices} services.`
+                    ? `You've successfully upgraded to the ${subscription.name} plan! You can now add up to ${
+                        subscription.maxServices === Number.POSITIVE_INFINITY ? "unlimited" : subscription.maxServices
+                      } services.`
                     : "Operation completed successfully!")}
               </p>
 
@@ -2821,7 +2618,7 @@ function Bookings() {
                 {successMessage.includes("upgraded") ? "Start Using Your New Plan" : "Close"}
               </button>
             </div>
-          </Dialog.Panel>
+          </DialogPanel>
         </div>
       </Dialog>
 
@@ -2830,12 +2627,12 @@ function Bookings() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
-          <Dialog.Panel className="mx-auto max-w-2xl w-full bg-white rounded-2xl overflow-hidden shadow-xl">
+          <DialogPanel className="mx-auto max-w-2xl w-full bg-white rounded-2xl overflow-hidden shadow-xl">
             <div className="p-6">
               <div className="flex justify-between items-start mb-6">
-                <Dialog.Title className="text-xl font-medium text-gray-700">
+                <DialogTitle className="text-xl font-medium text-gray-700">
                   {isTerminationScheduled ? "Service Termination Scheduled" : "Terminate Service: Strategic Review"}
-                </Dialog.Title>
+                </DialogTitle>
                 <button onClick={() => setIsTerminationModalOpen(false)} className="text-gray-400 hover:text-gray-500">
                   <X className="h-5 w-5" />
                 </button>
@@ -2855,13 +2652,14 @@ function Bookings() {
                     </div>
                   )}
 
-                  {/* Progress Indicator */}
                   {!isTerminationScheduled && (
                     <div className="mb-8">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
                           <div
-                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${terminationStep >= 1 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"}`}
+                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                              terminationStep >= 1 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"
+                            }`}
                           >
                             1
                           </div>
@@ -2869,7 +2667,9 @@ function Bookings() {
                         </div>
                         <div className="flex items-center">
                           <div
-                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${terminationStep >= 2 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"}`}
+                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                              terminationStep >= 2 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"
+                            }`}
                           >
                             2
                           </div>
@@ -2877,7 +2677,9 @@ function Bookings() {
                         </div>
                         <div className="flex items-center">
                           <div
-                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${terminationStep >= 3 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"}`}
+                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                              terminationStep >= 3 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"
+                            }`}
                           >
                             3
                           </div>
@@ -2891,7 +2693,6 @@ function Bookings() {
                     </div>
                   )}
 
-                  {/* Step Content */}
                   {terminationStep === 1 && !isTerminationScheduled && (
                     <div className="space-y-4">
                       <div>
@@ -2919,7 +2720,7 @@ function Bookings() {
                         </label>
                         <textarea
                           id="strategicNotes"
-                          value={legalReviewNotes} // Reusing legalReviewNotes for general notes
+                          value={legalReviewNotes}
                           onChange={(e) => setLegalReviewNotes(e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[80px]"
                           placeholder="Enter any additional notes for strategic review..."
@@ -3061,9 +2862,29 @@ function Bookings() {
                 </>
               )}
             </div>
-          </Dialog.Panel>
+          </DialogPanel>
         </div>
       </Dialog>
+
+      {/* Please Wait Modal */}
+      <PleaseWaitModal
+        isOpen={isPleaseWaitModalOpen}
+        onClose={() => setIsPleaseWaitModalOpen(false)}
+        message="Please wait while our AI reviews your service for compliance and optimal placement. This may take a moment."
+      />
+
+      {/* Advertisement Flow Modal */}
+      <AdvertisementFlowModal
+        isOpen={isAdvertiseFlowModalOpen === 1 || isAdvertiseFlowModalOpen === 2}
+        onClose={() => {
+          setIsAdvertiseFlowModalOpen(0) // Close advertisement modal
+          setSuccessMessage("Service created successfully!") // Set success message
+          setIsSuccessModalOpen(true) // Open success modal
+        }}
+        step={advertiseFlowStep}
+        onNextStep={() => setAdvertiseFlowStep(2)}
+        onConfirmAdvertise={handleConfirmAdvertisement}
+      />
 
       <Footer />
     </div>
