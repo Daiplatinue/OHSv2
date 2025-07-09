@@ -37,7 +37,28 @@ const ServiceSchema = new mongoose.Schema(
     },
     subCategory: {
       type: String,
-      required: false, 
+      required: false,
+    },
+    // NEW: Add fields for rating, reviews, and workers needed
+    totalRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    totalReviews: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    workersNeeded: {
+      type: Number,
+      default: 1, // Default to 1, will be set by AI
+      min: 1,
+    },
+    estimatedTime: {
+      type: String,
+      default: "Varies", // Default placeholder for estimated time
     },
   },
   { timestamps: true },

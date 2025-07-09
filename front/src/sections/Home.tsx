@@ -18,18 +18,31 @@ import {
   products as staticProducts,
 } from "../sections/Home-data"
 import SuggestServiceModal from "../sections/Styles/SuggestServiceModal"
+import { io } from "socket.io-client" // Import socket.io-client
 
 // Define a type for services fetched from the backend
 interface BackendService {
-  id: string
+  id: string // Changed to string
   name: string
   price: number
   description: string
   image: string
-  chargePerKm: number
+  chargePerKm: number // Ensure this is present
   mainCategory: string
   subCategory: string
-  cooId: string
+  // cooId is now the populated object, not just a string ID
+  cooId: {
+    _id: string // Changed to string
+    firstName: string
+    middleName?: string
+    lastName: string
+    profilePicture: string | null
+    location?: { name: string }
+  } | null // It can be null if not populated or if COO doesn't exist
+  totalRating: number
+  totalReviews: number
+  workersNeeded: number
+  estimatedTime: string
 }
 
 // Define a type for the combined product list for display
@@ -40,18 +53,29 @@ interface DisplayProduct {
   category: string
   image: string
   description: string
+  totalRating?: number
+  totalReviews?: number
+  workersNeeded?: number
+  cooId?: BackendService["cooId"] // Use cooId here
+  chargePerKm?: number // NEW: Add chargePerKm here
 }
 
 // Define a type for the combined subcategories for the modal
 interface CombinedServiceSubcategories {
   [key: string]: {
-    id: number
+    id: number | string // Allow string for dynamic service IDs
     name: string
     description: string
     price: number
     image: string
     workerCount: number
     estimatedTime: string
+    category: string
+    cooId?: BackendService["cooId"] // Use cooId here
+    totalRating?: number
+    totalReviews?: number
+    workersNeeded?: number
+    chargePerKm?: number // NEW: Add chargePerKm here
   }[]
 }
 
@@ -61,9 +85,8 @@ function Home() {
   const [priceRange, setPriceRange] = useState([0, 50000])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<string>("")
+  const [selectedProduct, setSelectedProduct] = useState<DisplayProduct | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>("")
-  const [, setSelectedSubcategory] = useState<string>("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [showAllServices, setShowAllServices] = useState(false)
   const [, setShowWelcomeModal] = useState(false)
@@ -105,98 +128,169 @@ function Home() {
     }
   }, [])
 
-  // NEW: Fetch dynamic services from backend and combine with static data
-  useEffect(() => {
-    const fetchAndCombineServices = async () => {
-      try {
-        // Fetch all services from the backend (no authentication needed for public view)
-        console.log("Attempting to fetch services from backend...")
-        const response = await fetch("http://localhost:3000/api/services")
+  // Function to fetch and combine services (now callable by WebSocket event)
+  const fetchAndCombineServices = async () => {
+    try {
+      console.log("Home.tsx: Attempting to fetch services from backend...")
+      const response = await fetch("http://localhost:3000/api/services")
 
-        if (response.ok) {
-          const data = await response.json()
-          console.log("Services fetched successfully:", data.services)
-          setDynamicServices(data.services)
+      if (response.ok) {
+        const data = await response.json()
+        console.log("Home.tsx: Raw services fetched successfully:", data.services)
 
-          // Create a mutable copy of static data
-          const tempCombinedProducts: DisplayProduct[] = [...staticProducts]
-          const tempCombinedSubcategories: CombinedServiceSubcategories = { ...staticServiceSubcategories }
+        setDynamicServices(data.services)
 
-          // Process dynamic services
-          data.services.forEach((service: BackendService) => {
-            // Add to combinedProducts if mainCategory is new or service name is "Suggest a Service"
-            const existingProduct = tempCombinedProducts.find((p) => p.name === service.mainCategory)
-            if (!existingProduct && service.mainCategory !== "Suggest a Service") {
-              // Create a new "product" entry for the new main category
-              tempCombinedProducts.push({
-                id: service.id, // Use service ID as product ID for dynamic ones
-                name: service.mainCategory,
-                price: service.price, // Use the service's price as a representative price for the category
-                category: service.mainCategory,
-                image: service.image || "/placeholder.svg?height=48&width=48", // Use service image or placeholder
-                description: `Explore services related to ${service.mainCategory}.`,
-              })
-            }
+        const tempCombinedProducts: DisplayProduct[] = [...staticProducts]
+        const tempCombinedSubcategories: CombinedServiceSubcategories = { ...staticServiceSubcategories }
 
-            // Add service to combinedServiceSubcategories
-            if (!tempCombinedSubcategories[service.mainCategory]) {
-              tempCombinedSubcategories[service.mainCategory] = []
-            }
-            // Ensure no duplicates when adding to subcategories
-            const subcategoryExists = tempCombinedSubcategories[service.mainCategory].some(
-              (sub) => sub.name === service.subCategory,
-            )
-            if (!subcategoryExists) {
-              // CRITICAL FIX: Ensure service.id is a string before slicing.
-              // If service.id is undefined or too short, use Date.now() as a fallback for the subcategory ID.
-              const subcategoryId =
-                typeof service.id === "string" && service.id.length >= 8
-                  ? Number.parseInt(service.id.slice(0, 8), 16)
-                  : Date.now()
+        data.services.forEach((service: BackendService) => {
+          console.log(
+            "Home.tsx: Processing dynamic service:",
+            service.name,
+            "Service ID:",
+            service.id,
+            "COO ID:",
+            service.cooId?._id,
+            "Charge Per KM:",
+            service.chargePerKm,
+          )
 
-              tempCombinedSubcategories[service.mainCategory].push({
-                id: subcategoryId,
-                name: service.subCategory,
-                description: service.description,
-                price: service.price,
-                image: service.image || "/placeholder.svg?height=48&width=48",
-                workerCount: 1, // Default for dynamically added
-                estimatedTime: "Varies", // Default for dynamically added
-              })
-            }
-          })
-
-          // Ensure "Suggest a Service" is always at the end and unique
-          const suggestServiceIndex = tempCombinedProducts.findIndex((p) => p.name === "Suggest a Service")
-          if (suggestServiceIndex !== -1) {
-            const suggestService = tempCombinedProducts.splice(suggestServiceIndex, 1)[0]
-            tempCombinedProducts.push(suggestService)
-          } else {
-            // Add it if it was somehow missing (e.g., if staticProducts was empty)
+          const existingProduct = tempCombinedProducts.find((p) => p.name === service.mainCategory)
+          if (!existingProduct && service.mainCategory !== "Suggest a Service") {
             tempCombinedProducts.push({
-              id: 11,
-              name: "Suggest a Service",
-              price: 0,
-              category: "Community",
-              image: "/placeholder.svg?height=48&width=48", // Use a generic placeholder
-              description: "Can't find what you're looking for? Suggest a new service and help us grow our offerings!",
+              id: service.id,
+              name: service.mainCategory,
+              price: service.price,
+              category: service.mainCategory,
+              image: service.image || "/placeholder.svg?height=48&width=48",
+              description: `Explore services related to ${service.mainCategory}.`,
+              cooId: service.cooId,
+              totalRating: service.totalRating,
+              totalReviews: service.totalReviews,
+              workersNeeded: service.workersNeeded,
+              chargePerKm: service.chargePerKm,
             })
           }
 
-          setCombinedProducts(tempCombinedProducts)
-          setCombinedServiceSubcategories(tempCombinedSubcategories)
+          if (!tempCombinedSubcategories[service.mainCategory]) {
+            tempCombinedSubcategories[service.mainCategory] = []
+          }
+          const subcategoryExists = tempCombinedSubcategories[service.mainCategory].some(
+            (sub) => sub.name === service.subCategory,
+          )
+          if (!subcategoryExists) {
+            const subcategoryId = service.id || Date.now().toString()
+
+            tempCombinedSubcategories[service.mainCategory].push({
+              id: subcategoryId,
+              name: service.subCategory,
+              description: service.description,
+              price: service.price,
+              image: service.image || "/placeholder.svg?height=48&width=48",
+              workerCount: service.workersNeeded || 1,
+              estimatedTime: service.estimatedTime || "Varies",
+              cooId: service.cooId,
+              category: service.mainCategory,
+              totalRating: service.totalRating,
+              totalReviews: service.totalReviews,
+              workersNeeded: service.workersNeeded,
+              chargePerKm: service.chargePerKm,
+            })
+          }
+        })
+
+        const suggestServiceIndex = tempCombinedProducts.findIndex((p) => p.name === "Suggest a Service")
+        if (suggestServiceIndex !== -1) {
+          const suggestService = tempCombinedProducts.splice(suggestServiceIndex, 1)[0]
+          tempCombinedProducts.push(suggestService)
         } else {
-          console.error("Failed to fetch dynamic services:", response.status, response.statusText)
-          const errorData = await response.json()
-          console.error("Error details:", errorData)
+          tempCombinedProducts.push({
+            id: "suggest-service",
+            name: "Suggest a Service",
+            price: 0,
+            category: "Community",
+            image: "/placeholder.svg?height=48&width=48",
+            description: "Can't find what you're looking for? Suggest a new service and help us grow our offerings!",
+          })
         }
-      } catch (error) {
-        console.error("Network error fetching dynamic services:", error)
+
+        setCombinedProducts(tempCombinedProducts)
+        setCombinedServiceSubcategories(tempCombinedSubcategories)
+      } else {
+        console.error("Home.tsx: Failed to fetch dynamic services:", response.status, response.statusText)
+        const errorData = await response.json()
+        console.error("Home.tsx: Error details:", errorData)
+      }
+    } catch (error) {
+      console.error("Home.tsx: Network error fetching dynamic services:", error)
+    }
+  }
+
+  // NEW: WebSocket connection and listener with authentication
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    const userString = localStorage.getItem("user")
+    let userId = null
+    let username = "Guest"
+
+    if (userString) {
+      try {
+        const userData = JSON.parse(userString)
+        // Assuming user data might be nested or direct
+        userId = userData.user?._id || userData._id || userData.id
+        username = userData.user?.firstName || userData.firstName || "User" // Use first name for username
+      } catch (e) {
+        console.error("Failed to parse user data from localStorage:", e)
       }
     }
 
-    fetchAndCombineServices()
-  }, []) // Run once on mount
+    console.log("Home.tsx: Attempting to connect to Socket.IO with token and user info:", {
+      token: token ? "present" : "missing",
+      userId,
+      username,
+    })
+
+    const socket = io("http://localhost:3000", {
+      auth: {
+        token: token,
+        userId: userId, // Pass userId for server-side authentication/identification
+        username: username, // Pass username for server-side identification
+      },
+      transports: ["websocket", "polling"], // Ensure WebSocket is preferred
+    })
+
+    socket.on("connect", () => {
+      console.log("Home.tsx: Connected to Socket.IO server for service updates. Socket ID:", socket.id)
+      // Initial fetch when the component mounts or reconnects
+      fetchAndCombineServices()
+    })
+
+    socket.on("disconnect", (reason) => {
+      console.log("Home.tsx: Disconnected from Socket.IO server for service updates. Reason:", reason)
+    })
+
+    socket.on("connect_error", (err) => {
+      console.error("Home.tsx: Socket.IO connection error:", err.message)
+      if (err.message === "Authentication failed" || err.message === "Authentication token is required") {
+        console.error("Home.tsx: Authentication error with WebSocket. Redirecting to login.")
+        // Optionally redirect to login if authentication fails
+        // navigate("/login");
+      }
+    })
+
+    // Listen for service_update event from the backend
+    socket.on("service_update", (data) => {
+      console.log("Home.tsx: Received service_update via WebSocket:", data)
+      // When an update is received, re-fetch all services
+      fetchAndCombineServices()
+    })
+
+    // Clean up the socket connection when the component unmounts
+    return () => {
+      console.log("Home.tsx: Disconnecting Socket.IO client.")
+      socket.disconnect()
+    }
+  }, []) // Empty dependency array means this effect runs once on mount and cleans up on unmount
 
   const categories = Array.from(new Set(combinedProducts.map((product) => product.category)))
 
@@ -214,7 +308,7 @@ function Home() {
   const handleCategoryToggle = (category: string) => {
     setSelectedCategories((prev) => {
       if (prev.includes(category)) {
-        return prev.filter((c) => c !== category)
+        return prev.filter((cat) => cat !== category)
       } else {
         return [...prev, category]
       }
@@ -235,22 +329,24 @@ function Home() {
     setSelectedCategories([])
   }
 
-  const handleSeeMore = (productName: string) => {
-    if (productName === "Suggest a Service") {
+  const handleSeeMore = (product: DisplayProduct) => {
+    console.log("Home.tsx: handleSeeMore - Selected product:", product)
+    if (product.name === "Suggest a Service") {
       setIsSuggestServiceModalOpen(true)
-    } else if (combinedServiceSubcategories[productName as keyof typeof combinedServiceSubcategories]) {
-      setSelectedCategory(productName)
+    } else if (combinedServiceSubcategories[product.name as keyof typeof combinedServiceSubcategories]) {
+      setSelectedCategory(product.name)
       setIsCategoriesModalOpen(true)
     } else {
-      setSelectedProduct(productName)
+      setSelectedProduct(product)
       setIsModalOpen(true)
     }
   }
 
-  const handleSubcategorySelect = (subcategoryName: string) => {
-    setSelectedSubcategory(subcategoryName)
+  const handleSubcategorySelect = (subcategory: CombinedServiceSubcategories[string][number]) => {
+    console.log("Home.tsx: handleSubcategorySelect - Selected subcategory:", subcategory)
+    setSelectedCategory(subcategory.name)
     setIsCategoriesModalOpen(false)
-    setSelectedProduct(subcategoryName)
+    setSelectedProduct(subcategory) // This will correctly pass the cooId and chargePerKm
     setIsModalOpen(true)
   }
 
@@ -379,7 +475,7 @@ function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {displayedProducts.map((product) => (
                 <div
-                  key={product.id}
+                  key={product.id.toString()} // Ensure key is always a string
                   className="group cursor-pointer bg-gray-200/70 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full"
                 >
                   <div className="relative overflow-hidden rounded-lg mb-4">
@@ -397,7 +493,7 @@ function Home() {
                     {/* Added mt-auto, pt-4 */}
                     <span className="text-lg font-medium text-gray-900">₱{product.price}</span>
                     <button
-                      onClick={() => handleSeeMore(product.name)}
+                      onClick={() => handleSeeMore(product)}
                       className="text-sky-500 flex items-center transition-all duration-300 hover:text-blue-600 hover:translate-x-1"
                     >
                       See More <ChevronRight className="h-4 w-4 ml-1" />
@@ -442,8 +538,8 @@ function Home() {
       <WorkersModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        productName={selectedProduct}
-        sellers={sellers[selectedProduct as keyof typeof sellers] || []}
+        serviceDetails={selectedProduct}
+        staticSellers={sellers}
       />
 
       <SuggestServiceModal isOpen={isSuggestServiceModalOpen} onClose={() => setIsSuggestServiceModalOpen(false)} />

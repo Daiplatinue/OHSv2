@@ -22,7 +22,7 @@ import {
   updateUserImage,
   updateUserProfile,
 } from "./controller/userController.js"
-import { createService, getServices } from "./controller/serviceController.js" // NEW: Import getServices
+import { createService, getServices, deleteService } from "./controller/serviceController.js" // NEW: Import getServices and deleteService
 import {
   saveMessage,
   getPrivateMessages,
@@ -500,10 +500,12 @@ app.post("/api/verify-recaptcha", async (req, res) => {
   }
 })
 
-// NEW: Service creation route
-app.post("/api/services/create", authenticateToken, createService)
+// NEW: Service creation route - pass 'io' to the controller
+app.post("/api/services/create", authenticateToken, (req, res) => createService(req, res, io))
 // NEW: Service fetch route
 app.get("/api/services", getServices) // NEW: Add route to fetch services
+// NEW: Service deletion route - pass 'io' to the controller
+app.delete("/api/services/:id", authenticateToken, (req, res) => deleteService(req, res, io)) // Add this line
 
 // Start the server using the HTTP server instance
 server.listen(PORT, () => {

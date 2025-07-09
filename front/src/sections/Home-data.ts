@@ -64,6 +64,7 @@ export const serviceSubcategories = {
       image: types1,
       workerCount: 1,
       estimatedTime: "1-2 hours",
+      category: "Plumbing Services", // Added category
     },
     {
       id: 2,
@@ -73,6 +74,7 @@ export const serviceSubcategories = {
       image: types2,
       workerCount: 2,
       estimatedTime: "3-5 hours",
+      category: "Plumbing Services", // Added category
     },
     {
       id: 3,
@@ -82,6 +84,7 @@ export const serviceSubcategories = {
       image: types3,
       workerCount: 1,
       estimatedTime: "1 hour",
+      category: "Plumbing Services", // Added category
     },
   ],
   "Handyman Services": [
@@ -93,6 +96,7 @@ export const serviceSubcategories = {
       image: types4,
       workerCount: 1,
       estimatedTime: "1-2 hours",
+      category: "Handyman Services", // Added category
     },
     {
       id: 6,
@@ -102,6 +106,7 @@ export const serviceSubcategories = {
       image: types5,
       workerCount: 1,
       estimatedTime: "1-2 hours",
+      category: "Handyman Services", // Added category
     },
   ],
   "Home Cleaning Services": [
@@ -113,6 +118,7 @@ export const serviceSubcategories = {
       image: types6,
       workerCount: 2,
       estimatedTime: "2-3 hours",
+      category: "Home Cleaning Services", // Added category
     },
     {
       id: 13,
@@ -122,6 +128,7 @@ export const serviceSubcategories = {
       image: types7,
       workerCount: 3,
       estimatedTime: "4-6 hours",
+      category: "Home Cleaning Services", // Added category
     },
     {
       id: 14,
@@ -131,6 +138,7 @@ export const serviceSubcategories = {
       image: types8,
       workerCount: 3,
       estimatedTime: "5-7 hours",
+      category: "Home Cleaning Services", // Added category
     },
     {
       id: 15,
@@ -140,6 +148,7 @@ export const serviceSubcategories = {
       image: types9,
       workerCount: 2,
       estimatedTime: "2-4 hours",
+      category: "Home Cleaning Services", // Added category
     },
     {
       id: 16,
@@ -149,6 +158,7 @@ export const serviceSubcategories = {
       image: types10,
       workerCount: 2,
       estimatedTime: "2-4 hours",
+      category: "Home Cleaning Services", // Added category
     },
   ],
   "Pest Control Services": [
@@ -160,6 +170,7 @@ export const serviceSubcategories = {
       image: types11,
       workerCount: 1,
       estimatedTime: "2-3 hours",
+      category: "Pest Control Services", // Added category
     },
     {
       id: 20,
@@ -169,6 +180,7 @@ export const serviceSubcategories = {
       image: types12,
       workerCount: 2,
       estimatedTime: "3-4 hours",
+      category: "Pest Control Services", // Added category
     },
     {
       id: 21,
@@ -178,6 +190,7 @@ export const serviceSubcategories = {
       image: types13,
       workerCount: 1,
       estimatedTime: "1-2 hours",
+      category: "Pest Control Services", // Added category
     },
   ],
   "Landscaping Services": [
@@ -189,6 +202,7 @@ export const serviceSubcategories = {
       image: types14,
       workerCount: 2,
       estimatedTime: "2-3 hours",
+      category: "Landscaping Services", // Added category
     },
     {
       id: 44,
@@ -198,6 +212,7 @@ export const serviceSubcategories = {
       image: types15,
       workerCount: 3,
       estimatedTime: "2-3 days",
+      category: "Landscaping Services", // Added category
     },
     {
       id: 45,
@@ -207,6 +222,7 @@ export const serviceSubcategories = {
       image: types16,
       workerCount: 3,
       estimatedTime: "4-6 hours",
+      category: "Landscaping Services", // Added category
     },
   ],
   "Massage Services": [
@@ -219,6 +235,7 @@ export const serviceSubcategories = {
       image: types17,
       workerCount: 1,
       estimatedTime: "1 hour",
+      category: "Massage Services", // Added category
     },
     {
       id: 102,
@@ -229,6 +246,7 @@ export const serviceSubcategories = {
       image: types18,
       workerCount: 1,
       estimatedTime: "1 hour 30 mins",
+      category: "Massage Services", // Added category
     },
     {
       id: 103,
@@ -239,6 +257,7 @@ export const serviceSubcategories = {
       image: types19,
       workerCount: 1,
       estimatedTime: "1 hour 15 mins",
+      category: "Massage Services", // Added category
     },
   ],
   "Roofing Services": [
@@ -250,6 +269,7 @@ export const serviceSubcategories = {
       image: types20,
       workerCount: 1,
       estimatedTime: "1-2 hours",
+      category: "Roofing Services", // Added category
     },
     {
       id: 50,
@@ -259,6 +279,7 @@ export const serviceSubcategories = {
       image: types21,
       workerCount: 2,
       estimatedTime: "4-8 hours",
+      category: "Roofing Services", // Added category
     },
     {
       id: 51,
@@ -268,6 +289,7 @@ export const serviceSubcategories = {
       image: types22,
       workerCount: 4,
       estimatedTime: "2-3 days",
+      category: "Roofing Services", // Added category
     },
   ],
   "Interior Design": [
@@ -279,6 +301,7 @@ export const serviceSubcategories = {
       image: types23,
       workerCount: 1,
       estimatedTime: "2-3 hours",
+      category: "Interior Design", // Added category
     },
     {
       id: 53,
@@ -288,6 +311,7 @@ export const serviceSubcategories = {
       image: types24,
       workerCount: 2,
       estimatedTime: "1-2 days",
+      category: "Interior Design", // Added category
     },
     {
       id: 54,
@@ -297,6 +321,7 @@ export const serviceSubcategories = {
       image: types25,
       workerCount: 1,
       estimatedTime: "1-2 hours",
+      category: "Interior Design", // Added category
     },
   ],
   "Wifi Installment Services": [
@@ -308,6 +333,7 @@ export const serviceSubcategories = {
       image: types27,
       workerCount: 1,
       estimatedTime: "1-2 hours",
+      category: "Wifi Installment Services", // Added category
     },
     {
       id: 105,
@@ -317,6 +343,7 @@ export const serviceSubcategories = {
       image: types28,
       workerCount: 2,
       estimatedTime: "3-5 hours",
+      category: "Wifi Installment Services", // Added category
     },
   ],
   "Mechanic Services": [
@@ -328,6 +355,7 @@ export const serviceSubcategories = {
       image: types30,
       workerCount: 2,
       estimatedTime: "4-8 hours",
+      category: "Mechanic Services", // Added category
     },
     {
       id: 107,
@@ -337,6 +365,7 @@ export const serviceSubcategories = {
       image: types31,
       workerCount: 1,
       estimatedTime: "1-2 hours",
+      category: "Mechanic Services", // Added category
     },
   ],
 }
@@ -1363,10 +1392,10 @@ export const products = [
       "Reliable automotive repair and maintenance services for all types of vehicles, right at your doorstep.",
   },
   {
-    id: 11, 
+    id: 11,
     name: "Suggest a Service",
-    price: 0, 
-    category: "Community", 
+    price: 0,
+    category: "Community",
     image: types32,
     description: "Can't find what you're looking for? Suggest a new service and help us grow our offerings!",
   },

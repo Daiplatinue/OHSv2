@@ -9,20 +9,22 @@ export const classifyServiceAI = async (req, res) => {
       return res.status(400).json({ error: "Service name and description are required." })
     }
 
-    const prompt = `You are an expert service classifier for an online home services platform. Your primary goal is to accurately categorize new services.
+    const prompt = `You are an expert service classifier for an online home services platform. Your primary goal is to accurately categorize new services and estimate the number of workers typically needed for such a service.
 
-First, critically evaluate if the service name and description are valid and meaningful. A service is invalid if its name or description is nonsensical, clearly spam, or too vague to classify (e.g., "asdfasdf", "test service", "buy now", "random stuff").
+First, critically evaluate if the service name and description are valid and meaningful. A service is invalid if its name or description is nonsensical, clearly spam, or too vague to classify (e.g., "asdfasdf", "test service", "buy now", "random stuff"). If a service is a legitimate offering, it should be considered valid.
 
 If the service is invalid:
 - Set "isValid" to false.
 - Provide a concise "reason" for why it's invalid.
-- Leave "mainCategory" and "subCategory" as empty strings.
+- Leave "mainCategory", "subCategory", and "workersNeeded" as empty strings or null.
 
 If the service is valid:
 - Set "isValid" to true.
-- Classify it into an existing main category and, if applicable, a subcategory from the provided lists.
-- If the service fits an existing main category but no specific subcategory, use the main category and the service's name as the subcategory.
-- If the service does NOT fit any of the listed main categories, you MUST create a NEW, appropriate, and descriptive main category name for it. Then, use the service's name as the subcategory. DO NOT use 'Other' or 'Uncategorized' as a main category if the service is valid. Invent a relevant, descriptive category (e.g., for "Dog Walking", invent "Pet Services").
+- Classify it into an existing main category and, if applicable, an existing subcategory from the provided lists.
+- If the service conceptually fits an existing main category but does not perfectly match any of its listed subcategories, then use that existing main category and use the service's original name as the subcategory.
+- If the service does NOT fit any of the listed main categories, you MUST create a NEW, appropriate, and descriptive main category name for it. Then, use the service's original name as the subcategory. DO NOT use 'Other' or 'Uncategorized' as a main category if the service is valid. Invent a relevant, descriptive category (e.g., for "Dog Walking", invent "Pet Services").
+- Estimate the typical number of workers needed for this service. This should be an integer. Default to 1 if unsure, but try to be realistic (e.g., "Deep Cleaning" might need 2-3, "Roof Replacement" might need 4-5, "Solar Panel Roofing Prep" might need 3, "Leak Repair" might need 1).
+- Estimate the approximate time required to complete this service. Provide this in a human-readable format (e.g., "1-2 hours", "30 mins", "1 day", "2-3 days"). Default to "Varies" if unsure.
 
 Here are the available main categories: ${JSON.stringify(mainCategoryNames)}
 Here are the available subcategories grouped by their main category: ${JSON.stringify(subcategoryNamesByMainCategory)}
@@ -31,35 +33,47 @@ New Service Details:
 Name: ${name}
 Description: ${description}
 
-Provide your classification as a JSON object with 'isValid' (boolean), 'mainCategory' (string), 'subCategory' (string), and 'reason' (string, only if isValid is false) fields.
+Provide your classification as a JSON object with 'isValid' (boolean), 'mainCategory' (string), 'subCategory' (string), 'workersNeeded' (integer), 'estimatedTime' (string), and 'reason' (string, only if isValid is false) fields.
 
 Example Output for an invalid service:
 {
 "isValid": false,
 "reason": "Service name is too vague or nonsensical.",
 "mainCategory": "",
-"subCategory": ""
+"subCategory": "",
+"workersNeeded": null
 }
 
 Example Output for an existing subcategory (e.g., "Bed Bug Treatment" under "Pest Control Services"):
 {
 "isValid": true,
 "mainCategory": "Pest Control Services",
-"subCategory": "Bed Bug Treatment"
+"subCategory": "Bed Bug Treatment",
+"workersNeeded": 2
 }
 
-Example Output for a new service under an existing main category but no specific subcategory (e.g., "Ant Extermination" under "Pest Control Services"):
+Example Output for a new service under an existing main category but no specific subcategory (e.g., "General Cleaning for Large Homes" under "Home Cleaning Services"):
 {
 "isValid": true,
-"mainCategory": "Pest Control Services",
-"subCategory": "Ant Extermination"
+"mainCategory": "Home Cleaning Services",
+"subCategory": "General Cleaning for Large Homes",
+"workersNeeded": 2
 }
 
 Example Output for a completely new type of service (e.g., "Dog Walking" where 'Pet Services' is a new main category):
 {
 "isValid": true,
 "mainCategory": "Pet Services",
-"subCategory": "Dog Walking"
+"subCategory": "Dog Walking",
+"workersNeeded": 1
+}
+Example Output for a service like "Solar Panel Roofing Prep" (under "Roofing Services"):
+{
+"isValid": true,
+"mainCategory": "Roofing Services",
+"subCategory": "Solar Panel Roofing Prep",
+"workersNeeded": 3,
+"estimatedTime": "1-2 days"
 }
 `
     console.log("AI Prompt:", prompt) // Log the prompt
@@ -97,10 +111,14 @@ Example Output for a completely new type of service (e.g., "Dog Walking" where '
     const aiResponseText = openRouterData.choices[0].message.content
     console.log("Raw AI Response:", aiResponseText) // Log the raw AI response
 
+    // Remove markdown code block wrapper if present
+    const jsonMatch = aiResponseText.match(/```json\n([\s\S]*?)\n```/)
+    const cleanedAiResponseText = jsonMatch ? jsonMatch[1] : aiResponseText
+
     // Attempt to parse the AI's response as JSON
     let classificationResult
     try {
-      classificationResult = JSON.parse(aiResponseText)
+      classificationResult = JSON.parse(cleanedAiResponseText)
     } catch (parseError) {
       console.error("Failed to parse AI response as JSON:", aiResponseText, parseError)
       // Fallback if AI doesn't return perfect JSON
@@ -109,6 +127,7 @@ Example Output for a completely new type of service (e.g., "Dog Walking" where '
         reason: "AI response parsing failed or malformed JSON.",
         mainCategory: "",
         subCategory: "",
+        workersNeeded: null, // Default for invalid
       }
     }
 
@@ -128,6 +147,13 @@ Example Output for a completely new type of service (e.g., "Dog Walking" where '
     }
     if (!classificationResult.reason && !classificationResult.isValid) {
       classificationResult.reason = "Invalid service details provided by user." // Fallback for invalid without reason
+    }
+    // NEW: Fallback for workersNeeded
+    if (typeof classificationResult.workersNeeded !== "number" || classificationResult.workersNeeded < 1) {
+      classificationResult.workersNeeded = 1 // Default to 1 worker if AI doesn't provide a valid number
+    }
+    if (typeof classificationResult.estimatedTime !== "string" || classificationResult.estimatedTime.trim() === "") {
+      classificationResult.estimatedTime = "Varies" // Default to "Varies" if AI doesn't provide a valid time
     }
 
     return res.status(200).json(classificationResult)

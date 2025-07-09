@@ -756,18 +756,18 @@ function Bookings() {
         return (
           <div className="flex flex-col items-center justify-center py-16 px-4 bg-gray-100/50 rounded-2xl">
             <div className="text-center max-w-md">
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">No Services Available</h3>
+              <h3 className="text-2xl font-medium text-gray-700 mb-2">No Services Available</h3>
               <p className="text-gray-600 mb-6">
                 You haven't added any services yet. Add your first service to start receiving bookings.
               </p>
-              <button
+            </div>
+             <button
                 onClick={handleCreateService}
                 className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-all flex items-center gap-2"
               >
                 <Plus className="h-4 w-4" />
                 Add Service
               </button>
-            </div>
           </div>
         )
       }
@@ -776,11 +776,10 @@ function Bookings() {
         <div className="flex flex-col">
           {/* Subscription info banner */}
           <div
-            className={`mb-6 p-4 rounded-lg flex items-center ${
-              services.length >= subscription.maxServices
+            className={`mb-6 p-4 rounded-lg flex items-center ${services.length >= subscription.maxServices
                 ? "bg-red-50 border border-red-200"
                 : "bg-gray-50 border border-gray-200"
-            }`}
+              }`}
           >
             <div className="flex items-center">
               <Crown className={`h-5 w-5 mr-2 ${subscription.color}`} />
@@ -788,9 +787,8 @@ function Bookings() {
                 <h3 className="font-medium">
                   {subscription.name} Plan
                   <span
-                    className={`ml-2 text-sm ${
-                      services.length >= subscription.maxServices ? "text-red-600" : "text-gray-600"
-                    }`}
+                    className={`ml-2 text-sm ${services.length >= subscription.maxServices ? "text-red-600" : "text-gray-600"
+                      }`}
                   >
                     ({services.length}/
                     {subscription.maxServices === Number.POSITIVE_INFINITY ? "∞" : subscription.maxServices})
@@ -799,9 +797,8 @@ function Bookings() {
                 <p className="text-sm text-gray-600">
                   {services.length >= subscription.maxServices
                     ? "You've reached your service limit."
-                    : `You can add ${subscription.maxServices - services.length} more service${
-                        subscription.maxServices - services.length !== 1 ? "s" : ""
-                      }.`}
+                    : `You can add ${subscription.maxServices - services.length} more service${subscription.maxServices - services.length !== 1 ? "s" : ""
+                    }.`}
                 </p>
               </div>
             </div>
@@ -871,11 +868,10 @@ function Bookings() {
                       e.stopPropagation()
                       handleEditService(service)
                     }}
-                    className={`bg-white/80 backdrop-blur-sm p-1.5 rounded-full hover:bg-white transition-all text-gray-600 ${
-                      isTerminationScheduled && service.id === serviceToTerminate?.id
+                    className={`bg-white/80 backdrop-blur-sm p-1.5 rounded-full hover:bg-white transition-all text-gray-600 ${isTerminationScheduled && service.id === serviceToTerminate?.id
                         ? "opacity-50 cursor-not-allowed"
                         : ""
-                    }`}
+                      }`}
                     disabled={isTerminationScheduled && service.id === serviceToTerminate?.id}
                   >
                     <svg
@@ -899,11 +895,10 @@ function Bookings() {
                       e.stopPropagation()
                       handleDeleteService(service)
                     }}
-                    className={`bg-white/80 backdrop-blur-sm p-1.5 rounded-full hover:bg-white transition-all text-red-500 ${
-                      isTerminationScheduled && service.id === serviceToTerminate?.id
+                    className={`bg-white/80 backdrop-blur-sm p-1.5 rounded-full hover:bg-white transition-all text-red-500 ${isTerminationScheduled && service.id === serviceToTerminate?.id
                         ? "opacity-50 cursor-not-allowed"
                         : ""
-                    }`}
+                      }`}
                     disabled={isTerminationScheduled && service.id === serviceToTerminate?.id}
                   >
                     <svg
@@ -951,9 +946,8 @@ function Bookings() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className={`p-2 rounded-lg ${
-                  currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
-                }`}
+                className={`p-2 rounded-lg ${currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
+                  }`}
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
@@ -962,9 +956,8 @@ function Bookings() {
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`px-3 py-2 rounded-lg ${
-                    currentPage === page ? "bg-sky-500 text-white" : "text-gray-600 hover:bg-gray-100"
-                  }`}
+                  className={`px-3 py-2 rounded-lg ${currentPage === page ? "bg-sky-500 text-white" : "text-gray-600 hover:bg-gray-100"
+                    }`}
                 >
                   {page}
                 </button>
@@ -973,9 +966,8 @@ function Bookings() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className={`p-2 rounded-lg ${
-                  currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
-                }`}
+                className={`p-2 rounded-lg ${currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
+                  }`}
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -986,11 +978,10 @@ function Bookings() {
           <div className="mt-10 flex justify-center">
             <button
               onClick={handleCreateService}
-              className={`px-6 py-3 rounded-full flex items-center gap-2 ${
-                services.length >= subscription.maxServices
+              className={`px-6 py-3 rounded-full flex items-center gap-2 ${services.length >= subscription.maxServices
                   ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                   : "bg-sky-500 text-white hover:bg-sky-600"
-              }`}
+                }`}
               disabled={services.length >= subscription.maxServices}
             >
               <Plus className="h-4 w-4" />
@@ -1076,9 +1067,8 @@ function Bookings() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className={`p-2 rounded-lg ${
-                  currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
-                }`}
+                className={`p-2 rounded-lg ${currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
+                  }`}
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
@@ -1087,9 +1077,8 @@ function Bookings() {
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
-                  className={`px-3 py-2 rounded-lg ${
-                    currentPage === page ? "bg-sky-500 text-white" : "text-gray-600 hover:bg-gray-100"
-                  }`}
+                  className={`px-3 py-2 rounded-lg ${currentPage === page ? "bg-sky-500 text-white" : "text-gray-600 hover:bg-gray-100"
+                    }`}
                 >
                   {page}
                 </button>
@@ -1098,9 +1087,8 @@ function Bookings() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className={`p-2 rounded-lg ${
-                  currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
-                }`}
+                className={`p-2 rounded-lg ${currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-600 hover:bg-gray-100"
+                  }`}
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -1445,26 +1433,90 @@ function Bookings() {
     let timerInterval: NodeJS.Timeout | null = null
 
     if (isTerminationScheduled && terminationStartTime !== null) {
-      timerInterval = setInterval(() => {
+      timerInterval = setInterval(async () => {
         const elapsed = Date.now() - terminationStartTime
         const remaining = TERMINATION_DURATION_MS - elapsed
 
         if (remaining <= 0) {
           // Time's up, perform actual deletion
-          setServices((prevServices) => prevServices.filter((s) => s.id !== serviceToTerminate?.id))
-          setIsTerminationScheduled(false)
-          setTerminationTimer(null)
-          setTerminationStartTime(null)
-          setServiceToTerminate(null)
-          localStorage.removeItem("terminationServiceId")
-          localStorage.removeItem("terminationStartTime")
-          localStorage.removeItem("terminationReason")
-          localStorage.removeItem("legalReviewNotes")
-          localStorage.removeItem("financialAuditNotes")
-          setIsTerminationModalOpen(false) // Close the termination modal
-          setIsSuccessModalOpen(true)
-          setSuccessMessage(`Service "${serviceToTerminate?.name}" has been successfully terminated.`)
-          if (timerInterval) clearInterval(timerInterval)
+          if (timerInterval) clearInterval(timerInterval) // Clear interval immediately
+
+          if (serviceToTerminate) {
+            try {
+              const token = localStorage.getItem("token")
+              if (!token) {
+                console.error("Authentication token not found. Cannot delete service from backend.")
+                setSuccessMessage("Error: Authentication token missing. Service not deleted from backend.")
+                setIsSuccessModalOpen(true)
+                // Do not remove from local state if backend call fails due to auth
+                setIsTerminationScheduled(false)
+                setTerminationTimer(null)
+                setTerminationStartTime(null)
+                setServiceToTerminate(null)
+                localStorage.removeItem("terminationServiceId")
+                localStorage.removeItem("terminationStartTime")
+                localStorage.removeItem("terminationReason")
+                localStorage.removeItem("legalReviewNotes")
+                localStorage.removeItem("financialAuditNotes")
+                return
+              }
+
+              const response = await fetch(`http://localhost:3000/api/services/${serviceToTerminate.id}`, {
+                method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              })
+
+              if (response.ok) {
+                // Backend deletion successful, now update frontend state
+                setServices((prevServices) => prevServices.filter((s) => s.id !== serviceToTerminate.id))
+                setIsTerminationScheduled(false)
+                setTerminationTimer(null)
+                setTerminationStartTime(null)
+                setServiceToTerminate(null)
+                localStorage.removeItem("terminationServiceId")
+                localStorage.removeItem("terminationStartTime")
+                localStorage.removeItem("terminationReason")
+                localStorage.removeItem("legalReviewNotes")
+                localStorage.removeItem("financialAuditNotes")
+                setIsTerminationModalOpen(false) // Close the termination modal
+                setIsSuccessModalOpen(true)
+                setSuccessMessage(`Service "${serviceToTerminate.name}" has been successfully terminated.`)
+              } else {
+                const errorData = await response.json()
+                console.error("Failed to delete service from backend:", response.status, errorData.message)
+                setSuccessMessage(`Failed to terminate service: ${errorData.message || "Unknown error."}`)
+                setIsSuccessModalOpen(true)
+                // If backend deletion fails, do NOT remove from local state, reset termination status
+                setIsTerminationScheduled(false)
+                setTerminationTimer(null)
+                setTerminationStartTime(null)
+                setServiceToTerminate(null)
+                localStorage.removeItem("terminationServiceId")
+                localStorage.removeItem("terminationStartTime")
+                localStorage.removeItem("terminationReason")
+                localStorage.removeItem("legalReviewNotes")
+                localStorage.removeItem("financialAuditNotes")
+                setIsTerminationModalOpen(false) // Close the modal, as termination failed
+              }
+            } catch (error) {
+              console.error("Network error during service termination:", error)
+              setSuccessMessage("Network error: Could not connect to the server to terminate service.")
+              setIsSuccessModalOpen(true)
+              // If network error, do NOT remove from local state, reset termination status
+              setIsTerminationScheduled(false)
+              setTerminationTimer(null)
+              setTerminationStartTime(null)
+              setServiceToTerminate(null)
+              localStorage.removeItem("terminationServiceId")
+              localStorage.removeItem("terminationStartTime")
+              localStorage.removeItem("terminationReason")
+              localStorage.removeItem("legalReviewNotes")
+              localStorage.removeItem("financialAuditNotes")
+              setIsTerminationModalOpen(false) // Close the modal, as termination failed
+            }
+          }
         } else {
           setTerminationTimer(Math.ceil(remaining / 1000))
         }
@@ -1510,13 +1562,13 @@ function Bookings() {
           localStorage.removeItem("terminationStartTime")
           localStorage.removeItem("terminationReason")
           localStorage.removeItem("legalReviewNotes")
+          localStorage.removeItem("financial")
+          localStorage.removeItem("legalReviewNotes")
           localStorage.removeItem("financialAuditNotes")
           setIsSuccessModalOpen(true)
-          setSuccessMessage(`Service "${service.name}" was terminated.`)
+          setSuccessMessage(`Service"${service.name}" was terminated.`)
         } else {
           setTerminationTimer(Math.ceil(remaining / 1000))
-          setIsTerminationModalOpen(true) // Re-open modal if termination is ongoing
-          setTerminationStep(4) // Go directly to scheduled view
         }
       }
     }
@@ -1617,73 +1669,66 @@ function Bookings() {
             <nav className="flex -mb-px overflow-x-auto">
               <button
                 onClick={() => setActiveTab("services")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
-                  activeTab === "services"
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "services"
                     ? "border-sky-500 text-sky-500"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                  }`}
               >
                 Services
               </button>
               <button
                 onClick={() => setActiveTab("ongoing")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
-                  activeTab === "ongoing"
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "ongoing"
                     ? "border-sky-500 text-sky-500"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                  }`}
               >
                 Ongoing Bookings
               </button>
               <button
                 onClick={() => setActiveTab("pending")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
-                  activeTab === "pending"
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "pending"
                     ? "border-sky-500 text-sky-500"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                  }`}
               >
                 Pending Bookings
               </button>
               <button
                 onClick={() => setActiveTab("completed")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
-                  activeTab === "completed"
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "completed"
                     ? "border-sky-500 text-sky-500"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                  }`}
               >
                 Completed Bookings
               </button>
               <button
                 onClick={() => setActiveTab("personal")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
-                  activeTab === "personal"
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "personal"
                     ? "border-sky-500 text-sky-500"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                  }`}
               >
                 <User className="h-4 w-4" />
                 Personal Info
               </button>
               <button
                 onClick={() => setActiveTab("security")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
-                  activeTab === "security"
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "security"
                     ? "border-sky-500 text-sky-500"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                  }`}
               >
                 <Lock className="h-4 w-4" />
                 Security
               </button>
               <button
                 onClick={() => setActiveTab("delete")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${
-                  activeTab === "delete"
+                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 ${activeTab === "delete"
                     ? "border-sky-500 text-sky-500"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                  }`}
               >
                 <Trash2 className="h-4 w-4" />
                 Delete Account
@@ -1743,13 +1788,12 @@ function Bookings() {
                     <h3 className="text-2xl font-light text-white tracking-tight">{selectedBooking.serviceName}</h3>
                     <div
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2 
-          ${
-            selectedBooking.status === "pending"
-              ? "bg-yellow-100 text-yellow-800"
-              : selectedBooking.status === "ongoing"
-                ? "bg-sky-100 text-sky-800"
-                : "bg-green-100 text-green-800"
-          }`}
+        ${selectedBooking.status === "pending"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : selectedBooking.status === "ongoing"
+                            ? "bg-sky-100 text-sky-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
                     >
                       {selectedBooking.status === "pending"
                         ? "Pending"
@@ -1857,13 +1901,12 @@ function Bookings() {
                       <button
                         onClick={() => handleMarkAsCompleted(selectedBooking.id)}
                         disabled={ceoMarkedCompleted.includes(selectedBooking.id) || isLoading || showSuccess}
-                        className={`w-full px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${
-                          ceoMarkedCompleted.includes(selectedBooking.id) || showSuccess
+                        className={`w-full px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${ceoMarkedCompleted.includes(selectedBooking.id) || showSuccess
                             ? "bg-gray-400 cursor-not-allowed"
                             : isLoading && processingBookingId === selectedBooking.id
                               ? "bg-sky-400 cursor-wait"
                               : "bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-200"
-                        }`}
+                          }`}
                       >
                         {isLoading && processingBookingId === selectedBooking.id ? (
                           <span className="flex items-center justify-center">
@@ -1916,11 +1959,10 @@ function Bookings() {
                         <button
                           onClick={() => handleAcceptBooking(selectedBooking.id)}
                           disabled={isLoading}
-                          className={`flex-1 px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${
-                            isLoading && processingBookingId === selectedBooking.id
+                          className={`flex-1 px-6 py-3 text-white rounded-full transition-all duration-200 font-medium text-sm ${isLoading && processingBookingId === selectedBooking.id
                               ? "bg-sky-400 cursor-wait"
                               : "bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-200"
-                          }`}
+                            }`}
                         >
                           {isLoading && processingBookingId === selectedBooking.id ? (
                             <span className="flex items-center justify-center">
@@ -2023,7 +2065,7 @@ function Bookings() {
               </div>
 
               {/* Form Section - Right Side */}
-              <div className="md:w-3/5 p-8 border-t md:border-t-0 md:border-l border-gray-200/50">
+              <div className="md:w-3/5 p-8 border-t md:border-t-0 md:border-l border-gray-200">
                 <div className="flex justify-between items-start mb-8">
                   <div>
                     <DialogTitle className="text-2xl font-medium text-gray-700">Create New Service</DialogTitle>
@@ -2044,9 +2086,8 @@ function Bookings() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div
-                        className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                          createServiceStep >= 1 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"
-                        }`}
+                        className={`flex items-center justify-center w-10 h-10 rounded-full ${createServiceStep >= 1 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"
+                          }`}
                       >
                         <FileText className="h-5 w-5" />
                       </div>
@@ -2054,9 +2095,8 @@ function Bookings() {
                     </div>
                     <div className="flex items-center">
                       <div
-                        className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                          createServiceStep >= 2 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"
-                        }`}
+                        className={`flex items-center justify-center w-10 h-10 rounded-full ${createServiceStep >= 2 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"
+                          }`}
                       >
                         <DollarSign className="h-5 w-5" />
                       </div>
@@ -2064,9 +2104,8 @@ function Bookings() {
                     </div>
                     <div className="flex items-center">
                       <div
-                        className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                          createServiceStep >= 3 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"
-                        }`}
+                        className={`flex items-center justify-center w-10 h-10 rounded-full ${createServiceStep >= 3 ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-500"
+                          }`}
                       >
                         <Clipboard className="h-5 w-5" />
                       </div>
@@ -2108,11 +2147,10 @@ function Bookings() {
                     <button
                       onClick={handleSubmitNewService}
                       disabled={!allRequirementsMet || isProcessing}
-                      className={`px-6 py-3 text-white rounded-full transition-all flex items-center ${
-                        !allRequirementsMet || isProcessing
+                      className={`px-6 py-3 text-white rounded-full transition-all flex items-center ${!allRequirementsMet || isProcessing
                           ? "bg-gray-400 cursor-not-allowed"
                           : "bg-sky-500 hover:bg-sky-600"
-                      }`}
+                        }`}
                     >
                       {isProcessing ? (
                         <>
@@ -2411,13 +2449,12 @@ function Bookings() {
                     <button
                       onClick={() => handleDeclineBooking(selectedBooking.id)}
                       disabled={!declineReason.trim() || isLoading}
-                      className={`flex-1 px-4 py-2.5 text-white rounded-lg transition-colors ${
-                        !declineReason.trim()
+                      className={`flex-1 px-4 py-2.5 text-white rounded-lg transition-colors ${!declineReason.trim()
                           ? "bg-gray-400 cursor-not-allowed"
                           : isLoading && processingBookingId === selectedBooking.id
                             ? "bg-red-400 cursor-wait"
                             : "bg-red-500 hover:bg-red-600"
-                      }`}
+                        }`}
                     >
                       {isLoading && processingBookingId === selectedBooking.id ? (
                         <span className="flex items-center justify-center">
@@ -2481,14 +2518,13 @@ function Bookings() {
                   checked={isYearlyBilling}
                   onChange={setIsYearlyBilling}
                   className={`
-                ${isYearlyBilling ? "bg-blue-600" : "bg-gray-300"}
-               relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+              ${isYearlyBilling ? "bg-blue-600" : "bg-gray-300"}
+             relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                 >
                   <span className="sr-only">Enable yearly billing</span>
                   <span
-                    className={`
-                  ${isYearlyBilling ? "translate-x-6" : "translate-x-1"}
-                 inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                    className={`${isYearlyBilling ? "translate-x-6" : "translate-x-1"
+                      } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                   />
                 </Switch>
                 <span className="text-gray-700 font-medium ml-3">Pay Yearly</span>
@@ -2507,15 +2543,14 @@ function Bookings() {
                     <div
                       key={plan.tier}
                       className={`rounded-xl p-6 flex flex-col shadow-lg transition-all duration-300
-                      ${plan.color} ${plan.textColor}
-                      ${
-                        plan.tier === subscription.tier
+                    ${plan.color} ${plan.textColor}
+                    ${plan.tier === subscription.tier
                           ? plan.tier === "mid"
                             ? "ring-4 ring-blue-300"
                             : "ring-4 ring-blue-200"
                           : "border border-gray-200"
-                      }
-                      `}
+                        }
+                    `}
                     >
                       <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
                       <p className={`text-sm mb-4 ${plan.tier === "mid" ? "text-blue-200" : "text-gray-600"}`}>
@@ -2532,13 +2567,11 @@ function Bookings() {
                       <button
                         onClick={() => handleSelectPlan(plan.tier as SubscriptionTier)}
                         className={`w-full py-3 rounded-lg font-semibold transition-colors duration-200
-                        ${
-                          plan.tier === "mid"
+                      ${plan.tier === "mid"
                             ? "bg-white text-blue-600 hover:bg-gray-100"
                             : "bg-blue-600 text-white hover:bg-blue-700"
-                        }
-                        ${plan.tier === subscription.tier ? "opacity-70 cursor-not-allowed" : ""}
-                        `}
+                          }
+                      ${plan.tier === subscription.tier ? "opacity-70 cursor-not-allowed" : ""}`}
                         disabled={plan.tier === subscription.tier}
                       >
                         {plan.tier === subscription.tier ? "Current Plan" : "Get Started Now"}
@@ -2549,15 +2582,13 @@ function Bookings() {
                           <li key={index} className="flex items-center">
                             {feature.included ? (
                               <CheckCircle
-                                className={`h-5 w-5 mr-3 flex-shrink-0 ${
-                                  plan.tier === "mid" ? "text-white" : "text-green-500"
-                                }`}
+                                className={`h-5 w-5 mr-3 flex-shrink-0 ${plan.tier === "mid" ? "text-white" : "text-green-500"
+                                  }`}
                               />
                             ) : (
                               <X
-                                className={`h-5 w-5 mr-3 flex-shrink-0 ${
-                                  plan.tier === "mid" ? "text-blue-300" : "text-gray-400"
-                                }`}
+                                className={`h-5 w-5 mr-3 flex-shrink-0 ${plan.tier === "mid" ? "text-blue-300" : "text-gray-400"
+                                  }`}
                               />
                             )}
                             <span className={`text-sm ${plan.textColor}`}>{feature.text}</span>
@@ -2604,9 +2635,8 @@ function Bookings() {
               <p className="text-gray-600 mb-6" style={{ animation: "fadeIn 0.5s ease-out 0.2s both" }}>
                 {successMessage ||
                   (subscription.tier !== "free"
-                    ? `You've successfully upgraded to the ${subscription.name} plan! You can now add up to ${
-                        subscription.maxServices === Number.POSITIVE_INFINITY ? "unlimited" : subscription.maxServices
-                      } services.`
+                    ? `You've successfully upgraded to the ${subscription.name} plan! You can now add up to ${subscription.maxServices === Number.POSITIVE_INFINITY ? "unlimited" : subscription.maxServices
+                    } services.`
                     : "Operation completed successfully!")}
               </p>
 
@@ -2657,9 +2687,8 @@ function Bookings() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
                           <div
-                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                              terminationStep >= 1 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"
-                            }`}
+                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${terminationStep >= 1 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"
+                              }`}
                           >
                             1
                           </div>
@@ -2667,9 +2696,8 @@ function Bookings() {
                         </div>
                         <div className="flex items-center">
                           <div
-                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                              terminationStep >= 2 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"
-                            }`}
+                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${terminationStep >= 2 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"
+                              }`}
                           >
                             2
                           </div>
@@ -2677,9 +2705,8 @@ function Bookings() {
                         </div>
                         <div className="flex items-center">
                           <div
-                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                              terminationStep >= 3 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"
-                            }`}
+                            className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${terminationStep >= 3 ? "bg-red-500 text-white" : "bg-gray-200 text-gray-500"
+                              }`}
                           >
                             3
                           </div>
@@ -2730,9 +2757,8 @@ function Bookings() {
                         <button
                           onClick={() => setTerminationStep(2)}
                           disabled={!terminationReason}
-                          className={`px-6 py-3 text-white rounded-full transition-all ${
-                            !terminationReason ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"
-                          }`}
+                          className={`px-6 py-3 text-white rounded-full transition-all ${!terminationReason ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"
+                            }`}
                         >
                           Next: Legal Review
                         </button>
@@ -2775,9 +2801,8 @@ function Bookings() {
                         <button
                           onClick={() => setTerminationStep(3)}
                           disabled={!legalReviewNotes.trim()}
-                          className={`px-6 py-3 text-white rounded-full transition-all ${
-                            !legalReviewNotes.trim() ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"
-                          }`}
+                          className={`px-6 py-3 text-white rounded-full transition-all ${!legalReviewNotes.trim() ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"
+                            }`}
                         >
                           Next: Financial Audit
                         </button>
@@ -2821,11 +2846,10 @@ function Bookings() {
                         <button
                           onClick={handleScheduleTermination}
                           disabled={!financialAuditNotes.trim()}
-                          className={`px-6 py-3 text-white rounded-full transition-all ${
-                            !financialAuditNotes.trim()
+                          className={`px-6 py-3 text-white rounded-full transition-all ${!financialAuditNotes.trim()
                               ? "bg-gray-400 cursor-not-allowed"
                               : "bg-red-500 hover:bg-red-600"
-                          }`}
+                            }`}
                         >
                           Schedule Termination
                         </button>

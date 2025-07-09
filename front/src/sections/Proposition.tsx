@@ -1,7 +1,10 @@
+"use client"
+
 import { useEffect, useState, useRef } from "react"
 import { X, Blend } from "lucide-react"
 import { aboutHandyGo } from "../sections/propositionData"
 import heroImage from "../assets/proposition/Creative Workspace Team.jpeg"
+import { useNavigate } from "react-router-dom" // Changed from next/navigation
 
 import SecondSection from "../sections/Proposition_Sections/SecondSection"
 import ThirdSection from "../sections/Proposition_Sections/ThirdSection"
@@ -123,6 +126,7 @@ function Proposition() {
   }, [])
 
   const [textAnimating, setTextAnimating] = useState(false)
+  const navigate = useNavigate() // Changed from useRouter()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -217,7 +221,7 @@ function Proposition() {
   }
 
   const navigateToLogin = () => {
-    window.location.href = "/login"
+    navigate("/login") // Changed from router.push("/login")
   }
 
   const handleTeamMemberHover = (memberName: string) => {
@@ -746,79 +750,79 @@ function Proposition() {
       </div>
 
       <style>{`
-    @keyframes fade-in {
-      0% {
-        opacity: 0;
-      }
-      100% {
-        opacity: 1;
-      }
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
     }
-    
-    @keyframes fade-out {
-      0% {
-        opacity: 1;
-      }
-      100% {
-        opacity: 0;
-      }
+    100% {
+      opacity: 1;
     }
-    
-    .fade-in {
-      animation: fade-in 0.4s ease-out forwards;
+  }
+  
+  @keyframes fade-out {
+    0% {
+      opacity: 1;
     }
-    
-    .fade-out {
-      animation: fade-out 0.4s ease-out forwards;
+    100% {
+      opacity: 0;
     }
-    
-    .contact-text {
-      animation: fadeSlideUp 0.8s ease-out forwards;
+  }
+  
+  .fade-in {
+    animation: fade-in 0.4s ease-out forwards;
+  }
+  
+  .fade-out {
+    animation: fade-out 0.4s ease-out forwards;
+  }
+  
+  .contact-text {
+    animation: fadeSlideUp 0.8s ease-out forwards;
+  }
+  
+  .contact-heading {
+    animation: fadeSlideUp 1s ease-out forwards;
+  }
+  
+  .contact-details {
+    animation: fadeSlideUp 1.2s ease-out forwards;
+  }
+  
+  .fade-slide-up {
+    animation: fadeSlideUp 0.8s ease-out forwards;
+  }
+  
+  .delay-1 {
+    animation-delay: 0.2s;
+  }
+  
+  .delay-2 {
+    animation-delay: 0.4s;
+  }
+  
+  .delay-3 {
+    animation-delay: 0.6s;
+  }
+  
+  .delay-4 {
+    animation-delay: 0.8s;
+  }
+  
+  .delay-5 {
+    animation-delay: 1s;
+  }
+  
+  @keyframes fadeSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
     }
-    
-    .contact-heading {
-      animation: fadeSlideUp 1s ease-out forwards;
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
-    
-    .contact-details {
-      animation: fadeSlideUp 1.2s ease-out forwards;
-    }
-    
-    .fade-slide-up {
-      animation: fadeSlideUp 0.8s ease-out forwards;
-    }
-    
-    .delay-1 {
-      animation-delay: 0.2s;
-    }
-    
-    .delay-2 {
-      animation-delay: 0.4s;
-    }
-    
-    .delay-3 {
-      animation-delay: 0.6s;
-    }
-    
-    .delay-4 {
-      animation-delay: 0.8s;
-    }
-    
-    .delay-5 {
-      animation-delay: 1s;
-    }
-    
-    @keyframes fadeSlideUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-  `}</style>
+  }
+`}</style>
     </>
   )
 }

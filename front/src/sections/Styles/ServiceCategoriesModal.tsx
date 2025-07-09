@@ -1,13 +1,22 @@
 import { X, ChevronRight, Users, Clock } from "lucide-react"
 
+interface CooDetails {
+  _id: string
+  firstName: string
+  lastName: string
+  profilePicture: string | null
+}
+
 interface ServiceSubcategory {
-  id: number
+  id: number | string // Allow string for dynamic service IDs
   name: string
   description: string
   price: number
   image: string
   workerCount: number
   estimatedTime: string
+  category: string
+  cooDetails?: CooDetails
 }
 
 interface ServiceCategoriesModalProps {
@@ -15,7 +24,7 @@ interface ServiceCategoriesModalProps {
   onClose: () => void
   categoryName: string
   subcategories: ServiceSubcategory[]
-  onSelectSubcategory: (subcategoryName: string) => void
+  onSelectSubcategory: (subcategory: ServiceSubcategory) => void // Change type to pass full object
 }
 
 function ServiceCategoriesModal({
@@ -53,7 +62,7 @@ function ServiceCategoriesModal({
                 <div
                   key={subcategory.id}
                   className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-all cursor-pointer"
-                  onClick={() => onSelectSubcategory(subcategory.name)}
+                  onClick={() => onSelectSubcategory(subcategory)} // Pass the entire subcategory object
                 >
                   <div className="relative h-48 overflow-hidden">
                     <img

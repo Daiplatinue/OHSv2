@@ -13,34 +13,37 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+// Remove this line:
+// import Image from "next/image" // Import Image component for profile pictures
+import { Clock } from "lucide-react"
 
 // Add animation keyframes
 const animationStyles = `
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+from { opacity: 0; }
+to { opacity: 1; }
 }
 
 @keyframes bounceIn {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.2); }
-  100% { transform: scale(1); opacity: 1; }
+0% { transform: scale(0); opacity: 0; }
+60% { transform: scale(1.2); }
+100% { transform: scale(1); opacity: 1; }
 }
 
 @keyframes slideInUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+from { transform: translateY(20px); opacity: 0; }
+to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+0% { transform: scale(1); }
+50% { transform: scale(1.05); }
+100% { transform: scale(1); }
 }
 `
 
 interface Seller {
-  id: number
+  id: number | string // Allow string for dynamic service IDs
   name: string
   rating: number
   reviews: number
@@ -50,13 +53,39 @@ interface Seller {
   badges: string[]
   description: string
   workerCount?: number
+  estimatedTime?: string
+}
+
+interface CooDetails {
+  _id: string // Changed to string
+  firstName: string
+  middleName?: string
+  lastName: string
+  profilePicture: string | null
+  location?: { name: string }
+}
+
+interface ServiceDetails {
+  id: string | number // Changed to string | number
+  name: string
+  price: number // This is the base price for the service itself
+  category: string
+  image: string
+  description: string
+  workerCount?: number // Optional for static subcategories
+  estimatedTime?: string // Optional for static subcategories
+  cooId?: CooDetails | null // Changed to cooId
+  chargePerKm?: number
+  totalRating?: number
+  totalReviews?: number
+  workersNeeded?: number
 }
 
 interface WorkersModalProps {
   isOpen: boolean
   onClose: () => void
-  productName: string
-  sellers: Seller[]
+  serviceDetails: ServiceDetails | null // Changed from productName to serviceDetails
+  staticSellers: { [key: string]: Seller[] } // The original sellers object
 }
 
 interface Location {
@@ -72,12 +101,14 @@ interface Location {
 }
 
 const COMPANY_LOCATION = {
-  lat: 10.2433,
-  lng: 123.7962,
-  name: "Minglanilla, Cebu City",
+  lat: 10.3125,
+  lng: 123.8924,
+  name: "HandyGO Headquarters",
 }
 
-function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalProps) {
+function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: WorkersModalProps) {
+  console.log("WorkersModal: Component rendered. serviceDetails:", serviceDetails) // Log serviceDetails at the start
+
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null)
   const [bookingStep, setBookingStep] = useState<number>(0)
   const [selectedDate, setSelectedDate] = useState<string>("")
@@ -85,7 +116,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
   const [totalRate, setTotalRate] = useState<number>(0)
   const [bookingSuccess, setBookingSuccess] = useState<boolean>(false)
   const [confirmationStep, setConfirmationStep] = useState<boolean>(false)
-  const [currentMonth, ] = useState<Date>(new Date())
+  const [currentMonth] = useState<Date>(new Date())
   const [, setCalendarDays] = useState<Date[]>([])
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false)
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState<boolean>(false)
@@ -167,18 +198,52 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
     })
   }, [])
 
-  if (!isOpen) return null
+  if (!isOpen || !serviceDetails) return null
+
+  // Determine the list of providers to display
+  const allProviders: (Seller & { isCoo?: boolean; profilePicture?: string | null })[] = []
+
+  if (serviceDetails.cooId) {
+    // Check serviceDetails.cooId
+    console.log("WorkersModal: serviceDetails.cooId found. Adding COO as provider:", serviceDetails.cooId)
+    const cooFullName = `${serviceDetails.cooId.firstName} ${
+      // Use serviceDetails.cooId
+      serviceDetails.cooId.middleName ? serviceDetails.cooId.middleName + " " : ""
+      }${serviceDetails.cooId.lastName}`.trim()
+
+    allProviders.push({
+      id: serviceDetails.cooId._id, // This should now be a string
+      name: cooFullName,
+      rating: serviceDetails.totalRating || 0, // Use totalRating from serviceDetails
+      reviews: serviceDetails.totalReviews || 0, // Use totalReviews from serviceDetails
+      location: serviceDetails.cooId.location?.name || "Online/Remote", // Use COO's location
+      startingRate: serviceDetails.price,
+      ratePerKm: serviceDetails.chargePerKm || 0, // Use chargePerKm from serviceDetails
+      badges: ["COO"],
+      description: serviceDetails.description, // Use service description
+      workerCount: serviceDetails.workersNeeded || 1, // Use workersNeeded from serviceDetails
+      isCoo: true,
+      profilePicture: serviceDetails.cooId.profilePicture,
+      estimatedTime: serviceDetails.estimatedTime,
+    })
+  } else {
+    console.log("WorkersModal: No cooId found. Using static sellers.")
+    // Otherwise, use the static sellers from Home-data.ts
+    const serviceSpecificStaticSellers = staticSellers[serviceDetails.name] || []
+    allProviders.push(...serviceSpecificStaticSellers)
+  }
+  console.log("WorkersModal: allProviders array after population:", allProviders, "Length:", allProviders.length) // Log allProviders after population
 
   const handleSellerSelect = (seller: Seller) => {
     setSelectedSeller(seller)
   }
 
-  const handleShare = (sellerId: number) => {
+  const handleShare = (sellerId: number | string) => {
     // In a real app, this would open a share dialog
     alert(`Sharing seller #${sellerId}`)
   }
 
-  const handleReport = (sellerId: number) => {
+  const handleReport = (sellerId: number | string) => {
     // In a real app, this would open a report dialog
     alert(`Reporting seller #${sellerId}`)
   }
@@ -201,7 +266,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
 
   const openCompanyModal = (seller: Seller) => {
     // Get company data from our data file
-    const companyData = getMockCompanyData(seller, productName)
+    const companyData = getMockCompanyData(seller, serviceDetails.name) // Use serviceDetails.name
     setSelectedCompany(companyData)
     setIsCompanyModalOpen(true)
   }
@@ -316,7 +381,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
       const bookingData = {
         userId,
         firstname,
-        productName,
+        productName: serviceDetails.name, // Use serviceDetails.name
         providerName: selectedSeller.name,
         providerId: selectedSeller.id,
         workerCount: selectedSeller.workerCount || 1,
@@ -378,7 +443,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
           userId,
           bookingId: result._id,
           status: "pending",
-          serviceName: productName,
+          serviceName: serviceDetails.name, // Use serviceDetails.name
           providerName: selectedSeller.name,
         }
 
@@ -475,7 +540,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
         <div className="p-6 flex justify-between items-center border-b border-gray-100/50 bg-white/80 backdrop-blur-sm">
           {bookingStep === 0 && !selectedSeller && !bookingSuccess && !confirmationStep && (
             <>
-              <h2 className="text-xl font-medium text-gray-700">Providers for {productName}</h2>
+              <h2 className="text-xl font-medium text-gray-700">Providers for {serviceDetails.name}</h2>
               <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X className="h-6 w-6" />
               </button>
@@ -547,88 +612,106 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
         <div id="modal-content" className="overflow-y-auto flex-grow">
           {bookingStep === 0 && !selectedSeller && !bookingSuccess && !confirmationStep && (
             <div className="p-6">
-              {sellers.length === 0 ? (
+              {allProviders.length === 0 ? (
                 <p className="text-gray-400 text-center py-8">No providers available for this service</p>
               ) : (
                 <div className="space-y-6">
-                  {sellers.map((seller) => (
-                    <div
-                      key={seller.id}
-                      className="bg-white/90 backdrop-blur-sm rounded-xl p-5 hover:bg-gray-50/90 transition-all cursor-pointer border border-gray-200/70 shadow-sm hover:shadow-md"
-                      onClick={() => handleSellerSelect(seller)}
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3
-                            className="text-black font-medium text-lg cursor-pointer hover:text-sky-600 hover:underline"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              openCompanyModal(seller)
-                            }}
-                          >
-                            {seller.name}
-                          </h3>
-                          <p className="text-gray-700 text-sm mt-1 flex items-center">
-                            <MapPin className="h-3 w-3 mr-1 text-gray-500" /> {seller.location}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-yellow-500 mb-1">
-                            {"★".repeat(seller.rating)}
-                            {"☆".repeat(5 - seller.rating)}
+                  {allProviders.map((seller) => {
+                    console.log("WorkersModal: Mapping seller with ID:", seller.id) // Log seller ID for debugging key warning
+                    return (
+                      <div
+                        key={seller.id} // This key should now be a string
+                        className="bg-white/90 backdrop-blur-sm rounded-xl p-5 hover:bg-gray-50/90 transition-all cursor-pointer border border-gray-200/70 shadow-sm hover:shadow-md"
+                        onClick={() => handleSellerSelect(seller)}
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden bg-gray-200 border border-gray-300 mr-3">
+                                {seller.profilePicture ? (
+                                  <img
+                                    src={seller.profilePicture || "/placeholder.svg"}
+                                    alt={seller.name}
+                                    className="object-cover w-full h-full"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-gray-500 text-lg font-medium">
+                                    {seller.name.charAt(0)}
+                                  </div>
+                                )}
+                              </div>
+                              <h3
+                                className="text-black font-medium text-lg cursor-pointer hover:text-sky-600 hover:underline"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  openCompanyModal(seller)
+                                }}
+                              >
+                                {seller.name}
+                              </h3>
+                            </div>
+                            <p className="text-gray-700 text-sm mt-1 flex items-center ml-13">
+                              <MapPin className="h-3 w-3 mr-1 text-gray-500" /> {seller.location}
+                            </p>
                           </div>
-                          <p className="text-gray-700 text-sm">{seller.reviews} reviews</p>
+                          <div className="text-right">
+                            <div className="text-yellow-500 mb-1">
+                              {"★".repeat(seller.rating)}
+                              {"☆".repeat(5 - seller.rating)}
+                            </div>
+                            <p className="text-gray-700 text-sm">{seller.reviews} reviews</p>
+                          </div>
+                        </div>
+
+                        <p className="text-gray-600 text-sm mb-3">{seller.description}</p>
+
+                        {/* Worker count information */}
+                        {seller.workerCount && (
+                          <div className="flex items-center mb-3 text-gray-600 text-sm">
+                            <Users className="h-4 w-4 mr-1 text-sky-600" />
+                            <span>
+                              {seller.workerCount} worker{seller.workerCount > 1 ? "s" : ""} will complete this service
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="flex justify-between items-center">
+                          <div className="text-green-600 font-medium">
+                            Starting at ₱{seller.startingRate.toLocaleString()} • ₱{seller.ratePerKm}/km
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleShare(seller.id)
+                              }}
+                              className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+                            >
+                              <Share className="h-4 w-4 text-gray-700" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleReport(seller.id)
+                              }}
+                              className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+                            >
+                              <Flag className="h-4 w-4 text-gray-700" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleBook(seller)
+                              }}
+                              className="px-6 py-2 bg-sky-600 text-white rounded-full hover:bg-sky-700 transition-colors shadow-sm hover:shadow-md"
+                            >
+                              Book
+                            </button>
+                          </div>
                         </div>
                       </div>
-
-                      <p className="text-gray-600 text-sm mb-3">{seller.description}</p>
-
-                      {/* Worker count information */}
-                      {seller.workerCount && (
-                        <div className="flex items-center mb-3 text-gray-600 text-sm">
-                          <Users className="h-4 w-4 mr-1 text-sky-600" />
-                          <span>
-                            {seller.workerCount} worker{seller.workerCount > 1 ? "s" : ""} will complete this service
-                          </span>
-                        </div>
-                      )}
-
-                      <div className="flex justify-between items-center">
-                        <div className="text-green-600 font-medium">
-                          Starting at ₱{seller.startingRate.toLocaleString()} • ₱{seller.ratePerKm}/km
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleShare(seller.id)
-                            }}
-                            className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
-                          >
-                            <Share className="h-4 w-4 text-gray-700" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleReport(seller.id)
-                            }}
-                            className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
-                          >
-                            <Flag className="h-4 w-4 text-gray-700" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleBook(seller)
-                            }}
-                            className="px-6 py-2 bg-sky-600 text-white rounded-full hover:bg-sky-700 transition-colors shadow-sm hover:shadow-md"
-                          >
-                            Book
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -639,6 +722,12 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
               <div className="mb-6">
                 <h3 className="text-lg font-medium">{selectedSeller.name}</h3>
                 <p className="text-gray-600 text-sm">{selectedSeller.description}</p>
+                {selectedSeller.estimatedTime && (
+                  <div className="flex items-center mt-2 text-gray-600 text-sm">
+                    <Clock className="h-4 w-4 mr-1 text-sky-600" />
+                    <span>Estimated time: {selectedSeller.estimatedTime}</span>
+                  </div>
+                )}
 
                 {/* Worker count information */}
                 {selectedSeller.workerCount && (
@@ -722,9 +811,9 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                       {selectedDate && selectedTime && " at "}
                       {selectedTime
                         ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })
                         : "No time selected"}
                     </p>
                   </div>
@@ -768,6 +857,12 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                     <Users className="h-4 w-4 mr-2 text-sky-600" />
                     <span className="font-medium">Workers:</span> {selectedSeller.workerCount} worker
                     {selectedSeller.workerCount > 1 ? "s" : ""}
+                  </p>
+                )}
+                {selectedSeller.estimatedTime && (
+                  <p className="text-gray-600 text-sm flex items-center mt-2">
+                    <Clock className="h-4 w-4 mr-2 text-sky-600" />
+                    <span className="font-medium">Estimated time:</span> {selectedSeller.estimatedTime}
                   </p>
                 )}
               </div>
@@ -856,7 +951,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                       <div className="space-y-4">
                         <div className="flex justify-between items-center pb-2 border-b border-gray-200">
                           <span className="text-gray-600">Service:</span>
-                          <span className="font-medium">{productName}</span>
+                          <span className="font-medium">{serviceDetails.name}</span>
                         </div>
 
                         <div className="flex justify-between items-center pb-2 border-b border-gray-200">
@@ -878,14 +973,20 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                           <span className="font-medium">{formatDate(selectedDate)}</span>
                         </div>
 
+                        {selectedSeller?.estimatedTime && (
+                          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                            <span className="text-gray-600">Estimated Time:</span> {selectedSeller.estimatedTime}
+                          </div>
+                        )}
+
                         <div className="flex justify-between items-center pb-2 border-b border-gray-200">
                           <span className="text-gray-600">Time:</span>
                           <span className="font-medium">
                             {selectedTime
                               ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
-                                  hour: "numeric",
-                                  minute: "2-digit",
-                                })
+                                hour: "numeric",
+                                minute: "2-digit",
+                              })
                               : "Not specified"}
                           </span>
                         </div>
@@ -1010,7 +1111,7 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 flex-1">
                   <h4 className="font-medium mb-3">Booking Details</h4>
                   <div className="mb-2">
-                    <span className="font-medium">Service:</span> {productName}
+                    <span className="font-medium">Service:</span> {serviceDetails.name}
                   </div>
                   <div className="mb-2">
                     <span className="font-medium">Provider:</span> {selectedSeller?.name}
@@ -1024,13 +1125,20 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
                   <div className="mb-2">
                     <span className="font-medium">Date:</span> {formatDate(selectedDate)}
                   </div>
+                  {selectedSeller?.estimatedTime && (
+                    <div className="mb-2">
+                      <span className="font-medium">Estimated Time:</span> {selectedSeller.estimatedTime}
+                    </div>
+                  )}
                   <div className="mb-2">
-                    <span className="font-medium">Time:</span>{" "}
+                    <span className="font-medium">
+                      Time:
+                    </span>{" "}
                     {selectedTime
                       ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })
                       : "Not specified"}
                   </div>
                   <div className="mb-2">
@@ -1101,11 +1209,10 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
               <button
                 onClick={handleBookNow}
                 disabled={!selectedLocation}
-                className={`px-6 py-2 rounded-full transition-colors ${
-                  selectedLocation
+                className={`px-6 py-2 rounded-full transition-colors ${selectedLocation
                     ? "bg-sky-600 text-white hover:bg-sky-700 shadow-sm hover:shadow-md"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
+                  }`}
               >
                 Book Now
               </button>
@@ -1117,18 +1224,16 @@ function WorkersModal({ isOpen, onClose, productName, sellers }: WorkersModalPro
               <button
                 onClick={() => setConfirmationStep(false)}
                 disabled={isSubmitting}
-                className={`px-6 py-2 border border-gray-300 text-gray-700 rounded-lg transition-colors ${
-                  isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100"
-                }`}
+                className={`px-6 py-2 border border-gray-300 text-gray-700 rounded-lg transition-colors ${isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100"
+                  }`}
               >
                 Back
               </button>
               <button
                 onClick={handleConfirmBooking}
                 disabled={isSubmitting}
-                className={`px-6 py-2 bg-sky-600 text-white rounded-full transition-colors shadow-sm ${
-                  isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-sky-700 hover:shadow-md"
-                }`}
+                className={`px-6 py-2 bg-sky-600 text-white rounded-full transition-colors shadow-sm ${isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-sky-700 hover:shadow-md"
+                  }`}
               >
                 {isSubmitting ? (
                   <span className="flex items-center">
