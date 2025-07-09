@@ -2,9 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Plus, Trash, Pencil, ChevronRight, Star, Info } from "lucide-react"
 import { useState, useEffect } from "react"
-import ServiceCategoriesModal from "../ServiceCategoriesModal"
-import WorkersModal from "../WorkersModal"
-import { serviceSubcategories, sellers, products } from "../../Home-data"
+// import ServiceCategoriesModal from "../ServiceCategoriesModal"
+// import WorkersModal from "../WorkersModal"
+// import { serviceSubcategories, sellers, products } from "../../Home-data"
+import { serviceSubcategories, products } from "../../Home-data"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -51,11 +52,15 @@ export default function Dashboard() {
     }
   }, [])
 
-  const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false)
-  const [isWorkersModalOpen, setIsWorkersModalOpen] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState("")
-  const [selectedProduct, setSelectedProduct] = useState("")
-  const [, setSelectedSubcategory] = useState("")
+  // const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false)
+  const [, setIsCategoriesModalOpen] = useState(false)
+  // const [isWorkersModalOpen, setIsWorkersModalOpen] = useState(false)
+  const [, setIsWorkersModalOpen] = useState(false)
+  // const [selectedCategory, setSelectedCategory] = useState("")
+  const [, setSelectedCategory] = useState("")
+  // const [selectedProduct, setSelectedProduct] = useState("")
+  const [, setSelectedProduct] = useState("")
+  // const [, setSelectedSubcategory] = useState("")
 
   const [notes, setNotes] = useState<{ id: number; content: string; completed: boolean }[]>([
     { id: 1, content: "Call customer for service feedback", completed: false },
@@ -113,10 +118,10 @@ export default function Dashboard() {
     }
   }
 
-  const handleSubcategorySelect = (subcategory: string) => {
-    setSelectedSubcategory(subcategory)
-    setIsCategoriesModalOpen(false)
-  }
+  // const handleSubcategorySelect = (subcategory: string) => {
+  //   setSelectedSubcategory(subcategory)
+  //   setIsCategoriesModalOpen(false)
+  // }
 
   const ongoingServices = [
     {
@@ -580,7 +585,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <ServiceCategoriesModal
+      {/* <ServiceCategoriesModal
         isOpen={isCategoriesModalOpen}
         onClose={() => setIsCategoriesModalOpen(false)}
         categoryName={selectedCategory}
@@ -593,7 +598,7 @@ export default function Dashboard() {
         onClose={() => setIsWorkersModalOpen(false)}
         productName={selectedProduct}
         sellers={sellers[selectedProduct as keyof typeof sellers] || []}
-      />
+      /> */}
     </div>
   )
 }
