@@ -61,35 +61,60 @@ interface RecentCustomer {
   rating: number
 }
 
-const keyframes = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+// Updated UserDetails interface to match MyProfileProvider.tsx
+interface UserDetails {
+  _id: string
+  firstName: string
+  lastName: string
+  middleName?: string
+  email: string
+  mobileNumber: string
+  gender?: string
+  bio?: string
+  profilePicture?: string
+  coverPhoto?: string
+  location?: {
+    name: string
+    lat: number
+    lng: number
+    distance: number
+    zipCode?: string
+  }
+  type: string
+  status: string
+  verification: string
+  createdAt: string
+}
 
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  @keyframes bounceIn {
-    0% { transform: scale(0); opacity: 0; }
-    60% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  
-  @keyframes slideInUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  
-  @keyframes shakeX {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(10px); }
-    20%, 40%, 60%, 80% { transform: translateX(-10px); }
-  }
-  
-  @keyframes countdown {
-    from { width: 100%; }
-    to { width: 0%; }
-  }
+const keyframes = `
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes shakeX {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(10px); }
+  20%, 40%, 60%, 80% { transform: translateX(-10px); }
+}
+
+@keyframes countdown {
+  from { width: 100%; }
+  to { width: 0%; }
+}
 `
 
 function ProviderDashboard() {
@@ -109,10 +134,25 @@ function ProviderDashboard() {
 
   const navigate = useNavigate() // Added navigate initialization
 
+  // States for user profile from localStorage
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null)
+
   useEffect(() => {
     const token = localStorage.getItem("token") // Assuming the token is stored in localStorage
     if (!token) {
       navigate("/proposition")
+    } else {
+      // Attempt to load user details from localStorage
+      const storedUser = localStorage.getItem("user") // Assuming user profile is stored under 'userProfile' key
+      if (storedUser) {
+        try {
+          const parsedUser: UserDetails = JSON.parse(storedUser)
+          setUserDetails(parsedUser)
+        } catch (error) {
+          console.error("Failed to parse user profile from localStorage:", error)
+          // Handle error, maybe clear invalid data or redirect
+        }
+      }
     }
   }, [])
 
@@ -546,7 +586,7 @@ function ProviderDashboard() {
             <div className="mt-4 flex flex-col gap-2">
               <Button
                 onClick={() => handleTrackService(service)}
-                className="w-full bg-black text-white hover:bg-gray-800 rounded-full"
+                className="w-full bg-sky-500 text-white hover:bg-sky-600 rounded-full"
               >
                 <MapPin className="h-4 w-4 mr-2" /> Track Customer
               </Button>
@@ -609,6 +649,17 @@ function ProviderDashboard() {
     return () => clearInterval(timer)
   }, [])
 
+  // Function to get dynamic greeting based on time
+  const getGreeting = (hour: number) => {
+    if (hour < 12) {
+      return "Good Morning"
+    } else if (hour < 18) {
+      return "Good Afternoon"
+    } else {
+      return "Good Evening"
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 text-gray-800 font-sans">
       <style>{keyframes}</style>
@@ -629,12 +680,9 @@ function ProviderDashboard() {
             <div className="absolute inset-0 bg-black/50"></div>
             <div className="relative z-10">
               <span className="text-sm font-semibold uppercase tracking-wider opacity-80">Service Provider</span>
-              <h2 className="text-2xl md:text-4xl font-bold mt-2 leading-tight">
+              <h2 className="text-2xl md:text-4xl font-medium leading-tight mb-5 mt-5">
                 Manage Your Services and Track Progress
               </h2>
-              <Button className="mt-4 md:mt-6 bg-white text-sky-700 hover:bg-gray-100 rounded-full px-6 py-3 shadow-md">
-                Learn More About Online Home Services <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
             </div>
           </div>
 
@@ -725,13 +773,18 @@ function ProviderDashboard() {
                 <Avatar className="w-[calc(100%)] h-[calc(100%)]">
                   <AvatarImage
                     className="object-cover"
-                    src="https://cdn.pixabay.com/photo/2019/03/05/05/45/man-4035612_1280.jpg"
-                    alt="Jason Ranti"
+                    src={userDetails?.profilePicture || "/placeholder.svg?height=128&width=128"}
+                    alt={userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : "User Profile"}
                   />
-                  <AvatarFallback>JR</AvatarFallback>
+                  <AvatarFallback>
+                    {userDetails ? `${userDetails.firstName.charAt(0)}${userDetails.lastName.charAt(0)}` : "US"}
+                  </AvatarFallback>
                 </Avatar>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900">Good Morning, Jason</h3>
+              <h3 className="text-xl font-semibold text-gray-900">
+                {getGreeting(currentTime.getHours())},{" "}
+                {userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : "User"}
+              </h3>
               <p className="text-sm text-gray-500 mt-1">Continue your learning to achieve your target!</p>
 
               {/* Performance Overview Section */}
@@ -820,7 +873,7 @@ function ProviderDashboard() {
                     </div>
                   </div>
                   <div className="flex flex-col items-end space-y-2 sm:space-y-0 sm:ml-auto">
-                    <p className="text-sm font-semibold text-sky-600">₱{customer.totalPayment.toLocaleString()}</p>
+                    <p className="text-sm font-semibold text-sky-600 mb-2">₱{customer.totalPayment.toLocaleString()}</p>
                     <Button
                       variant="default"
                       className="rounded-full px-4 py-2 text-sm bg-sky-500 text-white hover:bg-sky-600"

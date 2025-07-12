@@ -1,5 +1,5 @@
-import type React from "react"
-import { useEffect, useRef } from "react"
+"use client"
+import { useEffect, useRef, forwardRef, useImperativeHandle } from "react"
 
 interface ReCAPTCHAProps {
   siteKey: string
@@ -8,32 +8,39 @@ interface ReCAPTCHAProps {
   onError?: () => void
 }
 
-const ReCAPTCHA: React.FC<ReCAPTCHAProps> = ({ siteKey, onSuccess, onExpire, onError }) => {
+// Declare grecaptcha globally for TypeScript
+declare global {
+  interface Window {
+    grecaptcha: any
+  }
+}
+
+const ReCAPTCHA = forwardRef<any, ReCAPTCHAProps>(({ siteKey, onSuccess, onExpire, onError }, ref) => {
   const recaptchaRef = useRef<HTMLDivElement>(null)
   const widgetIdRef = useRef<number | null>(null)
 
-  useEffect(() => {
-    const renderRecaptcha = () => {
-      if (recaptchaRef.current && (window as any).grecaptcha && widgetIdRef.current === null) {
-        widgetIdRef.current = (window as any).grecaptcha.render(recaptchaRef.current, {
-          sitekey: "6LctwGgrAAAAAG01jljZ3VSgB7BsYJ6l25QSpLmI", 
-          callback: onSuccess,
-          "expired-callback": () => {
-            if (onExpire) onExpire()
-            if (widgetIdRef.current !== null) {
-              ;(window as any).grecaptcha.reset(widgetIdRef.current)
-            }
-          },
-          "error-callback": () => {
-            if (onError) onError()
-            if (widgetIdRef.current !== null) {
-              ;(window as any).grecaptcha.reset(widgetIdRef.current)
-            }
-          },
-        })
-      }
+  const renderRecaptcha = () => {
+    if (recaptchaRef.current && window.grecaptcha && widgetIdRef.current === null) {
+      widgetIdRef.current = window.grecaptcha.render(recaptchaRef.current, {
+        sitekey: "6LctwGgrAAAAAG01jljZ3VSgB7BsYJ6l25QSpLmI", // *** This line is crucial: uses the prop, not a hardcoded value ***
+        callback: onSuccess,
+        "expired-callback": () => {
+          if (onExpire) onExpire()
+          if (widgetIdRef.current !== null) {
+            window.grecaptcha.reset(widgetIdRef.current)
+          }
+        },
+        "error-callback": () => {
+          if (onError) onError()
+          if (widgetIdRef.current !== null) {
+            window.grecaptcha.reset(widgetIdRef.current)
+          }
+        },
+      })
     }
+  }
 
+  useEffect(() => {
     const scriptId = "recaptcha-script"
     if (!document.getElementById(scriptId)) {
       const script = document.createElement("script")
@@ -42,21 +49,21 @@ const ReCAPTCHA: React.FC<ReCAPTCHAProps> = ({ siteKey, onSuccess, onExpire, onE
       script.async = true
       script.defer = true
       script.onload = () => {
-        if ((window as any).grecaptcha) {
-          ;(window as any).grecaptcha.ready(renderRecaptcha)
+        if (window.grecaptcha) {
+          window.grecaptcha.ready(renderRecaptcha)
         }
       }
       document.body.appendChild(script)
     } else {
-      if ((window as any).grecaptcha) {
-        ;(window as any).grecaptcha.ready(renderRecaptcha)
+      if (window.grecaptcha) {
+        window.grecaptcha.ready(renderRecaptcha)
       }
     }
 
     return () => {
-      if (widgetIdRef.current !== null && (window as any).grecaptcha) {
+      if (widgetIdRef.current !== null && window.grecaptcha) {
         try {
-          ;(window as any).grecaptcha.reset(widgetIdRef.current)
+          window.grecaptcha.reset(widgetIdRef.current)
         } catch (e) {
           console.warn("Failed to reset reCAPTCHA widget on unmount:", e)
         }
@@ -65,11 +72,21 @@ const ReCAPTCHA: React.FC<ReCAPTCHAProps> = ({ siteKey, onSuccess, onExpire, onE
     }
   }, [siteKey, onSuccess, onExpire, onError])
 
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      if (widgetIdRef.current !== null && window.grecaptcha) {
+        window.grecaptcha.reset(widgetIdRef.current)
+      }
+    },
+  }))
+
   return (
     <div className="flex justify-center">
       <div ref={recaptchaRef} className="g-recaptcha"></div>
     </div>
   )
-}
+})
+
+ReCAPTCHA.displayName = "ReCAPTCHA"
 
 export default ReCAPTCHA

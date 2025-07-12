@@ -6,7 +6,7 @@ const cors = require("cors")
 const fetch = require("node-fetch")
 
 const app = express()
-const PORT = process.env.RECAPTCHA_SERVER_PORT || 3001 
+const PORT = process.env.RECAPTCHA_SERVER_PORT || 3000 
 
 app.use(cors())
 app.use(bodyParser.json())

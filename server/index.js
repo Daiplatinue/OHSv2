@@ -21,8 +21,11 @@ import {
   getUserProfile,
   updateUserImage,
   updateUserProfile,
+  checkEmailAvailability,
+  sendEmailVerificationCode, // NEW: Import new email verification function
+  verifyEmailVerificationCode, // NEW: Import new email verification function
 } from "./controller/userController.js"
-import { createService, getServices, deleteService } from "./controller/serviceController.js" // NEW: Import getServices and deleteService
+import { createService, getServices, deleteService } from "./controller/serviceController.js"
 import {
   saveMessage,
   getPrivateMessages,
@@ -36,7 +39,7 @@ import fetch from "node-fetch"
 dotenv.config()
 
 const app = express()
-const PORT = process.env.PORT || 3000 // Changed to 3000
+const PORT = process.env.PORT || 3000
 
 const upload = multer({ storage: multer.memoryStorage() })
 
@@ -101,6 +104,9 @@ const io = new Server(server, {
 const users = {} // Stores active users with their socket IDs and user info
 const typingUsers = new Map() // Map to track who is typing to whom: { receiverId: Set<senderId> }
 
+// NEW: In-memory store for email verification codes (NOT for production)
+const emailVerificationCodes = new Map() // email -> { code, expiresAt }
+
 io.use((socket, next) => {
   const { token, username, userId } = socket.handshake.auth
   console.log("Socket auth:", { username, userId })
@@ -146,8 +152,7 @@ io.on("connection", async (socket) => {
       fullUserDetails = { id: userId, username: username, profilePicture: null }
     } else {
       // Ensure the username property is also set for consistency,
-      // using the constructed username from the client if available,
-      // or constructing it from DB fields.
+      // using the username sent by client in auth, or constructing it from DB fields.
       fullUserDetails.username =
         username ||
         [fullUserDetails.firstName, fullUserDetails.middleName, fullUserDetails.lastName].filter(Boolean).join(" ")
@@ -417,6 +422,14 @@ app.post("/api/users/login", loginUser)
 app.post("/api/users/send-otp", sendOtpEmail) // New route for sending OTP
 app.post("/api/users/verify-otp", verifyOtp) // New route for verifying OTP
 
+// NEW: Routes for generic email verification
+app.post("/api/users/send-email-verification", (req, res) =>
+  sendEmailVerificationCode(req, res, emailVerificationCodes),
+)
+app.post("/api/users/verify-email-code", authenticateToken, (req, res) =>
+  verifyEmailVerificationCode(req, res, emailVerificationCodes),
+)
+
 // New routes for forgot password flow
 app.post("/api/users/forgot-password/fetch-details", fetchSecretDetails)
 app.post("/api/users/forgot-password/verify-answer", verifySecretAnswer)
@@ -436,7 +449,7 @@ app.post("/api/upload/image", upload.single("file"), async (req, res) => {
     // Upload the file buffer to Vercel Blob
     const { url } = await put(req.file.originalname, req.file.buffer, {
       access: "public",
-      addRandomSuffix: true, // FIX: Add random suffix to prevent "blob already exists"
+      addRandomSuffix: true, // FIX: Add random suffix to prevent "blob already exists" error
       contentType: req.file.mimetype,
     })
 
@@ -456,6 +469,9 @@ app.put("/api/user/update-image", authenticateToken, updateUserImage) // Apply m
 
 // New route to update user profile details
 app.put("/api/user/profile", authenticateToken, updateUserProfile) // Apply middleware and new controller function
+
+// NEW: Route for checking email availability
+app.post("/api/users/check-email-availability", authenticateToken, checkEmailAvailability)
 
 // Add the reCAPTCHA verification route
 app.post("/api/verify-recaptcha", async (req, res) => {
@@ -503,9 +519,9 @@ app.post("/api/verify-recaptcha", async (req, res) => {
 // NEW: Service creation route - pass 'io' to the controller
 app.post("/api/services/create", authenticateToken, (req, res) => createService(req, res, io))
 // NEW: Service fetch route
-app.get("/api/services", getServices) // NEW: Add route to fetch services
+app.get("/api/services", getServices)
 // NEW: Service deletion route - pass 'io' to the controller
-app.delete("/api/services/:id", authenticateToken, (req, res) => deleteService(req, res, io)) // Add this line
+app.delete("/api/services/:id", authenticateToken, (req, res) => deleteService(req, res, io))
 
 // Start the server using the HTTP server instance
 server.listen(PORT, () => {
@@ -514,5 +530,4 @@ server.listen(PORT, () => {
 })
 
 console.log(process.env.OPENROUTER_API_KEY)
-
-console.log(process.env.MONGO_URL)
+console.log(process.env.RECAPTCHA_SECRET_KEY)

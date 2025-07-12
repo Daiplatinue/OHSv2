@@ -1,19 +1,23 @@
-import type React from "react"
+"use client"
 
-import { CheckCircle2, X, ArrowRight, AlertCircle } from "lucide-react" // Added AlertCircle for error icon
-import { useEffect, useRef, useState, useCallback } from "react"
-import ReCAPTCHA from "../Styles/Recaptcha"
-import { verifyRecaptchaClient } from "../../../../server/Recaptcha/Recaptcha"
+import type React from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { X, CheckCircle2, ArrowRight, AlertCircle } from "lucide-react"
+import ReCAPTCHA from "../Styles/Recaptcha" // Your custom ReCAPTCHA component
+import { verifyRecaptchaClient } from "../../../../server/Recaptcha/Recaptcha" // Your client-side verification utility
+import axios from "axios" // NEW: Import axios
 
 interface OTPProps {
   email: string
   onClose: () => void
-  onOtpVerifiedSuccess: (user: any) => void // Modified to pass user data on full success
+  onOtpVerifiedSuccess: (data: { user: any; token?: string }) => void // Changed to pass full data, token is optional
   visible: boolean
-  onResendOtp: (email: string) => Promise<boolean> // New prop for resending OTP
+  onResendOtp: (email: string) => Promise<boolean>
+  // REMOVED: apiBaseUrl prop
 }
 
-function OTP({ email, onClose, onOtpVerifiedSuccess, visible, onResendOtp }: OTPProps) {
+const OTP: React.FC<OTPProps> = ({ email, onClose, onOtpVerifiedSuccess, visible, onResendOtp }) => {
+  // REMOVED: apiBaseUrl from destructuring
   const [otp, setOtp] = useState<string[]>(Array(6).fill(""))
   const [isVerifying, setIsVerifying] = useState(false)
   const [error, setError] = useState("")
@@ -24,7 +28,8 @@ function OTP({ email, onClose, onOtpVerifiedSuccess, visible, onResendOtp }: OTP
   const [modalVisible, setModalVisible] = useState(false)
   const [showRecaptcha, setShowRecaptcha] = useState(false)
   const [isRecaptchaVerifying, setIsRecaptchaVerifying] = useState(false)
-  const [verifiedUserData, setVerifiedUserData] = useState<any | null>(null) // To store user data after OTP verification
+  const [verifiedResponseData, setVerifiedResponseData] = useState<any | null>(null) // To store full response data (user + token) after OTP verification
+  const recaptchaRef = useRef<any>(null) // Ref for the ReCAPTCHA component
 
   useEffect(() => {
     if (visible) {
@@ -35,7 +40,8 @@ function OTP({ email, onClose, onOtpVerifiedSuccess, visible, onResendOtp }: OTP
       setError("") // Clear any previous errors
       setSuccess(false) // Reset success state
       setShowRecaptcha(false) // Hide recaptcha initially
-      setVerifiedUserData(null) // Clear verified user data
+      setVerifiedResponseData(null) // Clear verified response data
+      recaptchaRef.current?.reset() // Reset reCAPTCHA when modal opens
     } else {
       setModalVisible(false)
     }
@@ -116,11 +122,11 @@ function OTP({ email, onClose, onOtpVerifiedSuccess, visible, onResendOtp }: OTP
     setCountdown(60)
     setResendDisabled(true)
     setError("")
-    const success = await onResendOtp(email)
+    const success = await onResendOtp(email) // Use the prop function
     if (success) {
-      setError("New OTP code sent!")
+      setError("New code sent!")
     } else {
-      setError("Failed to resend OTP. Please try again.")
+      setError("Failed to resend code. Please try again.")
     }
     setTimeout(() => setError(""), 3000)
   }
@@ -137,28 +143,41 @@ function OTP({ email, onClose, onOtpVerifiedSuccess, visible, onResendOtp }: OTP
     setIsVerifying(true)
 
     try {
-      const response = await fetch("http://localhost:3000/api/users/verify-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const token = localStorage.getItem("token") // Get token for authentication
+      if (!token) {
+        setError("Authentication token missing. Please log in again.")
+        setIsVerifying(false)
+        return
+      }
+
+      // UPDATED: Hardcoded localhost:3000
+      const response = await axios.post(
+        `http://localhost:3000/api/users/verify-email-code`,
+        { email, code: otpValue },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-        body: JSON.stringify({ email, otp: otpValue }),
-      })
+      )
 
-      const data = await response.json()
+      const data = response.data // Axios automatically parses JSON
 
-      if (response.ok) {
-        setVerifiedUserData(data.user) // Store user data
+      if (response.status === 200) {
+        setVerifiedResponseData(data) // Store the entire data object (user + message)
         setShowRecaptcha(true) // Proceed to reCAPTCHA
         setError("") // Clear any previous errors
       } else {
-        setError(data.message || "Invalid or expired OTP.") // Show error if OTP is wrong
+        setError(data.message || "Invalid or expired code.") // Show error if code is wrong
         setOtp(Array(6).fill("")) // Clear OTP input on error
         inputRefs.current[0]?.focus() // Focus first input
       }
-    } catch (err) {
-      console.error("OTP verification error:", err)
-      setError("Failed to connect to the server for OTP verification. Please try again.")
+    } catch (err: any) {
+      // Use AxiosError type
+      console.error("Verification error:", err)
+      setError(err.response?.data?.message || "Failed to connect to the server for verification. Please try again.")
+      setOtp(Array(6).fill("")) // Clear OTP input on error
+      inputRefs.current[0]?.focus() // Focus first input
     } finally {
       setIsVerifying(false)
     }
@@ -169,37 +188,35 @@ function OTP({ email, onClose, onOtpVerifiedSuccess, visible, onResendOtp }: OTP
       setIsRecaptchaVerifying(true)
       setError("")
       try {
+        // Verify reCAPTCHA on the backend using your existing function
         const result = await verifyRecaptchaClient(token)
 
         if (result.success) {
           setSuccess(true)
           setTimeout(() => {
-            if (verifiedUserData) {
-              onOtpVerifiedSuccess(verifiedUserData) // Pass the stored user data
+            if (verifiedResponseData) {
+              onOtpVerifiedSuccess(verifiedResponseData) // Pass the stored full response data
             }
           }, 1500)
         } else {
           setError(result.message || "reCAPTCHA verification failed.")
-          if ((window as any).grecaptcha) {
-            ;(window as any).grecaptcha.reset()
-          }
+          recaptchaRef.current?.reset() // Reset reCAPTCHA on failure
         }
       } catch (err: any) {
         console.error("Error during reCAPTCHA client verification:", err)
         setError(`Network error during reCAPTCHA verification: ${err.message}`)
-        if ((window as any).grecaptcha) {
-          ;(window as any).grecaptcha.reset()
-        }
+        recaptchaRef.current?.reset() // Reset reCAPTCHA on network error
       } finally {
         setIsRecaptchaVerifying(false)
       }
     },
-    [onOtpVerifiedSuccess, verifiedUserData],
+    [onOtpVerifiedSuccess, verifiedResponseData],
   )
 
   const handleRecaptchaError = useCallback(() => {
     setError("reCAPTCHA encountered an error. Please try again.")
     setIsRecaptchaVerifying(false)
+    recaptchaRef.current?.reset() // Reset reCAPTCHA on error
   }, [])
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -210,7 +227,7 @@ function OTP({ email, onClose, onOtpVerifiedSuccess, visible, onResendOtp }: OTP
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] ${visible ? "visible" : "invisible"}`}
+      className={`fixed inset-0 z-100 flex items-center justify-center p-4 transition-opacity duration-300 font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] ${visible ? "visible" : "invisible"}`}
       onClick={handleBackdropClick}
     >
       <div
@@ -244,8 +261,10 @@ function OTP({ email, onClose, onOtpVerifiedSuccess, visible, onResendOtp }: OTP
             <div className="text-center">
               <h3 className="text-xl font-medium text-gray-700 text-center mb-4">Complete Security Check</h3>
               <p className="text-center text-gray-600 mb-6">Please complete the reCAPTCHA challenge.</p>
+              {/* Using your custom ReCAPTCHA component */}
               <ReCAPTCHA
-                siteKey="6LctwGgrAAAAAG01jljZ3VSgB7BsYJ6l25QSpLmI" // Your reCAPTCHA site key
+                ref={recaptchaRef} // Pass the ref here
+                siteKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "YOUR_RECAPTCHA_SITE_KEY"} // Use your actual site key
                 onSuccess={handleRecaptchaSuccess}
                 onError={handleRecaptchaError}
               />

@@ -32,7 +32,7 @@ const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
-// Send OTP via email
+// Send OTP via email (for existing users, e.g., login/password reset)
 export const sendOtpEmail = async (req, res) => {
   const { email } = req.body
 
@@ -44,8 +44,6 @@ export const sendOtpEmail = async (req, res) => {
     const user = await User.findOne({ email })
 
     if (!user) {
-      // If user doesn't exist, do NOT create a new one.
-      // Instead, inform the user that the email is not registered.
       return res.status(404).json({ message: "Email not registered. Please create an account first." })
     }
 
@@ -61,12 +59,12 @@ export const sendOtpEmail = async (req, res) => {
       to: email,
       subject: "Your HandyGo Magic Link / OTP",
       html: `
-      <h2>Your One-Time Password (OTP)</h2>
-      <p>Please use the following code to complete your login/verification:</p>
-      <h1 style="font-size: 24px; font-weight: bold; color: #007bff;">${otp}</h1>
-      <p>This code is valid for 10 minutes.</p>
-      <p>If you did not request this, please ignore this email.</p>
-    `,
+    <h2>Your One-Time Password (OTP)</h2>
+    <p>Please use the following code to complete your login/verification:</p>
+    <h1 style="font-size: 24px; font-weight: bold; color: #007bff;">${otp}</h1>
+    <p>This code is valid for 10 minutes.</p>
+    <p>If you did not request this, please ignore this email.</p>
+  `,
     }
 
     await transporter.sendMail(mailOptions)
@@ -77,7 +75,7 @@ export const sendOtpEmail = async (req, res) => {
   }
 }
 
-// Verify OTP
+// Verify OTP (for existing users, e.g., login/password reset)
 export const verifyOtp = async (req, res) => {
   const { email, otp } = req.body
 
@@ -119,6 +117,78 @@ export const verifyOtp = async (req, res) => {
   } catch (error) {
     console.error("Error verifying OTP:", error)
     res.status(500).json({ message: "Server error during OTP verification." })
+  }
+}
+
+// NEW: Send email verification code (for any email, including new ones)
+export const sendEmailVerificationCode = async (req, res, emailVerificationCodes) => {
+  const { email } = req.body
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required." })
+  }
+
+  try {
+    const code = generateOTP() // Reuse OTP generation logic
+    const expiresAt = Date.now() + 10 * 60 * 1000 // Code valid for 10 minutes
+
+    emailVerificationCodes.set(email, { code, expiresAt }) // Store code in the map
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Your Email Verification Code",
+      html: `
+        <h2>Verify Your Email Address</h2>
+        <p>Please use the following code to verify your email address:</p>
+        <h1 style="font-size: 24px; font-weight: bold; color: #007bff;">${code}</h1>
+        <p>This code is valid for 10 minutes.</p>
+        <p>If you did not request this, please ignore this email.</p>
+      `,
+    }
+
+    await transporter.sendMail(mailOptions)
+    res.status(200).json({ message: "Verification code sent to your email." })
+  } catch (error) {
+    console.error("Error sending email verification code:", error)
+    res.status(500).json({ message: "Failed to send verification code. Please try again." })
+  }
+}
+
+// NEW: Verify email verification code
+export const verifyEmailVerificationCode = async (req, res, emailVerificationCodes) => {
+  const { email, code } = req.body
+  const userId = req.userId // Get current user ID from authenticated token
+
+  if (!email || !code || !userId) {
+    return res.status(400).json({ message: "Email, code, and user ID are required." })
+  }
+
+  try {
+    const stored = emailVerificationCodes.get(email)
+
+    if (!stored || stored.code !== code || stored.expiresAt < Date.now()) {
+      return res.status(400).json({ message: "Invalid or expired verification code." })
+    }
+
+    // Code is valid, remove it from temporary storage
+    emailVerificationCodes.delete(email)
+
+    // Update the user's email in the database
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { email: email },
+      { new: true, runValidators: true },
+    ).select("-password")
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found for email update." })
+    }
+
+    res.status(200).json({ message: "Email verified and updated successfully!", user: updatedUser })
+  } catch (error) {
+    console.error("Error verifying email verification code:", error)
+    res.status(500).json({ message: "Server error during email verification." })
   }
 }
 
@@ -257,7 +327,7 @@ export const registerCOO = async (req, res) => {
     }
 
     // Set default values for optional fields.
-    // For email, explicitly set to null if not provided, to avoid unique key error.
+    // For email, explicitly set to null if not provided, instead of "not provided" string.
     const COOData = {
       email: email || null, // FIX: Set email to null if not provided, instead of "not provided" string
       password: password || null,
@@ -535,18 +605,31 @@ export const updateUserProfile = async (req, res) => {
       return res.status(400).json({ message: "User ID is required." })
     }
 
+    const currentUser = await User.findById(userId)
+    if (!currentUser) {
+      return res.status(404).json({ message: "Current user not found." })
+    }
+
+    // Check if email is being changed and if the new email is already in use
+    if (updates.email && updates.email !== currentUser.email) {
+      const existingUserWithNewEmail = await User.findOne({ email: updates.email })
+
+      // If an existing user is found AND that user is NOT the current user
+      if (existingUserWithNewEmail && existingUserWithNewEmail._id.toString() !== userId) {
+        return res.status(409).json({ message: "Email already in use. Please choose another one." })
+      }
+    }
+
     // Construct update object, handling nested fields like location
     const updateFields = {}
     for (const key in updates) {
       if (updates.hasOwnProperty(key)) {
         if (key === "location" && typeof updates[key] === "object" && updates[key] !== null) {
-          // Handle nested location object
-          for (const locKey in updates[key]) {
-            if (updates[key].hasOwnProperty(locKey)) {
-              updateFields[`location.${locKey}`] = updates[key][locKey]
-            }
-          }
+          // If location is provided as an object, replace the entire location subdocument
+          updateFields[key] = updates[key]
         } else {
+          // For other fields, or if location is not an object (e.g., null or undefined),
+          // directly assign the value.
           updateFields[key] = updates[key]
         }
       }
@@ -559,16 +642,40 @@ export const updateUserProfile = async (req, res) => {
     ).select("-password") // Exclude password from the returned user object
 
     if (!updatedUser) {
-      return res.status(404).json({ message: "User not found." })
+      return res.status(404).json({ message: "User not found after update attempt." })
     }
 
     res.status(200).json({ message: "User profile updated successfully!", user: updatedUser })
   } catch (error) {
     console.error("Error updating user profile:", error)
-    if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map((err) => err.message)
-      return res.status(400).json({ message: messages.join(", ") })
+    // Handle MongoDB duplicate key error specifically for email if it somehow bypasses the check above
+    if (error.code === 11000 && error.message.includes("email")) {
+      return res.status(409).json({ message: "A user with this email already exists." })
     }
     res.status(500).json({ message: "Failed to update user profile.", error: error.message })
+  }
+}
+
+// NEW: Check Email Availability
+export const checkEmailAvailability = async (req, res) => {
+  const { email } = req.body
+  const userId = req.userId // Get current user ID from authenticated token
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required." })
+  }
+
+  try {
+    // Find a user with the given email, but exclude the current user
+    const existingUser = await User.findOne({ email, _id: { $ne: userId } })
+
+    if (existingUser) {
+      return res.status(200).json({ available: false, message: "This email is already in use by another account." })
+    } else {
+      return res.status(200).json({ available: true, message: "Email is available." })
+    }
+  } catch (error) {
+    console.error("Error checking email availability:", error)
+    res.status(500).json({ message: "Server error checking email availability." })
   }
 }

@@ -37,13 +37,14 @@ interface UserDetails {
     lat: number
     lng: number
     distance: number
-    zipCode: string
+    zipCode?: string
   }
   type: string
   status: string
   verification: string
   createdAt: string
 }
+
 
 function MyProfile() {
   const [activeTab, setActiveTab] = useState("personal")

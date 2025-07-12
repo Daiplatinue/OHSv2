@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { X, AlertTriangle, XCircle, Clock, CheckCircle2, AlertCircle } from "lucide-react"
@@ -280,21 +282,21 @@ function LoginAlt() {
   }
 
   // New function to handle final login success after OTP and reCAPTCHA
-  const handleFinalLoginSuccess = useCallback((user: any) => {
+  const handleFinalLoginSuccess = useCallback((responsePayload: { user: any; token: string }) => {
     setSuccessMessage("OTP verified successfully! Login successful.")
     setShowSuccessModal(true)
-    localStorage.setItem("user", JSON.stringify(user))
+    localStorage.setItem("user", JSON.stringify(responsePayload.user))
     // Assuming OTP verification also returns a token, save it here
-    console.log("User data from OTP verification:", user) // Debugging log
-    if (user.token) {
-      localStorage.setItem("token", user.token)
-      console.log("Token saved to localStorage from OTP verification:", user.token) // Debugging log
+    console.log("User data from OTP verification:", responsePayload.user) // Debugging log
+    if (responsePayload.token) {
+      localStorage.setItem("token", responsePayload.token)
+      console.log("Token saved to localStorage from OTP verification:", responsePayload.token) // Debugging log
     } else {
       console.warn("No token received from OTP verification response.") // Debugging log
     }
     setShowOtpModal(false) // Close OTP modal
 
-    const userAccountType = user.accountType
+    const userAccountType = responsePayload.user.accountType
     let redirectPath = "/"
     switch (userAccountType) {
       case "customer":
@@ -428,7 +430,8 @@ function LoginAlt() {
     }
   }, [accountType])
 
-  const userData = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}") : {}
+  const userItem = localStorage.getItem("user")
+  const userData = userItem && userItem !== "undefined" ? JSON.parse(userItem) : {}
   const userStatus = userData.status || "pending"
 
   const getStatusContent = () => {
