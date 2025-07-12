@@ -436,7 +436,7 @@ app.post("/api/upload/image", upload.single("file"), async (req, res) => {
     // Upload the file buffer to Vercel Blob
     const { url } = await put(req.file.originalname, req.file.buffer, {
       access: "public",
-      addRandomSuffix: true, // FIX: Add random suffix to prevent "blob already exists" error
+      addRandomSuffix: true, // FIX: Add random suffix to prevent "blob already exists"
       contentType: req.file.mimetype,
     })
 
@@ -514,3 +514,5 @@ server.listen(PORT, () => {
 })
 
 console.log(process.env.OPENROUTER_API_KEY)
+
+console.log(process.env.MONGO_URL)
