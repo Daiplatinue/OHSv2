@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
     },
     accountType: {
       type: String,
-      enum: ["customer", "coo"],
+      enum: ["customer", "coo", "provider"],
     },
     status: {
       type: String,

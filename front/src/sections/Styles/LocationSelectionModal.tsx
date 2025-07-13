@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react"
-import { X, Search, Edit, Trash2, Check, MapPin } from "lucide-react"
+import { X, Search, Edit, Trash2, Check, MapPin, Loader2 } from "lucide-react" // Add Loader2
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import "leaflet-routing-machine"
+import OutOfBoundaryModal from "../Styles/OutOfBoundary"
+import axios from "axios"
 
 interface Location {
   name: string
@@ -16,6 +18,7 @@ interface Location {
   midTrafficTime?: number
   heavyTrafficTime?: number
   weatherIssuesTime?: number
+  zipCode?: string // Add zipCode to match UserDetails.location
 }
 
 interface LocationSelectionModalProps {
@@ -30,6 +33,16 @@ interface LocationSelectionModalProps {
   savedLocations?: Location[]
   previousLocation?: Location | null
 }
+
+// Define custom icon for user's current location
+const userLocationIcon = L.icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+})
 
 const LocationSelectionModal = ({
   isOpen,
@@ -50,12 +63,18 @@ const LocationSelectionModal = ({
   const [isEditingPosition, setIsEditingPosition] = useState<boolean>(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [isRouteLoading, setIsRouteLoading] = useState<boolean>(false)
+  const [isWarningModalOpen, setIsWarningModalOpen] = useState(false)
+
+  // New states for fetching user's current location
+  const [userLocation, setUserLocation] = useState<Location | null>(null)
+  const [isFetchingUserLocation, setIsFetchingUserLocation] = useState(false)
+  const [userLocationError, setUserLocationError] = useState<string | null>(null)
 
   // Add a new state to track the active tab
   const [activeTab, setActiveTab] = useState<"locations" | "travelTimes">("locations")
 
   const mapRef = useRef<L.Map | null>(null)
-  const mapContainerRef = useRef<HTMLDivElement>(null)
+  const mapContainerRef = useRef<HTMLDivElement | null>(null)
   const markersRef = useRef<L.Marker[]>([])
   const companyMarkerRef = useRef<L.Marker | null>(null)
   const selectedMarkerRef = useRef<L.Marker | null>(null)
@@ -65,6 +84,28 @@ const LocationSelectionModal = ({
   const routeAnimationRef = useRef<number | null>(null)
   const routePulseRef = useRef<any>(null)
 
+  // Define Cebu City boundary parameters
+  const cebuCityCenterLat = 10.3178 // Approx. Ayala Center Cebu
+  const cebuCityCenterLng = 123.9054
+  const cebuCityRadiusMeters = 7000 // Approx. 7km radius
+
+  // Utility function to check if a point is within a circle
+  const isPointInCircle = (
+    pointLat: number,
+    pointLng: number,
+    centerLat: number,
+    centerLng: number,
+    radiusMeters: number,
+  ): boolean => {
+    const distance = calculateDistance(pointLat, pointLng, centerLat, centerLng) * 1000 // Convert km to meters
+    return distance <= radiusMeters
+  }
+
+  const handleContactCustomerService = () => {
+    console.log("Contacting customer service...")
+    setIsWarningModalOpen(false)
+  }
+
   // Add CSS for route animations
   useEffect(() => {
     // Add CSS for route animations if not already present
@@ -72,26 +113,26 @@ const LocationSelectionModal = ({
       const style = document.createElement("style")
       style.id = "route-animations-css"
       style.innerHTML = `
-      @keyframes routePulse {
-        0% { stroke-opacity: 0.6; stroke-width: 5px; }
-        50% { stroke-opacity: 0.8; stroke-width: 7px; }
-        100% { stroke-opacity: 0.6; stroke-width: 5px; }
-      }
-      
-      @keyframes routeFlow {
-        0% { stroke-dashoffset: 1000; }
-        100% { stroke-dashoffset: 0; }
-      }
-      
-      .route-pulse {
-        animation: routePulse 2s ease-in-out infinite;
-      }
-      
-      .route-flow {
-        stroke-dasharray: 15, 10;
-        animation: routeFlow 30s linear infinite;
-      }
-    `
+  @keyframes routePulse {
+    0% { stroke-opacity: 0.6; stroke-width: 5px; }
+    50% { stroke-opacity: 0.8; stroke-width: 7px; }
+    100% { stroke-opacity: 0.6; stroke-width: 5px; }
+  }
+  
+  @keyframes routeFlow {
+    0% { stroke-dashoffset: 1000; }
+    100% { stroke-dashoffset: 0; }
+  }
+  
+  .route-pulse {
+    animation: routePulse 2s ease-in-out infinite;
+  }
+  
+  .route-flow {
+    stroke-dasharray: 15, 10;
+    animation: routeFlow 30s linear infinite;
+  }
+`
       document.head.appendChild(style)
     }
   }, [])
@@ -163,6 +204,60 @@ const LocationSelectionModal = ({
     setSavedLocationsList(locationsWithIds)
   }, [savedLocations, companyLocation.lat, companyLocation.lng])
 
+  // Effect to fetch user's current location when modal opens
+  useEffect(() => {
+    if (!isOpen) {
+      // Reset states when modal closes
+      setUserLocation(null)
+      setIsFetchingUserLocation(false)
+      setUserLocationError(null)
+      return
+    }
+
+    const fetchUserCurrentLocation = async () => {
+      setIsFetchingUserLocation(true)
+      setUserLocationError(null)
+      try {
+        const token = localStorage.getItem("token")
+        if (!token) {
+          setUserLocationError("Authentication token missing. Please log in.")
+          setIsFetchingUserLocation(false)
+          return
+        }
+
+        const API_BASE_URL = "http://localhost:3000" // Consistent with MyProfileProvider.tsx
+        const response = await axios.get(`${API_BASE_URL}/api/user/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.data.user && response.data.user.location) {
+          // Ensure distance is calculated if not present or needs re-calculation
+          const fetchedLocation = {
+            ...response.data.user.location,
+            distance: calculateDistance(
+              response.data.user.location.lat,
+              response.data.user.location.lng,
+              companyLocation.lat,
+              companyLocation.lng,
+            ),
+          }
+          setUserLocation(fetchedLocation)
+        } else {
+          setUserLocationError("User location not found in profile data.")
+        }
+      } catch (err: any) {
+        console.error("Error fetching user location:", err)
+        setUserLocationError("Failed to fetch user location. Please try again.")
+      } finally {
+        setIsFetchingUserLocation(false)
+      }
+    }
+
+    fetchUserCurrentLocation()
+  }, [isOpen, companyLocation.lat, companyLocation.lng]) // Re-fetch if company location changes
+
   useEffect(() => {
     if (isOpen && mapContainerRef.current && !mapRef.current) {
       initializeMap()
@@ -222,6 +317,48 @@ const LocationSelectionModal = ({
       addMarkersForLocations(savedLocationsList)
     }
   }, [savedLocationsList, isOpen])
+
+  // Modified useEffect to handle previousLocation and userLocation
+  useEffect(() => {
+    if (isOpen && mapRef.current) {
+      const locationToPin = userLocation || previousLocation // Prioritize userLocation
+
+      if (locationToPin) {
+        // Remove previous marker if it exists
+        if (selectedMarkerRef.current) {
+          selectedMarkerRef.current.remove()
+        }
+
+        const markerIcon =
+          locationToPin === userLocation
+            ? userLocationIcon
+            : L.icon({
+                iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+                shadowSize: [41, 41],
+              })
+
+        const marker = L.marker([locationToPin.lat, locationToPin.lng], { icon: markerIcon })
+          .addTo(mapRef.current)
+          .bindPopup(locationToPin.name)
+          .openPopup()
+
+        selectedMarkerRef.current = marker
+
+        // Center the map on the location
+        mapRef.current.setView([locationToPin.lat, locationToPin.lng], 14)
+
+        // Draw the route to the company
+        drawRouteToCompany(locationToPin)
+
+        // Also set this as the selectedMapLocation so the UI reflects it
+        setSelectedMapLocation(locationToPin)
+      }
+    }
+  }, [isOpen, previousLocation, userLocation, mapRef.current]) // Add userLocation to dependencies
 
   useEffect(() => {
     if (isEditingPosition && mapRef.current) {
@@ -292,40 +429,6 @@ const LocationSelectionModal = ({
     }
   }, [isEditingPosition, selectedMapLocation])
 
-  useEffect(() => {
-    if (isOpen && mapRef.current && previousLocation) {
-      // Set the previously selected location as the current selection
-      setSelectedMapLocation(previousLocation)
-
-      // Add a marker for the previously selected location
-      if (selectedMarkerRef.current) {
-        selectedMarkerRef.current.remove()
-      }
-
-      const locationIcon = L.icon({
-        iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
-        shadowSize: [41, 41],
-      })
-
-      const marker = L.marker([previousLocation.lat, previousLocation.lng], { icon: locationIcon })
-        .addTo(mapRef.current)
-        .bindPopup(previousLocation.name)
-        .openPopup()
-
-      selectedMarkerRef.current = marker
-
-      // Center the map on the previous location
-      mapRef.current.setView([previousLocation.lat, previousLocation.lng], 14)
-
-      // Draw the route to the company
-      drawRouteToCompany(previousLocation)
-    }
-  }, [isOpen, previousLocation])
-
   const initializeMap = () => {
     if (!mapContainerRef.current) return
 
@@ -348,6 +451,15 @@ const LocationSelectionModal = ({
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       crossOrigin: "anonymous",
       maxZoom: 19,
+    }).addTo(map)
+
+    // Add Cebu City boundary circle
+    L.circle([cebuCityCenterLat, cebuCityCenterLng], {
+      radius: cebuCityRadiusMeters, // Radius in meters
+      color: "rgba(128, 128, 128, 0.7)", // Gray boundary line
+      fillColor: "rgba(128, 128, 128, 0.1)", // Light gray transparent fill
+      fillOpacity: 0.5,
+      weight: 3,
     }).addTo(map)
 
     setTimeout(() => {
@@ -499,20 +611,32 @@ const LocationSelectionModal = ({
 
   const saveLocation = () => {
     if (selectedMapLocation) {
-      const locationExists = savedLocationsList.some(
-        (loc) => loc.lat === selectedMapLocation.lat && loc.lng === selectedMapLocation.lng,
+      const isWithinBoundary = isPointInCircle(
+        selectedMapLocation.lat,
+        selectedMapLocation.lng,
+        cebuCityCenterLat,
+        cebuCityCenterLng,
+        cebuCityRadiusMeters,
       )
 
-      if (!locationExists) {
-        const newLocation = {
-          ...selectedMapLocation,
-          id: selectedMapLocation.id || `loc-${Math.random().toString(36).substr(2, 9)}`,
+      if (isWithinBoundary) {
+        const locationExists = savedLocationsList.some(
+          (loc) => loc.lat === selectedMapLocation.lat && loc.lng === selectedMapLocation.lng,
+        )
+
+        if (!locationExists) {
+          const newLocation = {
+            ...selectedMapLocation,
+            id: selectedMapLocation.id || `loc-${Math.random().toString(36).substr(2, 9)}`,
+          }
+
+          const updatedLocations = [...savedLocationsList, newLocation]
+          setSavedLocationsList(updatedLocations)
+
+          onSelectLocation(newLocation)
         }
-
-        const updatedLocations = [...savedLocationsList, newLocation]
-        setSavedLocationsList(updatedLocations)
-
-        onSelectLocation(newLocation)
+      } else {
+        setIsWarningModalOpen(true)
       }
     }
   }
@@ -1207,6 +1331,26 @@ const LocationSelectionModal = ({
               </div>
             )}
 
+            {/* User location fetching indicator */}
+            {isFetchingUserLocation && (
+              <div className="absolute top-4 left-4 bg-white/90 p-2 rounded-md shadow-md">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                  <span className="text-sm font-medium text-gray-700">Fetching your location...</span>
+                </div>
+              </div>
+            )}
+
+            {/* User location error message */}
+            {userLocationError && (
+              <div className="absolute top-4 left-4 bg-red-100 p-2 rounded-md shadow-md">
+                <div className="flex items-center gap-2">
+                  <X className="h-4 w-4 text-red-600" />
+                  <span className="text-sm font-medium text-red-800">{userLocationError}</span>
+                </div>
+              </div>
+            )}
+
             {/* Edit mode indicator */}
             {isEditingPosition && (
               <div className="absolute bottom-4 left-4 bg-yellow-100 p-2 rounded-md shadow-md">
@@ -1253,6 +1397,12 @@ const LocationSelectionModal = ({
           )}
         </div>
       </div>
+      {/* Out of Boundary Warning Modal */}
+      <OutOfBoundaryModal
+        isOpen={isWarningModalOpen}
+        onClose={() => setIsWarningModalOpen(false)}
+        onContactCustomerService={handleContactCustomerService}
+      />
     </div>
   )
 }

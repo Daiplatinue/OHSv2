@@ -35,6 +35,7 @@ import {
 } from "./controller/chatController.js"
 import { User } from "./models/user.js"
 import fetch from "node-fetch"
+import { createBookings } from "./controller/bookingController.js" // Import the new controller
 
 dotenv.config()
 
@@ -65,6 +66,7 @@ const authenticateToken = (req, res, next) => {
   const token = authHeader && authHeader.split(" ")[1] // Bearer TOKEN
 
   if (token == null) {
+    console.warn("Authentication: No token provided.")
     return res.status(401).json({ message: "Authentication token required." })
   }
 
@@ -77,7 +79,15 @@ const authenticateToken = (req, res, next) => {
   jwt.verify(token, jwtSecret, (err, user) => {
     if (err) {
       console.error("JWT verification error:", err)
-      return res.status(403).json({ message: "Invalid or expired token." })
+      if (err.name === "TokenExpiredError") {
+        console.error("Token expired at:", err.expiredAt)
+        return res.status(401).json({ message: "Token expired. Please log in again." })
+      } else if (err.name === "JsonWebTokenError") {
+        console.error("Invalid token:", err.message)
+        return res.status(403).json({ message: "Invalid token. Please log in again." })
+      } else {
+        return res.status(403).json({ message: "Authentication failed. Invalid token." })
+      }
     }
     req.userId = user.userId // Attach user ID to the request
     req.userEmail = user.email // Attach user email to the request
@@ -522,6 +532,9 @@ app.post("/api/services/create", authenticateToken, (req, res) => createService(
 app.get("/api/services", getServices)
 // NEW: Service deletion route - pass 'io' to the controller
 app.delete("/api/services/:id", authenticateToken, (req, res) => deleteService(req, res, io))
+
+// Add the new booking route
+app.post("/api/bookings", authenticateToken, createBookings)
 
 // Start the server using the HTTP server instance
 server.listen(PORT, () => {

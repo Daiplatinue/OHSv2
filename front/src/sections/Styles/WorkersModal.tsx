@@ -13,9 +13,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-// Remove this line:
-// import Image from "next/image" // Import Image component for profile pictures
 import { Clock } from "lucide-react"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion" // Import Accordion components
 
 // Add animation keyframes
 const animationStyles = `
@@ -125,6 +124,7 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false)
+  const [specialRequests, setSpecialRequests] = useState<string>("") // New state for special requests
 
   const mapRef = useRef<L.Map | null>(null)
   const markerRef = useRef<L.Marker | null>(null)
@@ -209,7 +209,7 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
     const cooFullName = `${serviceDetails.cooId.firstName} ${
       // Use serviceDetails.cooId
       serviceDetails.cooId.middleName ? serviceDetails.cooId.middleName + " " : ""
-      }${serviceDetails.cooId.lastName}`.trim()
+    }${serviceDetails.cooId.lastName}`.trim()
 
     allProviders.push({
       id: serviceDetails.cooId._id, // This should now be a string
@@ -299,7 +299,9 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
   // Modify the handleDateSelect function to open the location modal after selecting a date
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
-      const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+      const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+        date.getDate(),
+      ).padStart(2, "0")}`
       setSelectedDate(formattedDate)
     } else {
       setSelectedDate("")
@@ -315,41 +317,37 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
     try {
       // Get the user data from localStorage
       const userString = localStorage.getItem("user")
+      const token = localStorage.getItem("token") // Get token separately
+
       if (!userString) {
         console.error("No user data found in localStorage")
+        return { userId: null, token: null, firstname: "User" }
+      }
+      if (!token) {
+        console.error("No token found in localStorage")
         return { userId: null, token: null, firstname: "User" }
       }
 
       // Parse user data
       const userData = JSON.parse(userString)
       console.log("User data from localStorage:", userData)
+      console.log("Token from localStorage:", token)
 
       let userId = null
-      let token = null
       let firstname = "User"
 
-      // Format 1: { user: { _id: "...", firstname: "..." }, token: "..." }
-      if (userData.user && userData.user._id) {
-        userId = userData.user._id
-        firstname = userData.user.firstname || firstname
-        token = userData.token
-      }
-      // Format 2: { _id: "...", firstname: "...", token: "..." }
-      else if (userData._id) {
+      // Extract userId and firstname from the parsed user data
+      if (userData._id) {
         userId = userData._id
         firstname = userData.firstname || firstname
-        token = userData.token
-      }
-      // Format 3: { id: "...", firstname: "...", token: "..." }
-      else if (userData.id) {
+      } else if (userData.id) {
         userId = userData.id
         firstname = userData.firstname || firstname
-        token = userData.token
       }
 
       return { userId, token, firstname }
     } catch (error) {
-      console.error("Error parsing user data:", error)
+      console.error("Error parsing user data or retrieving token:", error)
       return { userId: null, token: null, firstname: "User" }
     }
   }
@@ -374,6 +372,9 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
         }
       }
 
+      // Log the token being sent
+      console.log("Token being sent:", token)
+
       // Calculate distance charge
       const distanceCharge = selectedLocation.distance * selectedSeller.ratePerKm
 
@@ -381,7 +382,7 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
       const bookingData = {
         userId,
         firstname,
-        productName: serviceDetails.name, // Use serviceDetails.name
+        productName: serviceDetails.name, // Changed from serviceName to productName
         providerName: selectedSeller.name,
         providerId: selectedSeller.id,
         workerCount: selectedSeller.workerCount || 1,
@@ -399,11 +400,13 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
           distanceCharge: distanceCharge,
           totalRate: totalRate,
         },
+        specialRequests: specialRequests, // Include special requests
       }
 
       console.log("Sending booking data:", bookingData)
 
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/bookings`
+      // Directly use localhost URL
+      const apiUrl = `http://localhost:3000/api/bookings`
       console.log("API URL:", apiUrl)
 
       // Send booking data to the server with authentication token
@@ -419,6 +422,7 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: "Unknown error" }))
         console.error("Error creating booking:", errorData)
+        console.error("Response status:", response.status)
 
         if (response.status === 401) {
           return {
@@ -449,7 +453,7 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
 
         console.log("Creating booking notification:", notificationData)
 
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/notifications/booking`, {
+        await fetch(`http://localhost:3000/notifications/booking`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -513,6 +517,7 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
     setSelectedLocation(null)
     setConfirmationStep(false)
     setBookingSuccess(false)
+    setSpecialRequests("") // Reset special requests
   }
 
   const formatDate = (dateString: string) => {
@@ -581,17 +586,10 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
             </>
           )}
 
+          {/* Update the header for `confirmationStep`: */}
           {confirmationStep && (
             <>
-              <div>
-                <button
-                  onClick={() => setConfirmationStep(false)}
-                  className="flex items-center text-sky-600 hover:text-sky-700 transition-colors"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-1" /> Back to location selection
-                </button>
-                <h2 className="text-xl font-medium text-gray-700 mt-2">Confirm Booking</h2>
-              </div>
+              <h2 className="text-xl font-medium text-gray-700">Finalize Booking!</h2>
               <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X className="h-6 w-6" />
               </button>
@@ -616,11 +614,12 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
                 <p className="text-gray-400 text-center py-8">No providers available for this service</p>
               ) : (
                 <div className="space-y-6">
-                  {allProviders.map((seller) => {
+                  {allProviders.map((seller, index) => {
+                    // Added index for fallback key
                     console.log("WorkersModal: Mapping seller with ID:", seller.id) // Log seller ID for debugging key warning
                     return (
                       <div
-                        key={seller.id} // This key should now be a string
+                        key={seller.id ? String(seller.id) : `seller-${index}`} // Ensure key is a non-empty string
                         className="bg-white/90 backdrop-blur-sm rounded-xl p-5 hover:bg-gray-50/90 transition-all cursor-pointer border border-gray-200/70 shadow-sm hover:shadow-md"
                         onClick={() => handleSellerSelect(seller)}
                       >
@@ -676,7 +675,7 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
                         )}
 
                         <div className="flex justify-between items-center">
-                          <div className="text-green-600 font-medium">
+                          <div className="text-sky-600 font-medium">
                             Starting at ₱{seller.startingRate.toLocaleString()} • ₱{seller.ratePerKm}/km
                           </div>
                           <div className="flex gap-2">
@@ -811,9 +810,9 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
                       {selectedDate && selectedTime && " at "}
                       {selectedTime
                         ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })
+                            hour: "numeric",
+                            minute: "2-digit",
+                          })
                         : "No time selected"}
                     </p>
                   </div>
@@ -891,7 +890,8 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
                       </div>
                       <div className="flex justify-between mb-2">
                         <span>
-                          Distance charge ({selectedLocation.distance.toFixed(1)} km × ₱{selectedSeller.ratePerKm}):
+                          Distance charge ({selectedLocation.distance.toFixed(1)} km × ₱{selectedSeller.ratePerKm}
+                          ):
                         </span>
                         <span>₱{(selectedLocation.distance * selectedSeller.ratePerKm).toFixed(2)}</span>
                       </div>
@@ -933,6 +933,7 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
             </div>
           )}
 
+          {/* Modify the `confirmationStep` content: */}
           {confirmationStep && (
             <div className="p-6">
               {isSubmitting ? (
@@ -943,132 +944,111 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
                 </div>
               ) : (
                 <>
-                  <div className="flex flex-col md:flex-row gap-6">
-                    {/* Left side - Booking information */}
-                    <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6 flex-1">
-                      <h3 className="text-lg font-medium mb-4">Booking Details</h3>
-
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                          <span className="text-gray-600">Service:</span>
-                          <span className="font-medium">{serviceDetails.name}</span>
-                        </div>
-
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                          <span className="text-gray-600">Provider:</span>
-                          <span className="font-medium">{selectedSeller?.name}</span>
-                        </div>
-
-                        {selectedSeller?.workerCount && (
-                          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                            <span className="text-gray-600">Workers:</span>
-                            <span className="font-medium">
-                              {selectedSeller.workerCount} worker{selectedSeller.workerCount > 1 ? "s" : ""}
-                            </span>
-                          </div>
-                        )}
-
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                          <span className="text-gray-600">Date:</span>
-                          <span className="font-medium">{formatDate(selectedDate)}</span>
-                        </div>
-
-                        {selectedSeller?.estimatedTime && (
-                          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                            <span className="text-gray-600">Estimated Time:</span> {selectedSeller.estimatedTime}
-                          </div>
-                        )}
-
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                          <span className="text-gray-600">Time:</span>
-                          <span className="font-medium">
-                            {selectedTime
-                              ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
-                                hour: "numeric",
-                                minute: "2-digit",
-                              })
-                              : "Not specified"}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                          <span className="text-gray-600">Service Location:</span>
-                          <span className="font-medium">{selectedLocation?.name}</span>
-                        </div>
-
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                          <span className="text-gray-600">Distance:</span>
-                          <span className="font-medium">{selectedLocation?.distance.toFixed(1)} km</span>
-                        </div>
-
-                        <div className="space-y-1 pb-2 border-b border-gray-200">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-600">Estimated Travel Times:</span>
-                          </div>
-                          <div className="pl-4">
-                            <div className="flex justify-between text-sm">
-                              <span>Light Traffic:</span>
-                              <span className="text-green-600">{selectedLocation?.lightTrafficTime} min</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span>Medium Traffic:</span>
-                              <span className="text-yellow-600">{selectedLocation?.midTrafficTime} min</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span>Heavy Traffic:</span>
-                              <span className="text-orange-600">{selectedLocation?.heavyTrafficTime} min</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span>Weather Issues:</span>
-                              <span className="text-red-600">{selectedLocation?.weatherIssuesTime} min</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right side - Price calculations */}
-                    <div className="bg-white p-6 rounded-lg border border-gray-200 mb-6 flex-1 shadow-sm">
-                      <h3 className="text-lg font-medium mb-4">Price Breakdown</h3>
-
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                          <span className="text-gray-600">Base rate:</span>
-                          <span className="font-medium">₱{selectedSeller?.startingRate.toLocaleString()}</span>
-                        </div>
-
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                          <span className="text-gray-600">Distance:</span>
-                          <span className="font-medium">{selectedLocation?.distance.toFixed(1)} km</span>
-                        </div>
-
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                          <span className="text-gray-600">Rate per km:</span>
-                          <span className="font-medium">₱{selectedSeller?.ratePerKm.toFixed(2)}</span>
-                        </div>
-
-                        <div className="flex justify-between items-center pb-2 border-b border-gray-200">
-                          <span className="text-gray-600">Distance charge:</span>
-                          <span className="font-medium">
-                            ₱
-                            {selectedLocation
-                              ? (selectedLocation.distance * (selectedSeller?.ratePerKm || 0)).toFixed(2)
-                              : 0}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between items-center pt-2 text-lg">
-                          <span className="font-medium">Total:</span>
-                          <span className="font-bold text-sky-700">
+                  {/* Services Section - Now expandable */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-medium mb-3">Services:</h3>
+                    <Accordion type="single" collapsible defaultValue="item-1">
+                      <AccordionItem value="item-1" className="border rounded-lg bg-sky-50 border-sky-200">
+                        <AccordionTrigger className="flex justify-between items-center p-4 font-medium text-base text-black hover:no-underline">
+                          <div className="flex-1 text-left">Booking Summary</div>
+                          <span className="font-medium text-lg">
                             ₱
                             {totalRate.toLocaleString(undefined, {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}
                           </span>
+                        </AccordionTrigger>
+                        <AccordionContent className="p-4 pt-0 text-gray-600">
+                          <div className="flex justify-between items-center py-2 border-t border-sky-200">
+                            <span>Distance:</span>
+                            <span className="font-medium">{selectedLocation?.distance.toFixed(1)} km</span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-t border-sky-200">
+                            <span>Base rate:</span>
+                            <span className="font-medium">₱{selectedSeller?.startingRate.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-t border-sky-200">
+                            <span>Rate per km:</span>
+                            <span className="font-medium">₱{selectedSeller?.ratePerKm.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-t border-sky-200">
+                            <span>Distance charge:</span>
+                            <span className="font-medium">
+                              ₱
+                              {selectedLocation
+                                ? (selectedLocation.distance * (selectedSeller?.ratePerKm || 0)).toFixed(2)
+                                : 0}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center py-2 border-t border-sky-200 font-medium text-lg">
+                            <span>Total:</span>
+                            <span>
+                              ₱
+                              {totalRate.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </div>
+
+                  {/* More Details Section (formerly Payment Method) */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-medium mb-3">More Details</h3>
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Service:</span>
+                          <span className="font-medium">{serviceDetails.name}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Provider:</span>
+                          <span className="font-medium">{selectedSeller?.name}</span>
+                        </div>
+                        {selectedSeller?.workerCount && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">Workers:</span>
+                            <span className="font-medium">
+                              {selectedSeller.workerCount} worker{selectedSeller.workerCount > 1 ? "s" : ""}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Date:</span>
+                          <span className="font-medium">{formatDate(selectedDate)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Time:</span>
+                          <span className="font-medium">
+                            {selectedTime
+                              ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                })
+                              : "Not specified"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Service Location:</span>
+                          <span className="font-medium">{selectedLocation?.name}</span>
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Special Requests Section */}
+                  <div className="mb-6">
+                    <h3 className="text-lg font-medium mb-3">Special Requests</h3>
+                    <textarea
+                      className="w-full p-3 border border-gray-300 rounded-lg min-h-[80px] focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"
+                      placeholder="Payment request send to the owner. also the stuff assigned."
+                      value={specialRequests} // Bind value to state
+                      onChange={(e) => setSpecialRequests(e.target.value)} // Update state on change
+                    ></textarea>
                   </div>
 
                   <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mb-6">
@@ -1093,12 +1073,12 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
 
           {bookingSuccess && (
             <div className="p-8 text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                <Check className="h-8 w-8 text-green-500 animate-pulse" />
+              <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                <Check className="h-8 w-8 text-sky-500 animate-pulse" />
               </div>
               <h3 className="text-xl font-medium text-black mb-2">Booking Submitted!</h3>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-                <p className="text-green-800 text-sm">
+              <div className="bg-sky-50 border border-sky-200 rounded-lg p-3 mb-4">
+                <p className="text-sky-800 text-sm">
                   <span className="font-medium">Notification sent!</span> Check your notifications for booking updates.
                 </p>
               </div>
@@ -1131,14 +1111,12 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
                     </div>
                   )}
                   <div className="mb-2">
-                    <span className="font-medium">
-                      Time:
-                    </span>{" "}
+                    <span className="font-medium">Time:</span>{" "}
                     {selectedTime
                       ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      })
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })
                       : "Not specified"}
                   </div>
                   <div className="mb-2">
@@ -1153,7 +1131,7 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
                     <div className="pl-4 mt-1">
                       <div className="text-sm">
                         <span>Light Traffic:</span>{" "}
-                        <span className="text-green-600">{selectedLocation?.lightTrafficTime} min</span>
+                        <span className="text-sky-600">{selectedLocation?.lightTrafficTime} min</span>
                       </div>
                       <div className="text-sm">
                         <span>Medium Traffic:</span>{" "}
@@ -1209,31 +1187,26 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
               <button
                 onClick={handleBookNow}
                 disabled={!selectedLocation}
-                className={`px-6 py-2 rounded-full transition-colors ${selectedLocation
+                className={`px-6 py-2 rounded-full transition-colors ${
+                  selectedLocation
                     ? "bg-sky-600 text-white hover:bg-sky-700 shadow-sm hover:shadow-md"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }`}
+                }`}
               >
                 Book Now
               </button>
             </div>
           )}
 
+          {/* Update the footer buttons for `confirmationStep`: */}
           {confirmationStep && (
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={() => setConfirmationStep(false)}
-                disabled={isSubmitting}
-                className={`px-6 py-2 border border-gray-300 text-gray-700 rounded-lg transition-colors ${isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100"
-                  }`}
-              >
-                Back
-              </button>
+            <div className="flex flex-col items-center space-y-4">
               <button
                 onClick={handleConfirmBooking}
                 disabled={isSubmitting}
-                className={`px-6 py-2 bg-sky-600 text-white rounded-full transition-colors shadow-sm ${isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-sky-700 hover:shadow-md"
-                  }`}
+                className={`px-8 py-3 bg-sky-500 text-white rounded-full font-medium shadow-sm ${
+                  isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:bg-sky-700 hover:shadow-md"
+                }`}
               >
                 {isSubmitting ? (
                   <span className="flex items-center">
@@ -1241,8 +1214,17 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
                     Processing...
                   </span>
                 ) : (
-                  "Confirm Booking"
+                  "Send a Request & Confirm Booking"
                 )}
+              </button>
+              <button
+                onClick={() => setConfirmationStep(false)}
+                disabled={isSubmitting}
+                className={`text-gray-500 hover:text-gray-700 transition-colors ${
+                  isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                Cancel Booking
               </button>
             </div>
           )}

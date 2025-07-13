@@ -58,7 +58,7 @@ const ServiceSchema = new mongoose.Schema(
     },
     estimatedTime: {
       type: String,
-      default: "Varies", // Default placeholder for estimated time
+      default: "1 day or more", // Default placeholder for estimated time
     },
   },
   { timestamps: true },

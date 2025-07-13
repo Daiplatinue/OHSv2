@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { X, AlertTriangle, XCircle, Clock, CheckCircle2, AlertCircle } from "lucide-react"
@@ -203,14 +201,29 @@ function LoginAlt() {
         if (response.ok) {
           setSuccessMessage(data.message)
           setShowSuccessModal(true)
+          // Store user data and token separately
           localStorage.setItem("user", JSON.stringify(data.user))
-          // Save the token to localStorage
           if (data.token) {
             localStorage.setItem("token", data.token)
             console.log("Token saved to localStorage:", data.token) // Debugging log
           } else {
             console.warn("No token received from password login response.") // Debugging log
           }
+
+          // --- START ADDITION FOR SAVE CREDENTIALS ---
+          if (saveCredentials) {
+            // WARNING: Storing passwords directly in localStorage is not recommended for production
+            // applications due to security risks (e.g., XSS attacks).
+            // For a production environment, consider more secure methods like
+            // server-side sessions, secure HTTP-only cookies, or token-based authentication
+            // where the token is stored securely.
+            localStorage.setItem("savedEmail", email)
+            localStorage.setItem("savedPassword", password)
+          } else {
+            localStorage.removeItem("savedEmail")
+            localStorage.removeItem("savedPassword")
+          }
+          // --- END ADDITION FOR SAVE CREDENTIALS ---
 
           const userAccountType = data.user.accountType
           let redirectPath = "/"
@@ -282,12 +295,11 @@ function LoginAlt() {
   }
 
   // New function to handle final login success after OTP and reCAPTCHA
-  const handleFinalLoginSuccess = useCallback((responsePayload: { user: any; token: string }) => {
+  const handleFinalLoginSuccess = useCallback((responsePayload: { user: any; token?: string }) => {
     setSuccessMessage("OTP verified successfully! Login successful.")
     setShowSuccessModal(true)
+    // Store user data and token separately
     localStorage.setItem("user", JSON.stringify(responsePayload.user))
-    // Assuming OTP verification also returns a token, save it here
-    console.log("User data from OTP verification:", responsePayload.user) // Debugging log
     if (responsePayload.token) {
       localStorage.setItem("token", responsePayload.token)
       console.log("Token saved to localStorage from OTP verification:", responsePayload.token) // Debugging log
@@ -469,6 +481,16 @@ function LoginAlt() {
 
   const statusContent = getStatusContent()
 
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("savedEmail")
+    const savedPassword = localStorage.getItem("savedPassword")
+    if (savedEmail && savedPassword) {
+      setEmail(savedEmail)
+      setPassword(savedPassword)
+      setSaveCredentials(true)
+    }
+  }, [])
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Include animation keyframes */}
@@ -546,7 +568,14 @@ function LoginAlt() {
                     id="save-credentials"
                     type="checkbox"
                     checked={saveCredentials}
-                    onChange={(e) => setSaveCredentials(e.target.checked)}
+                    onChange={(e) => {
+                      const isChecked = e.target.checked
+                      setSaveCredentials(isChecked)
+                      if (!isChecked) {
+                        localStorage.removeItem("savedEmail")
+                        localStorage.removeItem("savedPassword")
+                      }
+                    }}
                     className="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded"
                   />
                   <label htmlFor="save-credentials" className="ml-2 text-gray-700">
@@ -562,7 +591,7 @@ function LoginAlt() {
           <button
             onClick={handleLogin}
             className={`w-full bg-gray-200 text-gray-500 hover:bg-gray-300 rounded-full h-12 font-medium transition-colors
-      ${!email || (showPasswordField && !password) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
+    ${!email || (showPasswordField && !password) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
             disabled={!email || (showPasswordField && !password) || loading}
           >
             {loading
@@ -683,9 +712,9 @@ function LoginAlt() {
                     }}
                     disabled={!termsAccepted} // Disabled if terms not accepted
                     className={`flex flex-col items-center justify-center p-6 border-2 rounded-xl transition-all w-[13rem] cursor-pointer
-                  ${
-                    termsAccepted ? "hover:border-sky-400 hover:bg-sky-50" : "opacity-50 cursor-not-allowed bg-gray-100"
-                  }`}
+                ${
+                  termsAccepted ? "hover:border-sky-400 hover:bg-sky-50" : "opacity-50 cursor-not-allowed bg-gray-100"
+                }`}
                   >
                     <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mb-4">
                       <svg
@@ -715,9 +744,9 @@ function LoginAlt() {
                     }}
                     disabled={!termsAccepted} // Disabled if terms not accepted
                     className={`flex flex-col items-center justify-center p-6 border-2 rounded-xl transition-all w-[13rem] cursor-pointer
-                  ${
-                    termsAccepted ? "hover:border-sky-400 hover:bg-sky-50" : "opacity-50 cursor-not-allowed bg-gray-100"
-                  }`}
+                ${
+                  termsAccepted ? "hover:border-sky-400 hover:bg-sky-50" : "opacity-50 cursor-not-allowed bg-gray-100"
+                }`}
                   >
                     <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mb-4">
                       <svg
