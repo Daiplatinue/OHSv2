@@ -22,8 +22,8 @@ import {
   updateUserImage,
   updateUserProfile,
   checkEmailAvailability,
-  sendEmailVerificationCode, // NEW: Import new email verification function
-  verifyEmailVerificationCode, // NEW: Import new email verification function
+  sendEmailVerificationCode,
+  verifyEmailVerificationCode,
 } from "./controller/userController.js"
 import { createService, getServices, deleteService } from "./controller/serviceController.js"
 import {
@@ -35,7 +35,7 @@ import {
 } from "./controller/chatController.js"
 import { User } from "./models/user.js"
 import fetch from "node-fetch"
-import { createBookings } from "./controller/bookingController.js" // Import the new controller
+import { createBookings, getBookingsByUserId, updateBookingStatus } from "./controller/bookingController.js" // Import the new controller and getBookingsByUserId
 
 dotenv.config()
 
@@ -483,6 +483,66 @@ app.put("/api/user/profile", authenticateToken, updateUserProfile) // Apply midd
 // NEW: Route for checking email availability
 app.post("/api/users/check-email-availability", authenticateToken, checkEmailAvailability)
 
+// NEW: PayMongo Link Creation Route
+app.post("/api/paymongo-create-link", async (req, res) => {
+  try {
+    const { amount, description, success_url, failure_url } = req.body
+
+    // IMPORTANT: This key MUST be loaded from environment variables in a real deployment.
+    // For local testing without a .env file, you can temporarily hardcode it here,
+    // but REMOVE IT before deploying to production.
+    const PAYMENT_SECRET_KEY = process.env.PAYMENT_SECRET_KEY || "sk_test_C91FKxnYJbsaa6zdpaJ4bNvk" // TEMPORARY: Hardcoded for testing without .env
+
+    if (!PAYMENT_SECRET_KEY) {
+      console.error("PAYMENT_SECRET_KEY is not defined in environment variables.")
+      return res.status(500).json({ error: "Payment secret key not configured." })
+    }
+
+    // PayMongo requires amount in centavos (smallest currency unit).
+    // Ensure the amount is an integer.
+    const amountInCentavos = Math.round(amount * 100)
+
+    const paymongoResponse = await fetch("https://api.paymongo.com/v1/links", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // The Authorization header uses Basic authentication with your secret key as the username and an empty password.
+        Authorization: `Basic ${Buffer.from(PAYMENT_SECRET_KEY + ":").toString("base64")}`,
+      },
+      body: JSON.stringify({
+        data: {
+          attributes: {
+            amount: amountInCentavos,
+            description: description,
+            remarks: "payment api integrations", // Using the remark from your curl example
+            currency: "PHP", // Assuming PHP as the currency for PayMongo in the Philippines
+            redirect: {
+              success: success_url,
+              failed: failure_url,
+            },
+          },
+        },
+      }),
+    })
+
+    if (!paymongoResponse.ok) {
+      const errorData = await paymongoResponse.json()
+      console.error("PayMongo API Error:", errorData)
+      return res
+        .status(paymongoResponse.status)
+        .json({ error: errorData.errors?.[0]?.detail || "Failed to create PayMongo link." })
+    }
+
+    const paymongoData = await paymongoResponse.json()
+    const checkoutUrl = paymongoData.data.attributes.checkout_url
+
+    return res.json({ checkoutUrl })
+  } catch (error) {
+    console.error("Error creating PayMongo link:", error)
+    return res.status(500).json({ error: "Internal server error." })
+  }
+})
+
 // Add the reCAPTCHA verification route
 app.post("/api/verify-recaptcha", async (req, res) => {
   const secretKey = process.env.RECAPTCHA_SECRET_KEY
@@ -535,6 +595,10 @@ app.delete("/api/services/:id", authenticateToken, (req, res) => deleteService(r
 
 // Add the new booking route
 app.post("/api/bookings", authenticateToken, createBookings)
+// NEW: Route to fetch bookings by user ID
+app.get("/api/bookings/user", authenticateToken, getBookingsByUserId)
+// NEW: Route to update booking status
+app.put("/api/bookings/:id/status", authenticateToken, updateBookingStatus)
 
 // Start the server using the HTTP server instance
 server.listen(PORT, () => {

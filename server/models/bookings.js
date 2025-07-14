@@ -15,12 +15,15 @@ const BookingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    serviceImage: {
+      type: String,
+    },
     providerName: {
       type: String,
       required: true,
     },
     providerId: {
-      type: String, // Can be ObjectId or string depending on how provider IDs are stored
+      type: String,
       required: true,
     },
     workerCount: {
@@ -28,7 +31,7 @@ const BookingSchema = new mongoose.Schema(
       default: 1,
     },
     bookingDate: {
-      type: String, // Storing as string for simplicity, can be Date
+      type: String,
       required: true,
     },
     bookingTime: {
@@ -42,7 +45,7 @@ const BookingSchema = new mongoose.Schema(
       distance: { type: Number, required: true },
     },
     estimatedTime: {
-      type: String, // e.g., "30 min"
+      type: String,
     },
     pricing: {
       baseRate: { type: Number, required: true },
@@ -55,11 +58,20 @@ const BookingSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "confirmed", "completed", "cancelled"],
+      enum: ["pending", "active", "ongoing", "cancelled", "completed"], // Updated enum
       default: "pending",
     },
+    autoCancelDate: {
+      type: Date,
+      required: false,
+    },
+    providerAccepted: {
+      // NEW: Add providerAccepted boolean
+      type: Boolean,
+      default: false,
+    },
   },
-  { timestamps: true }, // Adds createdAt and updatedAt fields
+  { timestamps: true },
 )
 
 const Booking = mongoose.model("Booking", BookingSchema)

@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Home,
@@ -19,7 +19,6 @@ import {
   CheckCircle2,
   AlertCircle,
   XCircleIcon,
-  ArrowUpRight,
   Coffee,
   CheckSquare,
   Star,
@@ -28,6 +27,7 @@ import {
   FileText,
   PowerOff,
   Album,
+  ArrowUpRight,
 } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import ProviderTrackingMap from "./ProviderTrackingMap"
@@ -38,43 +38,6 @@ declare module "../Customer_Tabs/Notification" {
   interface NotificationItem {
     read?: boolean
   }
-}
-
-const WaitingForProviderState: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
-  const [isWaiting, setIsWaiting] = useState(true)
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout
-
-    if (isWaiting) {
-      timer = setTimeout(() => {
-        setIsWaiting(false)
-      }, 10000)
-    }
-
-    return () => {
-      clearTimeout(timer)
-    }
-  }, [isWaiting])
-
-  return (
-    <>
-      {isWaiting ? (
-        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">
-          <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
-          Waiting for provider...
-        </div>
-      ) : (
-        <button
-          onClick={onComplete}
-          className="px-4 py-2 w-82 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors"
-        >
-          <MapPin className="w-4 h-4 inline mr-1" />
-          Track Service
-        </button>
-      )}
-    </>
-  )
 }
 
 interface DockItemProps {
@@ -94,9 +57,9 @@ const DockItem: React.FC<DockItemProps> = ({ icon, to, isActive, onClick, badge 
       onClick()
     } else if (to === "/logout") {
       localStorage.removeItem("token")
-      navigate("/login") 
+      navigate("/login")
     } else if (to === "/profile") {
-      navigate("/customer/profile") 
+      navigate("/customer/profile")
     } else if (to === "/") {
       navigate("/")
     } else {
@@ -156,9 +119,7 @@ const DockItem: React.FC<DockItemProps> = ({ icon, to, isActive, onClick, badge 
                   ? "News"
                   : to === "/chat"
                     ? "Chats"
-                    : to === "/logout"
-                      ? "Logout"
-                      : to}
+                    : to}
       </div>
     </>
   )
@@ -211,13 +172,13 @@ const StatCard: React.FC<StatCardProps> = ({ title, count, icon, trend, trendVal
 )
 
 interface Booking {
-  _id: string
-  id?: number
+  _id: string // This is the actual MongoDB _id
   userId: string
   firstname: string
   productName: string
+  serviceImage?: string
   providerName: string
-  providerId: number
+  providerId: string
   workerCount: number
   bookingDate: string
   bookingTime: string
@@ -235,7 +196,8 @@ interface Booking {
   }
   status: string
   createdAt: string
-  // Legacy fields for compatibility
+  providerAccepted?: boolean
+  // Legacy fields for compatibility - these should ideally be phased out
   companyName?: string
   service?: string
   date?: string
@@ -250,8 +212,9 @@ interface Booking {
 }
 
 const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
-  const navigate = useNavigate() // Use useNavigate from react-router-dom
-  const [timeLeft, setTimeLeft] = useState<number>(30)
+  const navigate = useNavigate()
+  const [timeLeft, setTimeLeft] = useState<number>(30) // Existing timer state, initialized to 30
+  const timerRef = useRef<NodeJS.Timeout | null>(null) // Ref to hold the timer ID
   const [status, setStatus] = useState(booking.status)
   const [paymentComplete] = useState(booking.paymentComplete || false)
   const [showTrackingModal, setShowTrackingModal] = useState(false)
@@ -267,14 +230,14 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
 
   // Convert database booking to display format
   const displayBooking = {
-    id: booking.id || Number.parseInt(booking._id.slice(-6), 16), // Use last 6 chars of _id as number
+    id: booking._id, // Use the actual MongoDB _id as the primary identifier
     companyName: booking.companyName || booking.providerName,
     service: booking.service || booking.productName,
     serviceType: booking.serviceType || "",
     status: booking.status,
     date: booking.date || new Date(booking.bookingDate).toLocaleDateString(),
     price: booking.price || booking.pricing.totalRate,
-    image: booking.image || "/placeholder.svg",
+    image: booking.image || booking.serviceImage || "/placeholder.svg",
     workerCount: booking.workerCount,
     estimatedTime: booking.estimatedTime || "2-4 hours",
     location: booking.location.name,
@@ -284,31 +247,93 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
     additionalFees: booking.additionalFees || 0,
     paymentComplete: booking.paymentComplete || false,
     providerArrived: booking.providerArrived || false,
+    providerAccepted: booking.providerAccepted || false,
   }
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout
+  // Function to handle booking cancellation via API
+  const handleCancelBooking = async (bookingIdToCancel: string) => {
+    console.log(`Booking ${bookingIdToCancel} timed out. Cancelling...`)
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        console.error("Authentication token not found for cancellation.")
+        setStatus("cancelled") // Fallback to local update
+        localStorage.setItem(
+          "bookingStatusUpdate",
+          JSON.stringify({ id: bookingIdToCancel, status: "cancelled", timestamp: new Date().getTime() }),
+        )
+        return
+      }
 
-    // Only start the timer if status is ongoing AND we're not in "Track Service" mode
+      const response = await fetch(`http://localhost:3000/api/bookings/${bookingIdToCancel}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "cancelled" }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to update booking status to cancelled on backend.")
+      }
+
+      const updatedBooking = await response.json()
+      console.log("Booking cancelled successfully due to timeout:", updatedBooking)
+      setStatus("cancelled") // Update local state
+      // Inform parent component (FloatingDock) about the change
+      localStorage.setItem(
+        "bookingStatusUpdate",
+        JSON.stringify({ id: bookingIdToCancel, status: "cancelled", timestamp: new Date().getTime() }),
+      )
+    } catch (error) {
+      console.error("Error cancelling booking via API:", error)
+      setStatus("cancelled") // Fallback to local update
+      localStorage.setItem(
+        "bookingStatusUpdate",
+        JSON.stringify({ id: bookingIdToCancel, status: "cancelled", timestamp: new Date().getTime() }),
+      )
+    }
+  }
+
+  // Existing useEffect for timer, modified to call API
+  useEffect(() => {
+    // Clear any existing timer when dependencies change or component unmounts
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+
+    // Only start timer if status is "ongoing" AND payment is NOT complete
     if (status === "ongoing" && !paymentComplete) {
-      timer = setInterval(() => {
+      setTimeLeft(30) // Reset timer to 30 seconds when entering this state
+      timerRef.current = setInterval(() => {
         setTimeLeft((prevTime) => {
           if (prevTime <= 1) {
-            clearInterval(timer)
-            setStatus("cancelled")
+            clearInterval(timerRef.current!)
+            timerRef.current = null
+            handleCancelBooking(displayBooking.id) // Call the API cancellation function
             return 0
           }
           return prevTime - 1
         })
       }, 1000)
+    } else {
+      // If status is not ongoing or payment is complete, ensure timer is cleared and reset
+      setTimeLeft(30) // Reset for next time this booking might become ongoing and unpaid
     }
 
+    // Cleanup function for the useEffect
     return () => {
-      if (timer) clearInterval(timer)
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+        timerRef.current = null
+      }
     }
-  }, [status, paymentComplete])
+  }, [status, paymentComplete, displayBooking.id]) // Dependencies: status, paymentComplete, and booking ID
 
-  // Check for provider arrival
+  // Check for provider arrival (existing logic)
   useEffect(() => {
     const checkProviderArrival = () => {
       const providerArrivedData = localStorage.getItem("providerArrived")
@@ -316,6 +341,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
         try {
           const data = JSON.parse(providerArrivedData)
           if (data.bookingId === displayBooking.id) {
+            // Compare with actual _id
             setProviderArrived(true)
           }
         } catch (e) {
@@ -324,22 +350,17 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
       }
     }
 
-    // Check immediately
     checkProviderArrival()
-
-    // Set up interval to check periodically
     const intervalId = setInterval(checkProviderArrival, 2000)
-
     return () => clearInterval(intervalId)
   }, [displayBooking.id])
 
   const handleCompletePayment = () => {
-    // Store the current booking data in localStorage
-    localStorage.setItem("currentBookingDetails", JSON.stringify(displayBooking))
+    // Store the current booking data in localStorage, using the actual _id
+    localStorage.setItem("currentBookingDetails", JSON.stringify({ ...displayBooking, id: booking._id }))
 
-    // Create seller information from the booking data
     const sellerInfo = {
-      id: displayBooking.id,
+      id: 1, // Dummy ID for seller, as it's not the booking _id
       name: displayBooking.companyName,
       rating: 4.5,
       reviews: 24,
@@ -353,12 +374,12 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
       workerCount: displayBooking.workerCount || 1,
     }
 
-    // Navigate to transaction page with seller info and booking details
+    // Navigate to transaction page with seller info and booking details, passing the actual _id
     navigate("/transaction", {
       state: {
         seller: sellerInfo,
         booking: {
-          id: displayBooking.id,
+          id: booking._id, // Pass the actual MongoDB _id here
           service: displayBooking.service,
           serviceType: displayBooking.serviceType,
           date: displayBooking.date,
@@ -378,27 +399,19 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
   }
 
   const handleTrackProvider = () => {
-    // Show loading state
     setIsLoadingMap(true)
-
-    // Show tracking modal with waiting state
     setShowTrackingModal(true)
-
-    // The loading state will be managed inside the tracking modal
     setIsLoadingMap(false)
   }
 
   const handleCompleteService = () => {
-    // Show review modal instead of immediately completing
     setShowReviewModal(true)
   }
 
   const handleReviewSubmit = () => {
-    // Hide review modal and show success modal
     setShowReviewModal(false)
     setShowSuccessModal(true)
 
-    // Store review data if needed
     localStorage.setItem(
       "serviceReview",
       JSON.stringify({
@@ -411,13 +424,9 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
   }
 
   const handleSuccessConfirm = () => {
-    // Hide success modal
     setShowSuccessModal(false)
-
-    // Update booking status to completed
     setStatus("completed")
 
-    // Store completion in localStorage
     localStorage.setItem(
       "serviceCompleted",
       JSON.stringify({
@@ -426,15 +435,11 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
       }),
     )
 
-    // Clear provider arrived flag
     localStorage.removeItem("providerArrived")
-
-    // Close the tracking modal if it's open
     setShowTrackingModal(false)
   }
 
   const handleViewDetails = () => {
-    // Store the current booking data in localStorage for the Transaction component to access
     localStorage.setItem("currentBookingDetails", JSON.stringify(displayBooking))
     setShowDetailsModal(true)
   }
@@ -446,6 +451,13 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
           <div className="flex items-center gap-1 text-amber-600 bg-amber-50 px-2 py-1 rounded-full text-xs font-medium">
             <AlertCircle className="w-3 h-3" />
             Pending
+          </div>
+        )
+      case "active":
+        return (
+          <div className="flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-1 rounded-full text-xs font-medium">
+            <CheckCircle2 className="w-3 h-3" />
+            Active
           </div>
         )
       case "ongoing":
@@ -485,55 +497,68 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
             </button>
             <button
               className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 transition-colors"
-              onClick={() => setStatus("cancelled")}
+              onClick={() => handleCancelBooking(displayBooking.id)} // Use the new API cancellation
             >
               <X className="w-4 h-4" />
               Cancel
             </button>
           </div>
         )
-      case "ongoing":
+      case "active":
         return (
           <div className="mt-4 space-y-2">
-            {/* Only show timer when not in Track Service mode */}
-            {!paymentComplete && !providerArrived && (
-              <div
-                className={`flex items-center justify-between ${
-                  timeLeft > 20
-                    ? "bg-emerald-50 text-emerald-700"
-                    : timeLeft > 10
-                      ? "bg-amber-50 text-amber-700"
-                      : "bg-rose-50 text-rose-700"
-                } rounded-lg px-3 py-1.5`}
-              >
-                <Clock className="w-4 h-4" />
-                <span className="text-sm font-medium">{timeLeft}s</span>
-              </div>
-            )}
-
-            {providerArrived ? (
-              <button
-                className="w-full flex items-center justify-center gap-1 px-4 py-2 bg-sky-100 text-sky-700 rounded-lg hover:bg-sky-200 transition-colors"
-                onClick={handleCompleteService}
-              >
-                <CheckSquare className="w-4 h-4" />
-                Complete Service
-              </button>
-            ) : paymentComplete ? (
-              <div className="w-full">
-                <WaitingForProviderState onComplete={handleTrackProvider} />
-              </div>
-            ) : (
+            {displayBooking.providerAccepted ? (
               <button
                 className="w-full flex items-center justify-center gap-1 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors"
+                onClick={handleTrackProvider}
+              >
+                <MapPin className="w-4 h-4 inline mr-1" />
+                Track Provider
+              </button>
+            ) : (
+              <div className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">
+                <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
+                Waiting for provider...
+              </div>
+            )}
+          </div>
+        )
+      case "ongoing":
+        if (!displayBooking.paymentComplete) {
+          // If payment is not complete, show timer and "Manage Payment"
+          return (
+            <div className="mt-4 space-y-2">
+              {timeLeft !== null && timeLeft > 0 && (
+                <div className="text-center text-sm font-medium text-red-600 animate-pulse">
+                  Complete payment in: {timeLeft}s
+                </div>
+              )}
+              <button
+                className={`w-full flex items-center justify-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+                  timeLeft === 0
+                    ? "bg-gray-200 text-gray-700 cursor-not-allowed"
+                    : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                }`}
                 onClick={handleCompletePayment}
+                disabled={timeLeft === 0}
               >
                 <ArrowUpRight className="w-4 h-4" />
                 Manage Payment
               </button>
-            )}
-          </div>
-        )
+            </div>
+          )
+        } else {
+          // If payment is complete for an ongoing booking, show "Complete Service"
+          return (
+            <button
+              className="w-full flex items-center justify-center gap-1 px-4 py-2 bg-sky-100 text-sky-700 rounded-lg hover:bg-sky-200 transition-colors"
+              onClick={handleCompleteService}
+            >
+              <CheckSquare className="w-4 h-4" />
+              Complete Service
+            </button>
+          )
+        }
       case "cancelled":
         return (
           <button className="flex items-center gap-1 px-4 py-2 mt-4 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors w-full justify-center">
@@ -741,7 +766,7 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                 {status === "pending" && (
                   <button
                     onClick={() => {
-                      setStatus("cancelled")
+                      handleCancelBooking(displayBooking.id) // Use the new API cancellation
                       setShowDetailsModal(false)
                     }}
                     className="px-4 py-2 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 transition-colors"
@@ -750,17 +775,18 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                   </button>
                 )}
 
-                {status === "ongoing" && !paymentComplete && (
-                  <button
-                    onClick={() => {
-                      setShowDetailsModal(false)
-                      handleCompletePayment()
-                    }}
-                    className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors"
-                  >
-                    Manage Payment
-                  </button>
-                )}
+                {status === "ongoing" &&
+                  !displayBooking.paymentComplete && ( // Only show manage payment if ongoing and not yet paid
+                    <button
+                      onClick={() => {
+                        setShowDetailsModal(false)
+                        handleCompletePayment()
+                      }}
+                      className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors"
+                    >
+                      Manage Payment
+                    </button>
+                  )}
 
                 <button
                   onClick={() => setShowDetailsModal(false)}
@@ -804,11 +830,10 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
 
               <ProviderTrackingMap
                 providerName={displayBooking.companyName}
-                bookingId={displayBooking.id}
+                bookingId={displayBooking.id} // Pass the actual _id
                 customerLocation={customerLocation} // Manila coordinates as example
                 providerLocation={{ lat: 14.5547, lng: 121.0244 }} // Makati coordinates as example
                 onProviderArrived={() => {
-                  // Only update the state, don't close the modal
                   setProviderArrived(true)
                 }}
               />
@@ -821,48 +846,20 @@ const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => {
                   >
                     Complete
                   </button>
-                ) : paymentComplete ? (
-                  <div>
-                    <WaitingForProviderState
-                      onComplete={() => {
-                        // Create a custom event that the ProviderTrackingMap component can listen for
-                        const arrivalEvent = new CustomEvent("providerForceArrival", {
-                          detail: { bookingId: displayBooking.id },
-                        })
-                        window.dispatchEvent(arrivalEvent)
-
-                        // Also update our local state
-                        setProviderArrived(true)
-
-                        // Store in localStorage to persist the state
-                        localStorage.setItem(
-                          "providerArrived",
-                          JSON.stringify({
-                            bookingId: displayBooking.id,
-                            providerName: displayBooking.companyName,
-                            timestamp: new Date().getTime(),
-                          }),
-                        )
-                      }}
-                    />
-                  </div>
                 ) : (
                   <button
                     onClick={() => {
-                      // Create a custom event that the ProviderTrackingMap component can listen for
                       const arrivalEvent = new CustomEvent("providerForceArrival", {
-                        detail: { bookingId: displayBooking.id },
+                        detail: { bookingId: displayBooking.id }, // Pass the actual _id
                       })
                       window.dispatchEvent(arrivalEvent)
 
-                      // Also update our local state
                       setProviderArrived(true)
 
-                      // Store in localStorage to persist the state
                       localStorage.setItem(
                         "providerArrived",
                         JSON.stringify({
-                          bookingId: displayBooking.id,
+                          bookingId: displayBooking.id, // Store the actual _id
                           providerName: displayBooking.companyName,
                           timestamp: new Date().getTime(),
                         }),
@@ -1029,254 +1026,350 @@ const FloatingDock: React.FC = () => {
 
   const [unreadNotifications, setUnreadNotifications] = useState(2) // Start with 2 unread notifications
 
+  // Sample data for all booking statuses (kept as fallback)
+  const sampleBookings: Booking[] = [
+    // PENDING BOOKINGS
+    {
+      _id: "65c7b1c3a0e2d4f5g6h7i8j1", // Example MongoDB _id
+      userId: "sample_user_id",
+      firstname: "John",
+      productName: "Plumbing Services",
+      serviceImage: "/placeholder.svg?height=150&width=200",
+      providerName: "PipeFix Pros",
+      providerId: "1",
+      workerCount: 1,
+      bookingDate: new Date().toISOString(),
+      bookingTime: "10:00 AM",
+      location: {
+        name: "123 Main St, Cebu City",
+        lat: 10.3157,
+        lng: 123.8854,
+        distance: 3.5,
+      },
+      estimatedTime: "1-2 hours",
+      pricing: {
+        baseRate: 1200,
+        distanceCharge: 87.5,
+        totalRate: 1287.5,
+      },
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      providerAccepted: false,
+    },
+    {
+      _id: "65c7b1c3a0e2d4f5g6h7i8j2", // Example MongoDB _id
+      userId: "sample_user_id",
+      firstname: "Maria",
+      productName: "Electrical Repair",
+      serviceImage: "/placeholder.svg?height=150&width=200",
+      providerName: "PowerFix Solutions",
+      providerId: "2",
+      workerCount: 2,
+      bookingDate: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
+      bookingTime: "2:00 PM",
+      location: {
+        name: "456 Park Avenue, Makati City",
+        lat: 14.5547,
+        lng: 121.0244,
+        distance: 2.8,
+      },
+      estimatedTime: "3-4 hours",
+      pricing: {
+        baseRate: 1500,
+        distanceCharge: 70,
+        totalRate: 1570,
+      },
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      providerAccepted: false,
+    },
+
+    // NEW: ACTIVE BOOKINGS (after payment, waiting for provider acceptance)
+    {
+      _id: "65c7b1c3a0e2d4f5g6h7i8j3", // Example MongoDB _id
+      userId: "sample_user_id",
+      firstname: "David",
+      productName: "Gardening Service",
+      serviceImage: "/placeholder.svg?height=150&width=200",
+      providerName: "GreenScape",
+      providerId: "10",
+      workerCount: 1,
+      bookingDate: new Date().toISOString(),
+      bookingTime: "09:00 AM",
+      location: {
+        name: "888 Sunshine Blvd, Cebu",
+        lat: 10.3157,
+        lng: 123.8854,
+        distance: 2.0,
+      },
+      estimatedTime: "1-2 hours",
+      pricing: {
+        baseRate: 800,
+        distanceCharge: 40,
+        totalRate: 840,
+      },
+      status: "active",
+      createdAt: new Date(Date.now() - 1800000).toISOString(), // 30 mins ago
+      providerAccepted: false, // Waiting for provider to accept
+    },
+    {
+      _id: "65c7b1c3a0e2d4f5g6h7i8j4", // Example MongoDB _id
+      userId: "sample_user_id",
+      firstname: "Sophia",
+      productName: "IT Support",
+      serviceImage: "/placeholder.svg?height=150&width=200",
+      providerName: "TechFix",
+      providerId: "11",
+      workerCount: 1,
+      bookingDate: new Date().toISOString(),
+      bookingTime: "01:00 PM",
+      location: {
+        name: "999 Cyber Street, Manila",
+        lat: 14.5995,
+        lng: 120.9842,
+        distance: 1.5,
+      },
+      estimatedTime: "1 hour",
+      pricing: {
+        baseRate: 1000,
+        distanceCharge: 30,
+        totalRate: 1030,
+      },
+      status: "active",
+      createdAt: new Date(Date.now() - 600000).toISOString(), // 10 mins ago
+      providerAccepted: true, // Provider has accepted
+    },
+
+    // ONGOING BOOKINGS
+    {
+      _id: "65c7b1c3a0e2d4f5g6h7i8j5", // Example MongoDB _id
+      userId: "sample_user_id",
+      firstname: "Carlos",
+      productName: "House Cleaning",
+      serviceImage: "/placeholder.svg?height=150&width=200",
+      providerName: "CleanPro Services",
+      providerId: "3",
+      workerCount: 3,
+      bookingDate: new Date().toISOString(),
+      bookingTime: "9:30 AM",
+      location: {
+        name: "789 Seaside Blvd, Manila",
+        lat: 14.5995,
+        lng: 120.9842,
+        distance: 5.2,
+      },
+      estimatedTime: "4-5 hours",
+      pricing: {
+        baseRate: 2200,
+        distanceCharge: 130,
+        totalRate: 2330,
+      },
+      status: "ongoing",
+      paymentComplete: true, // Payment is complete for this ongoing booking
+      createdAt: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+      providerAccepted: true,
+    },
+    {
+      _id: "65c7b1c3a0e2d4f5g6h7i8j6", // Example MongoDB _id
+      userId: "sample_user_id",
+      firstname: "Elena",
+      productName: "Aircon Maintenance",
+      serviceImage: "/placeholder.svg?height=150&width=200",
+      providerName: "CoolAir Technicians",
+      providerId: "4",
+      workerCount: 2,
+      bookingDate: new Date().toISOString(),
+      bookingTime: "11:00 AM",
+      location: {
+        name: "101 Green Hills, Pasig City",
+        lat: 14.5764,
+        lng: 121.0851,
+        distance: 4.1,
+      },
+      estimatedTime: "1-2 hours",
+      pricing: {
+        baseRate: 1800,
+        distanceCharge: 102.5,
+        totalRate: 1902.5,
+      },
+      status: "ongoing",
+      paymentComplete: false, // Payment is NOT complete for this ongoing booking (timer will run)
+      createdAt: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+      providerAccepted: true,
+    },
+
+    // CANCELLED BOOKINGS
+    {
+      _id: "65c7b1c3a0e2d4f5g6h7i8j7", // Example MongoDB _id
+      userId: "sample_user_id",
+      firstname: "Miguel",
+      productName: "Furniture Assembly",
+      serviceImage: "/placeholder.svg?height=150&width=200",
+      providerName: "BuildIt Experts",
+      providerId: "5",
+      workerCount: 2,
+      bookingDate: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+      bookingTime: "3:00 PM",
+      location: {
+        name: "222 Orchard Road, Quezon City",
+        lat: 14.676,
+        lng: 121.0437,
+        distance: 3.7,
+      },
+      estimatedTime: "2-3 hours",
+      pricing: {
+        baseRate: 1350,
+        distanceCharge: 92.5,
+        totalRate: 1442.5,
+      },
+      status: "cancelled",
+      createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+      providerAccepted: false,
+    },
+    {
+      _id: "65c7b1c3a0e2d4f5g6h7i8j8", // Example MongoDB _id
+      userId: "sample_user_id",
+      firstname: "Isabella",
+      productName: "Pest Control",
+      serviceImage: "/placeholder.svg?height=150&width=200",
+      providerName: "BugBusters",
+      providerId: "6",
+      workerCount: 1,
+      bookingDate: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
+      bookingTime: "10:00 AM",
+      location: {
+        name: "333 Coconut Avenue, Taguig",
+        lat: 14.5176,
+        lng: 121.0509,
+        distance: 6.3,
+      },
+      estimatedTime: "2-3 hours",
+      pricing: {
+        baseRate: 1700,
+        distanceCharge: 157.5,
+        totalRate: 1857.5,
+      },
+      status: "cancelled",
+      createdAt: new Date(Date.now() - 432000000).toISOString(), // 5 days ago
+      providerAccepted: false,
+    },
+
+    // COMPLETED BOOKINGS
+    {
+      _id: "65c7b1c3a0e2d4f5g6h7i8j9", // Example MongoDB _id
+      userId: "sample_user_id",
+      firstname: "Rafael",
+      productName: "Lawn Mowing",
+      serviceImage: "/placeholder.svg?height=150&width=200",
+      providerName: "GreenThumb Landscaping",
+      providerId: "7",
+      workerCount: 2,
+      bookingDate: new Date(Date.now() - 604800000).toISOString(), // 1 week ago
+      bookingTime: "8:00 AM",
+      location: {
+        name: "444 Hillside Drive, Antipolo",
+        lat: 14.5885,
+        lng: 121.1754,
+        distance: 8.2,
+      },
+      estimatedTime: "3-4 hours",
+      pricing: {
+        baseRate: 1600,
+        distanceCharge: 205,
+        totalRate: 1805,
+      },
+      status: "completed",
+      createdAt: new Date(Date.now() - 691200000).toISOString(), // 8 days ago
+      providerAccepted: true,
+    },
+    {
+      _id: "65c7b1c3a0e2d4f5g6h7i8j10", // Example MongoDB _id
+      userId: "sample_user_id",
+      firstname: "Sofia",
+      productName: "Carpet Cleaning",
+      serviceImage: "/placeholder.svg?height=150&width=200",
+      providerName: "FreshStart Cleaners",
+      providerId: "8",
+      workerCount: 2,
+      bookingDate: new Date(Date.now() - 1209600000).toISOString(), // 2 weeks ago
+      bookingTime: "1:00 PM",
+      location: {
+        name: "555 Beachfront Road, Parañaque",
+        lat: 14.4793,
+        lng: 120.9977,
+        distance: 4.8,
+      },
+      estimatedTime: "2-3 hours",
+      pricing: {
+        baseRate: 1900,
+        distanceCharge: 120,
+        totalRate: 2020,
+      },
+      status: "completed",
+      createdAt: new Date(Date.now() - 1296000000).toISOString(), // 15 days ago
+      providerAccepted: true,
+    },
+    {
+      _id: "65c7b1c3a0e2d4f5g6h7i8j11", // Example MongoDB _id
+      userId: "sample_user_id",
+      firstname: "Diego",
+      productName: "Roof Repair",
+      serviceImage: "/placeholder.svg?height=150&width=200",
+      providerName: "TopNotch Roofing",
+      providerId: "9",
+      workerCount: 3,
+      bookingDate: new Date(Date.now() - 1814400000).toISOString(), // 3 weeks ago
+      bookingTime: "9:00 AM",
+      location: {
+        name: "666 Mountain View, Tagaytay",
+        lat: 14.1153,
+        lng: 120.9621,
+        distance: 12.5,
+      },
+      estimatedTime: "5-6 hours",
+      pricing: {
+        baseRate: 3500,
+        distanceCharge: 312.5,
+        totalRate: 3812.5,
+      },
+      status: "completed",
+      createdAt: new Date(Date.now() - 1900800000).toISOString(), // 22 days ago
+      providerAccepted: true,
+    },
+  ]
+
   // Function to fetch user bookings from the backend
   const fetchUserBookings = async (silent = false) => {
     try {
       if (!silent) setLoading(true)
       setError("")
 
-      // Sample data for all booking statuses
-      const sampleBookings: Booking[] = [
-        // PENDING BOOKINGS
-        {
-          _id: "sample1",
-          userId: "sample_user_id",
-          firstname: "John",
-          productName: "Plumbing Services",
-          providerName: "PipeFix Pros",
-          providerId: 1,
-          workerCount: 1,
-          bookingDate: new Date().toISOString(),
-          bookingTime: "10:00 AM",
-          location: {
-            name: "123 Main St, Cebu City",
-            lat: 10.3157,
-            lng: 123.8854,
-            distance: 3.5,
-          },
-          estimatedTime: "1-2 hours",
-          pricing: {
-            baseRate: 1200,
-            distanceCharge: 87.5,
-            totalRate: 1287.5,
-          },
-          status: "pending",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          _id: "sample2",
-          userId: "sample_user_id",
-          firstname: "Maria",
-          productName: "Electrical Repair",
-          providerName: "PowerFix Solutions",
-          providerId: 2,
-          workerCount: 2,
-          bookingDate: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-          bookingTime: "2:00 PM",
-          location: {
-            name: "456 Park Avenue, Makati City",
-            lat: 14.5547,
-            lng: 121.0244,
-            distance: 2.8,
-          },
-          estimatedTime: "3-4 hours",
-          pricing: {
-            baseRate: 1500,
-            distanceCharge: 70,
-            totalRate: 1570,
-          },
-          status: "pending",
-          createdAt: new Date().toISOString(),
-        },
+      const token = localStorage.getItem("token")
+      if (!token) {
+        console.warn("No authentication token found. Using sample data.")
+        setBookings(sampleBookings)
+        return
+      }
 
-        // ONGOING BOOKINGS
-        {
-          _id: "sample3",
-          userId: "sample_user_id",
-          firstname: "Carlos",
-          productName: "House Cleaning",
-          providerName: "CleanPro Services",
-          providerId: 3,
-          workerCount: 3,
-          bookingDate: new Date().toISOString(),
-          bookingTime: "9:30 AM",
-          location: {
-            name: "789 Seaside Blvd, Manila",
-            lat: 14.5995,
-            lng: 120.9842,
-            distance: 5.2,
-          },
-          estimatedTime: "4-5 hours",
-          pricing: {
-            baseRate: 2200,
-            distanceCharge: 130,
-            totalRate: 2330,
-          },
-          status: "ongoing",
-          paymentComplete: true,
-          createdAt: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+      const response = await fetch("http://localhost:3000/api/bookings/user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-        {
-          _id: "sample4",
-          userId: "sample_user_id",
-          firstname: "Elena",
-          productName: "Aircon Maintenance",
-          providerName: "CoolAir Technicians",
-          providerId: 4,
-          workerCount: 2,
-          bookingDate: new Date().toISOString(),
-          bookingTime: "11:00 AM",
-          location: {
-            name: "101 Green Hills, Pasig City",
-            lat: 14.5764,
-            lng: 121.0851,
-            distance: 4.1,
-          },
-          estimatedTime: "1-2 hours",
-          pricing: {
-            baseRate: 1800,
-            distanceCharge: 102.5,
-            totalRate: 1902.5,
-          },
-          status: "ongoing",
-          paymentComplete: false,
-          createdAt: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
-        },
+      })
 
-        // CANCELLED BOOKINGS
-        {
-          _id: "sample5",
-          userId: "sample_user_id",
-          firstname: "Miguel",
-          productName: "Furniture Assembly",
-          providerName: "BuildIt Experts",
-          providerId: 5,
-          workerCount: 2,
-          bookingDate: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
-          bookingTime: "3:00 PM",
-          location: {
-            name: "222 Orchard Road, Quezon City",
-            lat: 14.676,
-            lng: 121.0437,
-            distance: 3.7,
-          },
-          estimatedTime: "2-3 hours",
-          pricing: {
-            baseRate: 1350,
-            distanceCharge: 92.5,
-            totalRate: 1442.5,
-          },
-          status: "cancelled",
-          createdAt: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
-        },
-        {
-          _id: "sample6",
-          userId: "sample_user_id",
-          firstname: "Isabella",
-          productName: "Pest Control",
-          providerName: "BugBusters",
-          providerId: 6,
-          workerCount: 1,
-          bookingDate: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
-          bookingTime: "10:00 AM",
-          location: {
-            name: "333 Coconut Avenue, Taguig",
-            lat: 14.5176,
-            lng: 121.0509,
-            distance: 6.3,
-          },
-          estimatedTime: "2-3 hours",
-          pricing: {
-            baseRate: 1700,
-            distanceCharge: 157.5,
-            totalRate: 1857.5,
-          },
-          status: "cancelled",
-          createdAt: new Date(Date.now() - 432000000).toISOString(), // 5 days ago
-        },
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to fetch bookings from API.")
+      }
 
-        // COMPLETED BOOKINGS
-        {
-          _id: "sample7",
-          userId: "sample_user_id",
-          firstname: "Rafael",
-          productName: "Lawn Mowing",
-          providerName: "GreenThumb Landscaping",
-          providerId: 7,
-          workerCount: 2,
-          bookingDate: new Date(Date.now() - 604800000).toISOString(), // 1 week ago
-          bookingTime: "8:00 AM",
-          location: {
-            name: "444 Hillside Drive, Antipolo",
-            lat: 14.5885,
-            lng: 121.1754,
-            distance: 8.2,
-          },
-          estimatedTime: "3-4 hours",
-          pricing: {
-            baseRate: 1600,
-            distanceCharge: 205,
-            totalRate: 1805,
-          },
-          status: "completed",
-          createdAt: new Date(Date.now() - 691200000).toISOString(), // 8 days ago
-        },
-        {
-          _id: "sample8",
-          userId: "sample_user_id",
-          firstname: "Sofia",
-          productName: "Carpet Cleaning",
-          providerName: "FreshStart Cleaners",
-          providerId: 8,
-          workerCount: 2,
-          bookingDate: new Date(Date.now() - 1209600000).toISOString(), // 2 weeks ago
-          bookingTime: "1:00 PM",
-          location: {
-            name: "555 Beachfront Road, Parañaque",
-            lat: 14.4793,
-            lng: 120.9977,
-            distance: 4.8,
-          },
-          estimatedTime: "2-3 hours",
-          pricing: {
-            baseRate: 1900,
-            distanceCharge: 120,
-            totalRate: 2020,
-          },
-          status: "completed",
-          createdAt: new Date(Date.now() - 1296000000).toISOString(), // 15 days ago
-        },
-        {
-          _id: "sample9",
-          userId: "sample_user_id",
-          firstname: "Diego",
-          productName: "Roof Repair",
-          providerName: "TopNotch Roofing",
-          providerId: 9,
-          workerCount: 3,
-          bookingDate: new Date(Date.now() - 1814400000).toISOString(), // 3 weeks ago
-          bookingTime: "9:00 AM",
-          location: {
-            name: "666 Mountain View, Tagaytay",
-            lat: 14.1153,
-            lng: 120.9621,
-            distance: 12.5,
-          },
-          estimatedTime: "5-6 hours",
-          pricing: {
-            baseRate: 3500,
-            distanceCharge: 312.5,
-            totalRate: 3812.5,
-          },
-          status: "completed",
-          createdAt: new Date(Date.now() - 1900800000).toISOString(), // 22 days ago
-        },
-      ]
-
-      setBookings(sampleBookings)
+      const data: Booking[] = await response.json()
+      setBookings(data)
     } catch (err) {
-      console.error("Error setting sample bookings:", err)
-      setError(err instanceof Error ? err.message : "Failed to load sample bookings")
+      console.error("Error fetching bookings from API:", err)
+      setError(err instanceof Error ? err.message : "Failed to load bookings from API.")
+      // Fallback to sample data if API call fails
+      console.log("Falling back to sample data.")
+      setBookings(sampleBookings)
     } finally {
       if (!silent) setLoading(false)
     }
@@ -1314,27 +1407,6 @@ const FloatingDock: React.FC = () => {
       localStorage.removeItem("openBookingsDrawer") // Clear the flag
     }
 
-    // Check if we need to update a booking status
-    const updateStatusData = localStorage.getItem("updateBookingStatus")
-    if (updateStatusData) {
-      try {
-        const { id, status } = JSON.parse(updateStatusData)
-
-        // Update the booking with the given ID to the new status
-        setBookings((prevBookings) =>
-          prevBookings.map((booking) =>
-            booking.id === id || booking._id === id || Number.parseInt(booking._id.slice(-6), 16) === id
-              ? { ...booking, status }
-              : booking,
-          ),
-        )
-
-        localStorage.removeItem("updateBookingStatus") // Clear the flag
-      } catch (e) {
-        console.error("Error parsing booking status update", e)
-      }
-    }
-
     // Check for recent payment completion
     const recentPayment = localStorage.getItem("recentBookingPayment")
     if (recentPayment) {
@@ -1344,13 +1416,13 @@ const FloatingDock: React.FC = () => {
         // Update the booking with payment completion and status
         setBookings((prevBookings) =>
           prevBookings.map((booking) =>
-            booking.id === paymentData.id ||
-            booking._id === paymentData.id ||
-            Number.parseInt(booking._id.slice(-6), 16) === paymentData.id
+            // Compare using the actual _id string
+            booking._id === paymentData.id
               ? {
                   ...booking,
-                  status: paymentData.status || booking.status,
+                  status: "active",
                   paymentComplete: true,
+                  providerAccepted: false,
                 }
               : booking,
           ),
@@ -1359,7 +1431,7 @@ const FloatingDock: React.FC = () => {
         // If tracking is requested, open the drawer
         if (paymentData.trackProvider) {
           setShowDrawer(true)
-          setActiveTab("ongoing")
+          setActiveTab("active")
         }
 
         localStorage.removeItem("recentBookingPayment") // Clear the data
@@ -1377,20 +1449,21 @@ const FloatingDock: React.FC = () => {
         // Update the booking with provider arrival
         setBookings((prevBookings) =>
           prevBookings.map((booking) =>
-            booking.id === data.bookingId ||
-            booking._id === data.bookingId ||
-            Number.parseInt(booking._id.slice(-6), 16) === data.bookingId
+            // Compare using the actual _id string
+            booking._id === data.bookingId
               ? {
                   ...booking,
                   providerArrived: true,
+                  status: "ongoing",
+                  providerAccepted: true,
                 }
               : booking,
           ),
         )
 
-        // Open the drawer to show the Complete Service button
         setShowDrawer(true)
         setActiveTab("ongoing")
+        localStorage.removeItem("providerArrived")
       } catch (e) {
         console.error("Error parsing provider arrival data", e)
       }
@@ -1405,7 +1478,8 @@ const FloatingDock: React.FC = () => {
         // Update the booking status to completed
         setBookings((prevBookings) =>
           prevBookings.map((booking) =>
-            booking.id === data.id || booking._id === data.id || Number.parseInt(booking._id.slice(-6), 16) === data.id
+            // Compare using the actual _id string
+            booking._id === data.id
               ? {
                   ...booking,
                   status: "completed",
@@ -1415,13 +1489,31 @@ const FloatingDock: React.FC = () => {
           ),
         )
 
-        localStorage.removeItem("serviceCompleted") // Clear the data
+        localStorage.removeItem("serviceCompleted")
       } catch (e) {
         console.error("Error parsing service completion data", e)
       }
     }
 
-    // Check URL parameters for booking updates
+    // NEW: Check for booking status updates from BookingCard (e.g., cancellation due to timer)
+    const bookingStatusUpdate = localStorage.getItem("bookingStatusUpdate")
+    if (bookingStatusUpdate) {
+      try {
+        const data = JSON.parse(bookingStatusUpdate)
+        setBookings((prevBookings) =>
+          prevBookings.map((booking) =>
+            booking._id === data.id
+              ? { ...booking, status: data.status } // Update status
+              : booking,
+          ),
+        )
+        localStorage.removeItem("bookingStatusUpdate")
+      } catch (e) {
+        console.error("Error parsing booking status update data from BookingCard", e)
+      }
+    }
+
+    // Check URL parameters for booking updates (less critical now with API + localStorage)
     const urlParams = new URLSearchParams(window.location.search)
     const bookingIdParam = urlParams.get("bookingId")
     const statusParam = urlParams.get("status")
@@ -1429,14 +1521,11 @@ const FloatingDock: React.FC = () => {
     const openBookingsParam = urlParams.get("openBookings")
 
     if (bookingIdParam && statusParam) {
-      const bookingId = bookingIdParam
+      const bookingIdFromUrl = bookingIdParam // This should be the _id string
 
-      // Update the booking with the given ID to the new status
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
-          String(booking.id) === bookingId ||
-          booking._id === bookingId ||
-          String(Number.parseInt(booking._id.slice(-6), 16)) === bookingId
+          booking._id === bookingIdFromUrl
             ? {
                 ...booking,
                 status: statusParam,
@@ -1447,7 +1536,6 @@ const FloatingDock: React.FC = () => {
       )
     }
 
-    // Open bookings drawer if requested in URL
     if (openBookingsParam === "true") {
       setShowDrawer(true)
     }
@@ -1467,7 +1555,7 @@ const FloatingDock: React.FC = () => {
 
   const totalBookings = bookings.length
   const pendingBookings = bookings.filter((b) => b.status === "pending").length
-  const ongoingBookings = bookings.filter((b) => b.status === "ongoing").length
+  const activeBookings = bookings.filter((b) => b.status === "active").length
 
   const filteredBookings = bookings.filter((booking) => {
     const companyName = booking.companyName || booking.providerName || ""
@@ -1485,25 +1573,21 @@ const FloatingDock: React.FC = () => {
 
   const displayedBookings = showAllServices ? filteredBookings : filteredBookings.slice(0, 4)
 
-  // Handler for notification bell click
   const handleNotificationClick = () => {
     setShowNotificationPopup(!showNotificationPopup)
   }
 
-  // Function to check if all notifications are read and update badge count
   const updateNotificationBadge = (notifications: NotificationItem[]) => {
     const unreadCount = notifications.filter((n) => !n.read).length
     setUnreadNotifications(unreadCount)
   }
 
-  // Add useEffect to control body overflow based on drawer state
   useEffect(() => {
     if (showDrawer) {
       document.body.style.overflow = "hidden"
     } else {
       document.body.style.overflow = ""
     }
-    // Clean up the style when the component unmounts or showDrawer changes
     return () => {
       document.body.style.overflow = ""
     }
@@ -1694,6 +1778,14 @@ const FloatingDock: React.FC = () => {
                     Pending
                   </button>
                   <button
+                    onClick={() => setActiveTab("active")}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                      activeTab === "active" ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Active
+                  </button>
+                  <button
                     onClick={() => setActiveTab("ongoing")}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
                       activeTab === "ongoing"
@@ -1743,8 +1835,8 @@ const FloatingDock: React.FC = () => {
                   trendValue={5}
                 />
                 <StatCard
-                  title="Ongoing"
-                  count={ongoingBookings}
+                  title="Active"
+                  count={activeBookings}
                   icon={<CheckCircle2 className="w-5 h-5" />}
                   trend="up"
                   trendValue={8}
@@ -1771,9 +1863,7 @@ const FloatingDock: React.FC = () => {
                     </button>
                   </div>
                 ) : displayedBookings.length > 0 ? (
-                  displayedBookings.map((booking) => (
-                    <BookingCard key={`booking-${booking._id || booking.id}`} booking={booking} />
-                  ))
+                  displayedBookings.map((booking) => <BookingCard key={`booking-${booking._id}`} booking={booking} />)
                 ) : (
                   <div className="flex flex-col items-center justify-center h-40 text-gray-500">
                     <Filter className="w-10 h-10 mb-2 opacity-50" />

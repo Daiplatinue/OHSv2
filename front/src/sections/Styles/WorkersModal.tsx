@@ -14,7 +14,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Clock } from "lucide-react"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion" // Import Accordion components
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+
+import logo from "../../assets/Traverser_logo.png"
+import qr from "../../assets/512px-QR-code-obituary.svg.png"
 
 // Add animation keyframes
 const animationStyles = `
@@ -69,7 +72,7 @@ interface ServiceDetails {
   name: string
   price: number // This is the base price for the service itself
   category: string
-  image: string
+  image: string // Ensure this field is present
   description: string
   workerCount?: number // Optional for static subcategories
   estimatedTime?: string // Optional for static subcategories
@@ -127,9 +130,16 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
   const [specialRequests, setSpecialRequests] = useState<string>("") // New state for special requests
 
   const mapRef = useRef<L.Map | null>(null)
-  const markerRef = useRef<L.Marker | null>(null)
-  const companyMarkerRef = useRef<L.Marker | null>(null)
-  const lineRef = useRef<L.Polyline | null>(null)
+  const markerRef = useRef<L.Marker | null>(mapRef.current ? L.marker([0, 0]) : null)
+  const companyMarkerRef = useRef<L.Marker | null>(mapRef.current ? L.marker([0, 0]) : null)
+  const lineRef = useRef<L.Polyline | null>(
+    mapRef.current
+      ? L.polyline([
+          [0, 0],
+          [0, 0],
+        ])
+      : null,
+  )
 
   // Generate calendar days for the current month
   useEffect(() => {
@@ -383,6 +393,7 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
         userId,
         firstname,
         productName: serviceDetails.name, // Changed from serviceName to productName
+        serviceImage: serviceDetails.image, // Add serviceImage here
         providerName: selectedSeller.name,
         providerId: selectedSeller.id,
         workerCount: selectedSeller.workerCount || 1,
@@ -598,7 +609,7 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
 
           {bookingSuccess && (
             <>
-              <h2 className="text-xl font-semibold text-black">Booking Confirmation</h2>
+              <h2 className="text-xl font-medium text-gray-700">Booking Confirmation</h2>
               <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X className="h-6 w-6" />
               </button>
@@ -1076,7 +1087,7 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
               <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
                 <Check className="h-8 w-8 text-sky-500 animate-pulse" />
               </div>
-              <h3 className="text-xl font-medium text-black mb-2">Booking Submitted!</h3>
+              <h3 className="text-xl font-medium text-gray-700 mb-2">Booking Submitted!</h3>
               <div className="bg-sky-50 border border-sky-200 rounded-lg p-3 mb-4">
                 <p className="text-sky-800 text-sm">
                   <span className="font-medium">Notification sent!</span> Check your notifications for booking updates.
@@ -1088,80 +1099,166 @@ function WorkersModal({ isOpen, onClose, serviceDetails, staticSellers }: Worker
 
               <div className="flex flex-col md:flex-row gap-6 text-left">
                 {/* Left side - Booking information */}
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 flex-1">
-                  <h4 className="font-medium mb-3">Booking Details</h4>
-                  <div className="mb-2">
-                    <span className="font-medium">Service:</span> {serviceDetails.name}
-                  </div>
-                  <div className="mb-2">
-                    <span className="font-medium">Provider:</span> {selectedSeller?.name}
-                  </div>
-                  {selectedSeller?.workerCount && (
-                    <div className="mb-2">
-                      <span className="font-medium">Workers:</span> {selectedSeller.workerCount} worker
-                      {selectedSeller.workerCount > 1 ? "s" : ""}
+                <div className="bg-white p-6 rounded-lg border border-gray-200 mb-6 flex-1 shadow-md relative overflow-hidden">
+                  <h4 className="font-medium text-xl text-center mb-10 mt-10 text-gray-700">Booking Details</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                    <div className="space-y-2 text-gray-700">
+                      <div className="flex justify-between items-center pb-2 border-b border-dashed border-gray-300">
+                        <span className="text-sm text-gray-600">Service:</span>
+                        <span className="font-medium text-base">{serviceDetails.name}</span>
+                      </div>
+                      <div className="flex justify-between items-center pb-2 border-b border-dashed border-gray-300">
+                        <span className="text-sm text-gray-600">Provider:</span>
+                        <span className="font-medium text-base">{selectedSeller?.name}</span>
+                      </div>
+                      {selectedSeller?.workerCount && (
+                        <div className="flex justify-between items-center pb-2 border-b border-dashed border-gray-300">
+                          <span className="text-sm text-gray-600">Workers:</span>
+                          <span className="font-medium text-base">
+                            {selectedSeller.workerCount} worker{selectedSeller.workerCount > 1 ? "s" : ""}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center pb-2 border-b border-dashed border-gray-300">
+                        <span className="text-sm text-gray-600">Date:</span>
+                        <span className="font-medium text-base">{formatDate(selectedDate)}</span>
+                      </div>
+                      <div className="flex justify-between items-center pb-2 border-b border-dashed border-gray-300">
+                        <span className="text-sm text-gray-600">Time:</span>
+                        <span className="font-medium text-base">
+                          {selectedTime
+                            ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
+                                hour: "numeric",
+                                minute: "2-digit",
+                              })
+                            : "Not specified"}
+                        </span>
+                      </div>
+                      {/* START: Modified Service Location line */}
+                      <div className="flex items-start pb-2 border-b border-dashed border-gray-300">
+                        <span className="text-sm text-gray-600 flex-shrink-0 mr-2">Service Location:</span>
+                        <span className="font-medium text-base text-right flex-grow">{selectedLocation?.name}</span>
+                      </div>
+                      {/* END: Modified Service Location line */}
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Distance:</span>
+                        <span className="font-medium text-base">{selectedLocation?.distance.toFixed(1)} km</span>
+                      </div>
                     </div>
-                  )}
-                  <div className="mb-2">
-                    <span className="font-medium">Date:</span> {formatDate(selectedDate)}
                   </div>
-                  {selectedSeller?.estimatedTime && (
-                    <div className="mb-2">
-                      <span className="font-medium">Estimated Time:</span> {selectedSeller.estimatedTime}
-                    </div>
-                  )}
-                  <div className="mb-2">
-                    <span className="font-medium">Time:</span>{" "}
-                    {selectedTime
-                      ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
-                          hour: "numeric",
-                          minute: "2-digit",
-                        })
-                      : "Not specified"}
-                  </div>
-                  <div className="mb-2">
-                    <span className="font-medium">Service Location:</span> {selectedLocation?.name}
-                  </div>
-                  <div className="mb-2">
-                    <span className="font-medium">Distance:</span> {selectedLocation?.distance.toFixed(1)} km
-                  </div>
-
-                  <div className="mb-2">
-                    <span className="font-medium">Estimated Travel Times:</span>
-                    <div className="pl-4 mt-1">
-                      <div className="text-sm">
-                        <span>Light Traffic:</span>{" "}
-                        <span className="text-sky-600">{selectedLocation?.lightTrafficTime} min</span>
+                  <div className="mt-6 pt-4 border-t border-gray-200">
+                    <h5 className="font-medium text-lg mb-3 text-gray-800">Estimated Travel Times:</h5>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-700">Light Traffic:</span>{" "}
+                        <span className="font-medium text-sky-600">{selectedLocation?.lightTrafficTime} min</span>
                       </div>
-                      <div className="text-sm">
-                        <span>Medium Traffic:</span>{" "}
-                        <span className="text-yellow-600">{selectedLocation?.midTrafficTime} min</span>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-700">Medium Traffic:</span>{" "}
+                        <span className="font-medium text-yellow-600">{selectedLocation?.midTrafficTime} min</span>
                       </div>
-                      <div className="text-sm">
-                        <span>Heavy Traffic:</span>{" "}
-                        <span className="text-orange-600">{selectedLocation?.heavyTrafficTime} min</span>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-700">Heavy Traffic:</span>{" "}
+                        <span className="font-medium text-orange-600">{selectedLocation?.heavyTrafficTime} min</span>
                       </div>
-                      <div className="text-sm">
-                        <span>Weather Issues:</span>{" "}
-                        <span className="text-red-600">{selectedLocation?.weatherIssuesTime} min</span>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-700">Weather Issues:</span>{" "}
+                        <span className="font-medium text-red-600">{selectedLocation?.weatherIssuesTime} min</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Right side - Price information */}
-                <div className="bg-white p-4 rounded-lg border border-gray-200 mb-6 flex-1 shadow-sm">
-                  <h4 className="font-medium mb-3">Price Details</h4>
-                  <div className="mb-2">
-                    <span className="font-medium">Base Rate:</span> ₱{selectedSeller?.startingRate.toLocaleString()}
+                <div className="bg-white p-6 rounded-lg border border-gray-200 mb-6 flex-1 shadow-md relative overflow-hidden">
+                  {serviceDetails.image && (
+                    <div className="flex justify-center mb-4">
+                      <img
+                        src={logo}
+                        alt="Service Logo"
+                        className="h-40 w-40 mb-[-10px] mt-[-30px] object-contain"
+                      />
+                    </div>
+                  )}
+                  {/* <h4 className="font-medium text-xl text-center mb-4 text-gray-700">HandyGo</h4> */}
+                  <div className="space-y-3 text-gray-700">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Service:</span>
+                      <span className="font-medium text-base">{serviceDetails.name}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Provider:</span>
+                      <span className="font-medium text-base">{selectedSeller?.name}</span>
+                    </div>
+                    {/* Removed Workers line as requested */}
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Date:</span>
+                      <span className="font-medium text-base">{formatDate(selectedDate)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Time:</span>
+                      <span className="font-medium text-base">
+                        {selectedTime
+                          ? new Date(`2000-01-01T${selectedTime}`).toLocaleTimeString([], {
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })
+                          : "Not specified"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="mb-2">
-                    <span className="font-medium">Distance Charge:</span> ₱
-                    {selectedLocation ? (selectedLocation.distance * (selectedSeller?.ratePerKm || 0)).toFixed(2) : 0}
+                  <div className="border-t border-dashed border-gray-300 my-4"></div>
+                  <div className="space-y-3 text-gray-700">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Base Rate:</span>
+                      <span className="font-medium text-base">₱{selectedSeller?.startingRate.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Distance Charge:</span>
+                      <span className="font-medium text-base">
+                        ₱
+                        {selectedLocation
+                          ? (selectedLocation.distance * (selectedSeller?.ratePerKm || 0)).toFixed(2)
+                          : 0}
+                      </span>
+                    </div>
                   </div>
-                  <div className="mb-2 pt-2 border-t border-gray-200">
-                    <span className="font-medium">Total:</span> ₱
-                    {totalRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <div className="bg-gray-100 p-4 mt-6 rounded-lg">
+                    <div className="flex justify-between items-center font-bold text-xl text-gray-800 mb-2">
+                      <span>Total:</span>
+                      <span>
+                        ₱{totalRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-gray-600 text-sm">
+                      <span>Payment Status:</span>
+                      <span>Pending</span> {/* Placeholder for payment status */}
+                    </div>
+                  </div>
+                  {/* QR Code Section */}
+                  <div className="flex items-center justify-between mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="text-gray-700 text-sm pr-4">
+                      <h5 className="font-medium mb-1">Win coffee accessories or a month's supply of coffee!</h5>
+                      <p className="text-xs text-gray-500">Details via QR code</p>
+                    </div>
+                    <img
+                      src={qr}
+                      alt="QR Code"
+                      className="w-24 h-24 border border-gray-300 rounded"
+                    />
+                  </div>
+                  {/* Footer */}
+                  <div className="mt-8 text-xs text-gray-500 text-center">
+                    <p>HandyGO Inc.</p>
+                    <p>TIN: 1234567890</p>
+                    <a
+                      href="https://ohs-one.vercel.app/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sky-600 hover:underline mt-1 block"
+                    >
+                      Check receipt: ohs-one.vercel.app
+                    </a>
                   </div>
                 </div>
               </div>

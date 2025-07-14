@@ -20,7 +20,7 @@ interface SellerInfo {
 }
 
 interface BookingDetails {
-  id?: number
+  id?: string
   service?: string
   serviceType?: string
   date?: string
@@ -63,31 +63,31 @@ function Transaction() {
   const [successMessage, setSuccessMessage] = useState("")
   const [previousPage, setPreviousPage] = useState<string>("")
   const [, setBookingStatus] = useState<string>("")
-  const [bookingId, setBookingId] = useState<number | null>(null)
+  const [bookingId, setBookingId] = useState<string | null>(null) // Changed to string | null
 
   // Animation keyframes
   const keyframes = `
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  @keyframes bounceIn {
-    0% { transform: scale(0); opacity: 0; }
-    60% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  
-  @keyframes slideInUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-  }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
 `
 
   useEffect(() => {
@@ -118,14 +118,42 @@ function Transaction() {
     const userTypeParam = urlParams.get("userType")
     const statusParam = urlParams.get("status")
     const bookingIdParam = urlParams.get("bookingId")
+    const transactionTypeParam = urlParams.get("transactionType")
 
-    // Set booking ID if provided
-    if (bookingIdParam) {
-      setBookingId(Number.parseInt(bookingIdParam, 10))
-    } else if (bookingData && bookingData.id) {
-      setBookingId(bookingData.id)
+    // Set booking ID if provided (prioritize actual _id from location.state or URL)
+    if (bookingData && bookingData.id) {
+      setBookingId(bookingData.id) // This should now be the _id string
+    } else if (bookingIdParam) {
+      setBookingId(bookingIdParam) // This should be the _id string from URL
     } else if (sellerData && sellerData.id) {
-      setBookingId(sellerData.id)
+      // This might still be a number for dummy seller data, handle carefully if it's a booking
+      setBookingId(String(sellerData.id))
+    }
+
+    // Set transaction type from URL if available
+    if (transactionTypeParam) {
+      setTransactionType(transactionTypeParam as "subscription" | "booking" | "advertisement")
+    }
+
+    // Handle PayMongo redirect status
+    if (statusParam === "success" && bookingIdParam) {
+      setBookingId(bookingIdParam)
+      if (transactionTypeParam === "booking") {
+        setSuccessMessage("Payment completed successfully via PayMongo! You can now track your provider.")
+      } else if (transactionTypeParam === "subscription") {
+        setSuccessMessage(`You've successfully subscribed to the ${planName} plan via PayMongo!`)
+      } else if (transactionTypeParam === "advertisement") {
+        setSuccessMessage(`Your service "${planName}" is now being advertised via PayMongo!`)
+      } else {
+        setSuccessMessage("Payment completed successfully via PayMongo!")
+      }
+      setIsSuccessModalOpen(true)
+      // Optionally, update booking status on backend if not already done by webhook
+      // For this example, we'll assume the backend will handle status update via webhook
+      // or a separate API call if needed.
+    } else if (statusParam === "failed") {
+      setSuccessMessage("Payment failed or was cancelled. Please try again.")
+      setIsSuccessModalOpen(true) // Or a separate error modal
     }
 
     // Set booking status if provided
@@ -265,7 +293,7 @@ function Transaction() {
 
           // Create booking details object
           const newBookingDetails: BookingDetails = {
-            id: sellerData.id,
+            id: String(sellerData.id), // Ensure ID is string for consistency
             service: location.state?.service || "Service",
             serviceType: location.state?.serviceType || planName,
             date: location.state?.date || new Date().toISOString().split("T")[0],
@@ -316,42 +344,106 @@ function Transaction() {
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsProcessing(true)
 
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false)
-      setIsComplete(true)
+    if (paymentMethod === "paymongo") {
+      try {
+        const currentOrigin = window.location.origin
+        // This URL must point to your running Node.js backend (index.js)
+        const backendApiUrl = "http://localhost:3000/api/paymongo-create-link"
 
-      // Update booking status to ongoing after payment
-      if (transactionType === "booking") {
-        setBookingStatus("ongoing")
+        const successUrl = `${currentOrigin}/transaction?status=success&bookingId=${bookingId || ""}&transactionType=${transactionType}`
+        const failureUrl = `${currentOrigin}/transaction?status=failed&bookingId=${bookingId || ""}&transactionType=${transactionType}`
+
+        const response = await fetch(backendApiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            amount: totalAmount,
+            description: planName || bookingDetails?.service || "Service Payment",
+            success_url: successUrl,
+            failure_url: failureUrl,
+          }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || "Failed to initiate PayMongo payment.")
+        }
+
+        const data = await response.json()
+        window.open(data.checkoutUrl, "_blank") // Open in new tab
+        setIsProcessing(false) // Reset processing state in the original tab
+      } catch (error) {
+        console.error("Error initiating PayMongo payment:", error)
+        setSuccessMessage(
+          `Failed to initiate PayMongo payment: ${error instanceof Error ? error.message : String(error)}`,
+        )
+        setIsSuccessModalOpen(true) // Show error in success modal
+        setIsProcessing(false)
       }
+    } else {
+      // Simulate payment processing for other methods
+      setTimeout(async () => {
+        setIsProcessing(false)
+        setIsComplete(true)
 
-      // Set success message based on transaction type
-      if (transactionType === "subscription") {
-        setSuccessMessage(`You've successfully subscribed to the ${planName} plan!`)
-      } else if (transactionType === "advertisement") {
-        // NEW: Handle advertisement success message
-        setSuccessMessage(`Your service "${planName}" is now being advertised!`)
-      } else {
-        setSuccessMessage("Payment completed successfully! You can now view your provider's location.")
-      }
+        if (transactionType === "booking" && bookingId) {
+          try {
+            const token = localStorage.getItem("token") // Assuming token is stored in localStorage
+            if (!token) {
+              console.error("Authentication token not found.")
+              setSuccessMessage("Payment successful, but failed to update booking status (auth error).")
+              setIsSuccessModalOpen(true)
+              return
+            }
 
-      // Show success modal
-      setIsSuccessModalOpen(true)
-    }, 2000)
+            const response = await fetch(`http://localhost:3000/api/bookings/${bookingId}/status`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ status: "active", providerAccepted: false }),
+            })
+
+            if (!response.ok) {
+              const errorData = await response.json()
+              throw new Error(errorData.message || "Failed to update booking status on backend.")
+            }
+
+            const updatedBooking = await response.json()
+            console.log("Booking status updated successfully:", updatedBooking)
+            setBookingStatus("active") // Update local state
+            setSuccessMessage("Payment completed successfully! You can now track your provider.")
+          } catch (error) {
+            console.error("Error updating booking status via API:", error)
+            setSuccessMessage(
+              `Payment successful, but failed to update booking status: ${error instanceof Error ? error.message : String(error)}`,
+            )
+          }
+        } else if (transactionType === "subscription") {
+          setSuccessMessage(`You've successfully subscribed to the ${planName} plan!`)
+        } else if (transactionType === "advertisement") {
+          setSuccessMessage(`Your service "${planName}" is now being advertised!`)
+        } else {
+          setSuccessMessage("Payment completed successfully! You can now track your provider.")
+        }
+
+        // Show success modal
+        setIsSuccessModalOpen(true)
+      }, 2000)
+    }
   }
 
   const handleSuccessModalClose = () => {
     setIsSuccessModalOpen(false)
 
-    // Handle different redirect logic based on transaction type
     if (transactionType === "subscription" || transactionType === "advertisement") {
-      // NEW: Include advertisement
-      // For subscription/advertisement: redirect with the upgraded tier parameter
       const urlParams = new URLSearchParams(window.location.search)
       const planParam = urlParams.get("plan")
 
@@ -362,62 +454,32 @@ function Transaction() {
       }
     } else {
       // For booking: use localStorage to communicate with the floating dock
-
-      // Store booking information in localStorage
       const bookingInfo = {
-        id: bookingId,
-        status: "ongoing",
+        id: bookingId, // This will now be the _id string
+        status: "active",
         paymentComplete: true,
         timestamp: new Date().getTime(),
       }
 
       localStorage.setItem("recentBookingPayment", JSON.stringify(bookingInfo))
-
-      // Also set a flag to open the bookings drawer
       localStorage.setItem("openBookingsDrawer", "true")
-
-      // Set a flag to indicate the booking status should be updated
-      localStorage.setItem(
-        "updateBookingStatus",
-        JSON.stringify({
-          id: bookingId,
-          status: "ongoing",
-        }),
-      )
-
-      // Redirect to home page
       window.location.href = "/"
     }
   }
 
   const handleTrackProvider = () => {
-    // Close the modal
     setIsSuccessModalOpen(false)
 
-    // Store tracking information in localStorage
     const trackingInfo = {
-      id: bookingId,
-      status: "ongoing",
+      id: bookingId, // This will now be the _id string
+      status: "active",
       paymentComplete: true,
       trackProvider: true,
       timestamp: new Date().getTime(),
     }
 
     localStorage.setItem("recentBookingPayment", JSON.stringify(trackingInfo))
-
-    // Set a flag to open the bookings drawer
     localStorage.setItem("openBookingsDrawer", "true")
-
-    // Set a flag to indicate the booking status should be updated
-    localStorage.setItem(
-      "updateBookingStatus",
-      JSON.stringify({
-        id: bookingId,
-        status: "ongoing",
-      }),
-    )
-
-    // Redirect to home page
     window.location.href = "/"
   }
 
@@ -596,7 +658,7 @@ function Transaction() {
 
           <form onSubmit={handleSubmit}>
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Payment Method</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
               <div
                 className={`p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === "credit" ? "border-sky-300 bg-sky-500/10" : "border-gray-400 hover:border-gray-500"}`}
                 onClick={() => handlePaymentMethodChange("credit")}
@@ -622,6 +684,16 @@ function Transaction() {
                 <div className="flex items-center">
                   <DollarSign className="h-6 w-6 mr-3 text-gray-400" />
                   <span className="text-gray-700">Bank Transfer</span>
+                </div>
+              </div>
+              <div
+                className={`p-4 border rounded-lg cursor-pointer transition-all ${paymentMethod === "paymongo" ? "border-sky-300 bg-sky-500/10" : "border-gray-400 hover:border-gray-500"}`}
+                onClick={() => handlePaymentMethodChange("paymongo")}
+              >
+                <div className="flex items-center">
+                  <DollarSign className="h-6 w-6 mr-3 text-gray-400" />{" "}
+                  {/* Using DollarSign for now, consider a custom icon */}
+                  <span className="text-gray-700">PayMongo</span>
                 </div>
               </div>
             </div>
@@ -775,7 +847,7 @@ function Transaction() {
                     <span className="font-medium">Metro Bank</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Account Number:</span>
+                    <span className="text-600">Account Number:</span>
                     <span className="font-medium">1234-5678-9012-3456</span>
                   </div>
                   <div className="flex justify-between">

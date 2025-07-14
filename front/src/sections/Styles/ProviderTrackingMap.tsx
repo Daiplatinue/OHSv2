@@ -19,7 +19,7 @@ interface ProviderTrackingMapProps {
   providerName: string
   firstName?: string
   lastName?: string
-  bookingId: number
+  bookingId: string
   customerLocation: {
     lat: number
     lng: number
@@ -260,7 +260,7 @@ const ProviderTrackingMap = forwardRef<ProviderTrackingMapRef, ProviderTrackingM
 
     // Listen for force arrival events
     useEffect(() => {
-      const handleForceArrival = (event: CustomEvent<{ bookingId: number }>) => {
+      const handleForceArrival = (event: CustomEvent<{ bookingId: string }>) => {
         if (event.detail.bookingId === bookingId) {
           // Force the provider to arrive
           if (providerMarkerRef.current && customerMarkerRef.current) {
