@@ -21,6 +21,9 @@ import {
   Upload,
   AlertTriangle,
   XCircle,
+  Eye,
+  EyeOff,
+  CheckCircle2,
 } from "lucide-react"
 
 import MyFloatingDockCustomer from "../Styles/MyFloatingDock-Provider"
@@ -32,6 +35,31 @@ interface ProfileUpdateSuccessModalProps {
   isOpen: boolean
   onClose: () => void
 }
+
+// Animation keyframes from Transaction.tsx
+const keyframes = `
+@keyframes fadeIn {
+from { opacity: 0; }
+to { opacity: 1; }
+}
+
+@keyframes bounceIn {
+0% { transform: scale(0); opacity: 0; }
+60% { transform: scale(1.2); }
+100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideInUp {
+from { transform: translateY(20px); opacity: 0; }
+to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+0% { transform: scale(1); }
+50% { transform: scale(1.05); }
+100% { transform: scale(1); }
+}
+`
 
 const ProfileUpdateSuccessModal: React.FC<ProfileUpdateSuccessModalProps> = ({ isOpen, onClose }) => {
   return (
@@ -46,7 +74,7 @@ const ProfileUpdateSuccessModal: React.FC<ProfileUpdateSuccessModalProps> = ({ i
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-md" aria-hidden="true" />
         </Transition.Child>
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4 text-center">
@@ -59,21 +87,43 @@ const ProfileUpdateSuccessModal: React.FC<ProfileUpdateSuccessModalProps> = ({ i
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-sm transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all flex flex-col items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6 animate-pulse">
-                  <Check className="h-10 w-10 text-green-500 animate-bounce" />
+              {/* Redesigned modal panel */}
+              <Dialog.Panel
+                className="mx-auto max-w-md w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20 p-6"
+                style={{ animation: "fadeIn 0.5s ease-out" }}
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div
+                    className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6"
+                    style={{ animation: "pulse 2s ease-in-out infinite" }}
+                  >
+                    <CheckCircle2
+                      className="h-10 w-10 text-green-500"
+                      style={{ animation: "bounceIn 0.6s ease-out" }}
+                    />
+                  </div>
+
+                  <Dialog.Title
+                    as="h3"
+                    className="text-xl font-medium text-gray-900 mb-2"
+                    style={{ animation: "slideInUp 0.4s ease-out" }}
+                  >
+                    Profile Updated!
+                  </Dialog.Title>
+
+                  <p className="text-gray-600 mb-6" style={{ animation: "fadeIn 0.5s ease-out 0.2s both" }}>
+                    Your profile details have been successfully updated.
+                  </p>
+
+                  <button
+                    type="button"
+                    className="px-8 py-3 bg-sky-500 text-white rounded-full font-medium shadow-sm hover:bg-sky-600 active:scale-95 transition-all duration-200"
+                    onClick={onClose}
+                    style={{ animation: "fadeIn 0.5s ease-out 0.3s both" }}
+                  >
+                    Got it!
+                  </button>
                 </div>
-                <Dialog.Title as="h3" className="text-xl font-semibold leading-6 text-gray-700 mb-2">
-                  Profile Updated!
-                </Dialog.Title>
-                <p className="text-gray-600 text-center mb-6">Your profile details have been successfully updated.</p>
-                <button
-                  type="button"
-                  className="inline-flex justify-center rounded-md border border-transparent bg-sky-500 px-4 py-2 text-sm font-medium text-white hover:bg-sky-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
-                  onClick={onClose}
-                >
-                  Got it!
-                </button>
               </Dialog.Panel>
             </Transition.Child>
           </div>
@@ -110,23 +160,39 @@ const AccountObservationModal: React.FC<ProfileUpdateSuccessModalProps> = ({ isO
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-sm transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all flex flex-col items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-yellow-100 flex items-center justify-center mx-auto mb-6 animate-pulse">
-                  <AlertTriangle className="h-10 w-10 text-yellow-500 animate-bounce" />
+              <Dialog.Panel
+                className="mx-auto max-w-md w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20 p-6"
+                style={{ animation: "fadeIn 0.5s ease-out" }}
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div
+                    className="w-20 h-20 rounded-full bg-yellow-100 flex items-center justify-center mb-6"
+                    style={{ animation: "pulse 2s ease-in-out infinite" }}
+                  >
+                    <AlertTriangle
+                      className="h-10 w-10 text-yellow-500"
+                      style={{ animation: "bounceIn 0.6s ease-out" }}
+                    />
+                  </div>
+                  <Dialog.Title
+                    as="h3"
+                    className="text-xl font-medium text-gray-900 mb-2"
+                    style={{ animation: "slideInUp 0.4s ease-out" }}
+                  >
+                    Account Under Observation
+                  </Dialog.Title>
+                  <p className="text-gray-600 mb-6" style={{ animation: "fadeIn 0.5s ease-out 0.2s both" }}>
+                    Your account is now under observation. We will verify your account once all documents are approved.
+                  </p>
+                  <button
+                    type="button"
+                    className="px-8 py-3 bg-sky-500 text-white rounded-full font-medium shadow-sm hover:bg-sky-600 active:scale-95 transition-all duration-200"
+                    onClick={onClose}
+                    style={{ animation: "fadeIn 0.5s ease-out 0.3s both" }}
+                  >
+                    Got it!
+                  </button>
                 </div>
-                <Dialog.Title as="h3" className="text-xl font-semibold leading-6 text-gray-700 mb-2">
-                  Account Under Observation
-                </Dialog.Title>
-                <p className="text-gray-600 text-center mb-6">
-                  Your account is now under observation. We will verify your account once all documents are approved.
-                </p>
-                <button
-                  type="button"
-                  className="inline-flex justify-center rounded-md border border-transparent bg-sky-500 px-4 py-2 text-sm font-medium text-white hover:bg-sky-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
-                  onClick={onClose}
-                >
-                  Got it!
-                </button>
               </Dialog.Panel>
             </Transition.Child>
           </div>
@@ -238,6 +304,9 @@ function MyProfile() {
   const [secretQuestion, setSecretQuestion] = useState("")
   const [secretAnswer, setSecretAnswer] = useState("")
   const [secretCode, setSecretCode] = useState<string | null>(null)
+  // State for toggling visibility of secret answer
+  const [showSecretAnswerInput, setShowSecretAnswerInput] = useState(false)
+  const [showSecretAnswerView, setShowSecretAnswerView] = useState(false)
 
   // NEW: States for upload modals and image popup
   const [showWarningModal, setShowWarningModal] = useState(false)
@@ -1182,14 +1251,22 @@ function MyProfile() {
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                           <input
-                            type="text"
+                            type={showSecretAnswerInput ? "text" : "password"}
                             id="secretAnswer"
                             name="secretAnswer"
                             value={secretAnswer}
                             onChange={handleInputChange}
-                            className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                            className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-10 shadow-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
                             placeholder="Enter your secret answer"
                           />
+                          <button
+                            type="button"
+                            onClick={() => setShowSecretAnswerInput((prev) => !prev)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          >
+                            {showSecretAnswerInput ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            <span className="sr-only">{showSecretAnswerInput ? "Hide answer" : "Show answer"}</span>
+                          </button>
                         </div>
                       </div>
                       {secretCode && (
@@ -1203,13 +1280,10 @@ function MyProfile() {
                       )}
                     </div>
                   </div>
-
                 </div>
 
                 {/* Grouped ID Documents Upload and Secret Question & Answer */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-full">
-
-
                   {/* Email */}
                   <div>
                     <h4 className="text-lg font-medium mb-2 text-gray-700">Email Address</h4>
@@ -1250,8 +1324,6 @@ function MyProfile() {
                         )}
                     </div>
                   </div>
-
-
                 </div>
 
                 {/* ID Documents Upload */}
@@ -1516,11 +1588,27 @@ function MyProfile() {
                 {/* Secret Answer Status (not the answer itself) */}
                 <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                   <h4 className="mb-1 flex items-center text-sm font-medium text-gray-500">
-                    <Lock className="mr-2 h-4 w-4" /> Secret Answer Status
+                    <Lock className="mr-2 h-4 w-4" /> Secret Answer
                   </h4>
-                  <p className="text-gray-900">
-                    {userDetails?.secretAnswer && userDetails.secretAnswer !== "not provided" ? "Set" : "Not set"}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-gray-900">
+                      {userDetails?.secretAnswer && userDetails.secretAnswer !== "not provided"
+                        ? showSecretAnswerView
+                          ? userDetails.secretAnswer
+                          : "••••••••"
+                        : "Not set"}
+                    </p>
+                    {userDetails?.secretAnswer && userDetails.secretAnswer !== "not provided" && (
+                      <button
+                        type="button"
+                        onClick={() => setShowSecretAnswerView((prev) => !prev)}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        {showSecretAnswerView ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        <span className="sr-only">{showSecretAnswerView ? "Hide answer" : "Show answer"}</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -1793,13 +1881,13 @@ function MyProfile() {
                         <div className="block h-6 bg-gray-300 rounded-full w-10"></div>
                         <div className="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
                         <style>{`
-                      input:checked ~ .dot {
-                        transform: translateX(100%);
-                      }
-                      input:checked ~ .block {
-                        background-color: #3b82f6;
-                      }
-                    `}</style>
+                    input:checked ~ .dot {
+                      transform: translateX(100%);
+                    }
+                    input:checked ~ .block {
+                      background-color: #3b82f6;
+                    }
+                  `}</style>
                       </div>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
@@ -1918,6 +2006,9 @@ function MyProfile() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Include animation keyframes */}
+      <style>{keyframes}</style>
+
       {/* User Profile Section */}
       <div className="z-40 flex">
         <MyFloatingDockCustomer />
@@ -1989,43 +2080,31 @@ function MyProfile() {
           </div>
 
           <div className="pt-20">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl font-medium text-gray-700">
-                    {userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : "Provider"}
-                  </h1>
-                  <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
-                    {userDetails?.accountType === "customer"
-                      ? "Customer"
-                      : userDetails?.accountType === "provider"
-                        ? "Provider"
-                        : userDetails?.accountType || "invalid"}
-                  </span>
-                  {userDetails?.isVerified !== undefined && (
-                    <span
-                      className={`px-2 py-0.5 text-xs font-medium rounded-full ${userDetails.isVerified ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                        }`}
-                    >
-                      {userDetails.isVerified ? "Verified" : "Unverified"}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 mt-1 text-gray-600">
-                  <MapPin className="h-4 w-4" />
-                  <span>{userDetails?.location?.name || "Location not specified"}</span>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                {isEditingProfile && (
-                  <button
-                    onClick={handleResetImages}
-                    disabled={isResettingImages}
-                    className="flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-all hover:bg-gray-50"
+            <div className="flex items-center gap-2 justify-between">
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-medium text-gray-700">
+                  {userDetails ? `${userDetails.firstName} ${userDetails.lastName}` : "Provider"}
+                </h1>
+
+                <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
+                  {userDetails?.accountType === "customer"
+                    ? "Customer"
+                    : userDetails?.accountType === "provider"
+                      ? "Provider"
+                      : userDetails?.accountType || "invalid"}
+                </span>
+
+                {userDetails?.isVerified !== undefined && (
+                  <span
+                    className={`px-2 py-0.5 text-xs font-medium rounded-full ${userDetails.isVerified ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                      }`}
                   >
-                    {isResettingImages ? <Loader2 className="h-5 w-5 animate-spin" /> : "Reset"}
-                  </button>
+                    {userDetails.isVerified ? "Verified" : "Unverified"}
+                  </span>
                 )}
+
+              </div>
+              <div>
                 <button
                   onClick={() => {
                     if (!isEditingProfile) {
@@ -2039,9 +2118,27 @@ function MyProfile() {
                   {isEditingProfile ? "Done Editing" : "Change Profile"}
                 </button>
               </div>
+
             </div>
 
-            <p className="text-gray-600 max-w-2xl mb-6">{userDetails?.bio || "No bio provided"}</p>
+            <div className="flex items-center gap-2 mt-1 text-gray-600">
+              <MapPin className="h-4 w-4" />
+              <span>{userDetails?.location?.name || "Location not specified"}</span>
+            </div>
+            <div className="flex items-center gap-2 mt-8 text-gray-600">
+              <span>{userDetails?.bio}</span>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {isEditingProfile && (
+              <button
+                onClick={handleResetImages}
+                disabled={isResettingImages}
+                className="flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-all hover:bg-gray-50"
+              >
+                {isResettingImages ? <Loader2 className="h-5 w-5 animate-spin" /> : "Reset"}
+              </button>
+            )}
           </div>
         </div>
 
@@ -2052,8 +2149,8 @@ function MyProfile() {
               <button
                 onClick={() => setActiveTab("personal")}
                 className={`flex items-center gap-2 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium ${activeTab === "personal"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  ? "border-sky-500 text-sky-500"
+                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
               >
                 <svg
@@ -2077,8 +2174,8 @@ function MyProfile() {
               <button
                 onClick={() => setActiveTab("security")}
                 className={`flex items-center gap-2 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium ${activeTab === "security"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  ? "border-sky-500 text-sky-500"
+                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
               >
                 <svg
@@ -2101,8 +2198,8 @@ function MyProfile() {
               <button
                 onClick={() => setActiveTab("delete")}
                 className={`flex items-center gap-2 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium ${activeTab === "delete"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  ? "border-sky-500 text-sky-500"
+                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
               >
                 <svg
