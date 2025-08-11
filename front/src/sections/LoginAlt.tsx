@@ -1,3 +1,5 @@
+"use client"
+
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { X, AlertTriangle, XCircle, Clock, CheckCircle2, AlertCircle } from "lucide-react"
@@ -166,7 +168,9 @@ function LoginAlt() {
   const [showUnverifiedWarning, setShowUnverifiedWarning] = useState(false)
   const [customerMinimalMode, setCustomerMinimalMode] = useState(false)
 
-  // Removed: const router = useRouter() // Not used in Vite
+  // Define the API base URL using Vite's import.meta.env
+  // Provide a fallback for local development if the env var isn't set
+  const API_BASE_URL = import.meta.env.VITE_API_URL
 
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
@@ -187,7 +191,7 @@ function LoginAlt() {
           setLoading(false)
           return
         }
-        const response = await fetch("http://localhost:3000/api/users/login", {
+        const response = await fetch(`${API_BASE_URL}/api/users/login`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -195,10 +199,24 @@ function LoginAlt() {
           body: JSON.stringify({ email, password }),
         })
 
+        // Check if the response is OK before trying to parse JSON
+        if (!response.ok) {
+          const errorText = await response.text() // Get raw text for debugging
+          console.error("Server error response (password login):", response.status, errorText)
+          setUnsuccessMessage(
+            `Login failed: ${response.status} ${response.statusText}. ${errorText.substring(0, 100)}...`,
+          )
+          setShowUnsuccessModal(true)
+          setTimeout(() => setShowUnsuccessModal(false), 2000)
+          setLoading(false)
+          return
+        }
+
         const data = await response.json()
         console.log("Server response data (password login):", data) // Debugging log
 
         if (response.ok) {
+          // This check is redundant after the !response.ok check above, but harmless
           setSuccessMessage(data.message)
           setShowSuccessModal(true)
           // Store user data and token separately
@@ -255,7 +273,7 @@ function LoginAlt() {
         }
       } else {
         // Magic link: Send OTP
-        const response = await fetch("http://localhost:3000/api/users/send-otp", {
+        const response = await fetch(`${API_BASE_URL}/api/users/send-otp`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -263,10 +281,24 @@ function LoginAlt() {
           body: JSON.stringify({ email }),
         })
 
+        // Check if the response is OK before trying to parse JSON
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error("Server error response (send OTP):", response.status, errorText)
+          setUnsuccessMessage(
+            `Failed to send magic link: ${response.status} ${response.statusText}. ${errorText.substring(0, 100)}...`,
+          )
+          setShowUnsuccessModal(true)
+          setTimeout(() => setShowUnsuccessModal(false), 2000)
+          setLoading(false)
+          return
+        }
+
         const data = await response.json()
         console.log("Server response data (send OTP):", data) // Debugging log
 
         if (response.ok) {
+          // This check is redundant after the !response.ok check above, but harmless
           setSuccessMessage(data.message)
           setShowSuccessModal(true)
           setTimeout(() => {
@@ -335,7 +367,7 @@ function LoginAlt() {
 
   const handleResendOtp = useCallback(async (email: string) => {
     try {
-      const response = await fetch("http://localhost:3000/api/users/send-otp", {
+      const response = await fetch(`${API_BASE_URL}/api/users/send-otp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -591,7 +623,7 @@ function LoginAlt() {
           <button
             onClick={handleLogin}
             className={`w-full bg-gray-200 text-gray-500 hover:bg-gray-300 rounded-full h-12 font-medium transition-colors
-    ${!email || (showPasswordField && !password) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
+  ${!email || (showPasswordField && !password) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
             disabled={!email || (showPasswordField && !password) || loading}
           >
             {loading
@@ -712,9 +744,7 @@ function LoginAlt() {
                     }}
                     disabled={!termsAccepted} // Disabled if terms not accepted
                     className={`flex flex-col items-center justify-center p-6 border-2 rounded-xl transition-all w-[13rem] cursor-pointer
-                ${
-                  termsAccepted ? "hover:border-sky-400 hover:bg-sky-50" : "opacity-50 cursor-not-allowed bg-gray-100"
-                }`}
+              ${termsAccepted ? "hover:border-sky-400 hover:bg-sky-50" : "opacity-50 cursor-not-allowed bg-gray-100"}`}
                   >
                     <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mb-4">
                       <svg
@@ -744,9 +774,7 @@ function LoginAlt() {
                     }}
                     disabled={!termsAccepted} // Disabled if terms not accepted
                     className={`flex flex-col items-center justify-center p-6 border-2 rounded-xl transition-all w-[13rem] cursor-pointer
-                ${
-                  termsAccepted ? "hover:border-sky-400 hover:bg-sky-50" : "opacity-50 cursor-not-allowed bg-gray-100"
-                }`}
+              ${termsAccepted ? "hover:border-sky-400 hover:bg-sky-50" : "opacity-50 cursor-not-allowed bg-gray-100"}`}
                   >
                     <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mb-4">
                       <svg

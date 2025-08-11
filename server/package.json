@@ -8,8 +8,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "dev": "nodemon --env-file=.env index.js"
+    "start": "nodemon --env-file=.env index.js"
   },
   "keywords": [],
   "author": "",
@@ -33,13 +32,13 @@
     "mysql2": "^3.12.0",
     "node-fetch": "^3.3.2",
     "nodemailer": "^7.0.4",
+    "nodemon": "^3.1.9",
     "openai": "^5.8.2",
     "react-google-recaptcha": "^3.1.0",
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "@types/express": "^5.0.3",
-    "nodemon": "^3.1.9"
+    "@types/express": "^5.0.3"
   }
 }

@@ -623,3 +623,4 @@ server.listen(PORT, () => {
 
 console.log(process.env.OPENROUTER_API_KEY)
 console.log(process.env.RECAPTCHA_SECRET_KEY)
+console.log(process.env.VITE_API_URL)
