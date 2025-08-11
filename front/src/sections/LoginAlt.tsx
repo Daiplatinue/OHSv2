@@ -168,9 +168,9 @@ function LoginAlt() {
   const [showUnverifiedWarning, setShowUnverifiedWarning] = useState(false)
   const [customerMinimalMode, setCustomerMinimalMode] = useState(false)
 
-  // Define the API base URL using Vite's import.meta.env
+  // Define the API base URL using Next.js's process.env for client-side
   // Provide a fallback for local development if the env var isn't set
-  const API_BASE_URL = import.meta.env.VITE_API_URL
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
@@ -179,6 +179,12 @@ function LoginAlt() {
 
     if (!email) {
       setError("Please enter your email.")
+      setLoading(false)
+      return
+    }
+
+    if (!API_BASE_URL) {
+      setError("API Base URL is not configured. Please check environment variables.")
       setLoading(false)
       return
     }
@@ -365,28 +371,31 @@ function LoginAlt() {
     }, 1500)
   }, [])
 
-  const handleResendOtp = useCallback(async (email: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/users/send-otp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      })
-      const data = await response.json()
-      if (response.ok) {
-        console.log("Resend OTP successful:", data.message)
-        return true
-      } else {
-        console.error("Resend OTP failed:", data.message)
+  const handleResendOtp = useCallback(
+    async (email: string) => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/users/send-otp`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        })
+        const data = await response.json()
+        if (response.ok) {
+          console.log("Resend OTP successful:", data.message)
+          return true
+        } else {
+          console.error("Resend OTP failed:", data.message)
+          return false
+        }
+      } catch (error) {
+        console.error("Error during resend OTP:", error)
         return false
       }
-    } catch (error) {
-      console.error("Error during resend OTP:", error)
-      return false
-    }
-  }, [])
+    },
+    [API_BASE_URL],
+  )
 
   const closeStatusModal = () => {
     setModalVisible(false)
@@ -672,7 +681,7 @@ function LoginAlt() {
             <button className="flex items-center justify-center gap-2 rounded-full text-sm font-medium border border-gray-300 py-2 hover:bg-gray-50 transition-colors">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
-                  d="M14.0756 10.5C14.0654 9.25225 14.6607 8.10938 15.6725 7.4165C15.0908 6.54163 14.1432 5.97488 13.1166 5.9165C12.0287 5.80925 10.8854 6.56188 10.3332 6.56188C9.74844 6.56188 8.7666 5.94275 7.91094 5.94275C6.42969 5.96675 4.82656 7.07613 4.82656 9.34275C4.82656 10.0166 4.94219 10.7155 5.17344 11.4395C5.49531 12.4155 6.74219 15.2249 8.04219 15.1916C8.84844 15.1749 9.39844 14.6124 10.4332 14.6124C11.4322 14.6124 11.9412 15.1916 12.8412 15.1916C14.1578 15.1749 15.2791 12.6082 15.5834 11.6291C13.8537 10.8207 14.0756 10.5498 14.0756 10.5Z"
+                  d="M14.0756 10.5C14.0654 9.25225 14.6607 8.10938 15.6725 7.4165C15.0908 6.54163 14.1432 5.97488 13.1166 5.9165C12.0287 5.80925 10.8854 6.56188 10.3332 6.56188C9.74844 6.56188 8.76660 5.94275 7.91094 5.94275C6.42969 5.96675 4.82656 7.07613 4.82656 9.34275C4.82656 10.0166 4.94219 10.7155 5.17344 11.4395C5.49531 12.4155 6.74219 15.2249 8.04219 15.1916C8.84844 15.1749 9.39844 14.6124 10.4332 14.6124C11.4322 14.6124 11.9412 15.1916 12.8412 15.1916C14.1578 15.1749 15.2791 12.6082 15.5834 11.6291C13.8537 10.8207 14.0756 10.5498 14.0756 10.5Z"
                   fill="black"
                 />
                 <path
