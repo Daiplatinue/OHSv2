@@ -170,7 +170,7 @@ function LoginAlt() {
 
   // Define the API base URL using Next.js's process.env for client-side
   // Provide a fallback for local development if the env var isn't set
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+  const API_BASE_URL = process.env.VITE_API_URL
 
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
