@@ -565,7 +565,7 @@ function Proposition() {
                 <div
                   className={`transition-transform duration-1000 delay-500 ${heroAnimationComplete ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0"}`}
                 >
-                  <span className="block text-gray-300 font-medium">IN PHILIPPINES</span>
+                  <span className="block text-gray-300 font-medium">IN CEBU CITY</span>
                 </div>
               </h1>
 

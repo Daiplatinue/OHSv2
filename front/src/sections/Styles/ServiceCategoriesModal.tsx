@@ -8,7 +8,7 @@ interface CooDetails {
 }
 
 interface ServiceSubcategory {
-  id: number | string // Allow string for dynamic service IDs
+  id: number | string
   name: string
   description: string
   price: number
@@ -24,7 +24,7 @@ interface ServiceCategoriesModalProps {
   onClose: () => void
   categoryName: string
   subcategories: ServiceSubcategory[]
-  onSelectSubcategory: (subcategory: ServiceSubcategory) => void // Change type to pass full object
+  onSelectSubcategory: (subcategory: ServiceSubcategory) => void
 }
 
 function ServiceCategoriesModal({

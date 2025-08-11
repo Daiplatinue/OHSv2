@@ -64,7 +64,6 @@ interface BookingSummary {
 export default function ProviderSimulation({
   customerName,
   customerLocation,
-  onSimulationComplete,
   onClose,
 }: ProviderSimulationProps) {
   const [estimatedTime, setEstimatedTime] = useState(15) // minutes
@@ -82,10 +81,8 @@ export default function ProviderSimulation({
   const [availableRoutes, setAvailableRoutes] = useState<Route[]>([])
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [showCompletionModal, setShowCompletionModal] = useState(false)
-  const [laborCost, setLaborCost] = useState(0)
-  const [partsCost, setPartsCost] = useState(0)
-  const [bookingSummary, setBookingSummary] = useState<BookingSummary | null>(null)
+  const [, setShowCompletionModal] = useState(false)
+  const [bookingSummary, ] = useState<BookingSummary | null>(null)
   const [showWeather, ] = useState(false)
   const [currentWeather, ] = useState<"clear" | "rain" | "snow" | "storm" | "cloudy">("clear")
 
@@ -117,19 +114,6 @@ export default function ProviderSimulation({
     "Weather Problem",
     "Vehicle Problem",
   ]
-
-  // Mock previous booking summary
-  const previousBookingSummary: BookingSummary = {
-    serviceType: "Plumbing Repair",
-    date: "May 12, 2025",
-    time: "10:00 AM - 12:00 PM",
-    location: "123 Main St, Quezon City",
-    laborCost: 1500,
-    partsCost: 850,
-    travelCost: 350,
-    discount: 200,
-    total: 2500,
-  }
 
   useEffect(() => {
     // Add custom styles
@@ -1581,35 +1565,9 @@ export default function ProviderSimulation({
     setShowCompletionModal(true)
   }
 
-  const handleSubmitCompletion = () => {
-    // Calculate total
-    const travelCost = 350 // Example travel cost
-    const total = laborCost + partsCost + travelCost - previousBookingSummary.discount
-
-    // Create booking summary
-    const newBookingSummary: BookingSummary = {
-      serviceType: "Emergency Repair",
-      date: new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
-      time: `${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, "0")} - ${new Date().getHours() + 2}:${String(new Date().getMinutes()).padStart(2, "0")}`,
-      location: customerLocation,
-      laborCost: laborCost,
-      partsCost: partsCost,
-      travelCost: travelCost,
-      discount: previousBookingSummary.discount,
-      total: total,
-    }
-
-    setBookingSummary(newBookingSummary)
-    setShowCompletionModal(false)
-    onSimulationComplete()
-  }
 
   const closeSuccessModal = () => {
     setShowSuccessModal(false)
-  }
-
-  const closeCompletionModal = () => {
-    setShowCompletionModal(false)
   }
 
   // Success Modal Component
@@ -1655,143 +1613,6 @@ export default function ProviderSimulation({
               className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors"
             >
               Complete Service
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Completion Modal Component
-  const CompletionModal = () => {
-    if (!showCompletionModal) return null
-
-    return (
-      <div className="modal-overlay">
-        <div className="modal-content" style={{ maxWidth: "700px" }}>
-          <div className="modal-header">
-            <h3 className="text-lg font-medium">Complete Service</h3>
-            <button onClick={closeCompletionModal} className="text-gray-400 hover:text-gray-600">
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="modal-body">
-            <div className="flex flex-col md:flex-row gap-4">
-              {/* Left side - Input fields */}
-              <div className="flex-1">
-                <h4 className="font-medium mb-4">Service Details</h4>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Labor Cost (₱)</label>
-                  <input
-                    type="number"
-                    value={laborCost}
-                    onChange={(e) => setLaborCost(Number(e.target.value))}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Parts Cost (₱)</label>
-                  <input
-                    type="number"
-                    value={partsCost}
-                    onChange={(e) => setPartsCost(Number(e.target.value))}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Service Description</label>
-                  <textarea
-                    className="w-full p-2 border border-gray-300 rounded-md h-24"
-                    placeholder="Describe the service performed..."
-                  ></textarea>
-                </div>
-
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
-                  <h4 className="font-medium mb-2">Previous Booking Summary</h4>
-                  <div className="text-sm space-y-1">
-                    <div className="flex justify-between">
-                      <span>Service Type:</span>
-                      <span>{previousBookingSummary.serviceType}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Date:</span>
-                      <span>{previousBookingSummary.date}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Total:</span>
-                      <span>₱{previousBookingSummary.total.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right side - Cost breakdown */}
-              <div className="flex-1">
-                <h4 className="font-medium mb-4">Payment Summary</h4>
-
-                <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                      <span className="text-gray-600">Labor Cost:</span>
-                      <span className="font-medium">₱{laborCost.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                      <span className="text-gray-600">Parts Cost:</span>
-                      <span className="font-medium">₱{partsCost.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                      <span className="text-gray-600">Travel Cost:</span>
-                      <span className="font-medium">₱350</span>
-                    </div>
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                      <span className="text-gray-600">Subtotal:</span>
-                      <span className="font-medium">₱{(laborCost + partsCost + 350).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                      <span className="text-gray-600">Discount:</span>
-                      <span className="font-medium text-green-600">
-                        -₱{previousBookingSummary.discount.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center pt-2 text-lg">
-                      <span className="font-bold">Total:</span>
-                      <span className="font-bold text-sky-700">
-                        ₱{(laborCost + partsCost + 350 - previousBookingSummary.discount).toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-sky-50 p-4 rounded-lg border border-sky-100">
-                  <h4 className="font-medium mb-2 flex items-center">
-                    <CheckCircle className="h-4 w-4 mr-2 text-sky-600" />
-                    Service Completion
-                  </h4>
-                  <p className="text-sm text-sky-800 mb-2">
-                    By submitting this form, you confirm that the service has been completed successfully.
-                  </p>
-                  <p className="text-sm text-sky-800">
-                    The customer will receive a notification with the service details and payment summary.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="modal-footer">
-            <button
-              onClick={closeCompletionModal}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmitCompletion}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Submit & Complete
             </button>
           </div>
         </div>
@@ -1935,7 +1756,7 @@ export default function ProviderSimulation({
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left side - Map */}
-        <div className="w-3/5 h-[37rem] p-4 overflow-hidden">
+        <div className="w-3/5 h-[35rem] p-4 overflow-hidden">
           <div className="bg-gray-100 p-3 rounded-lg mb-3">
             <div className="flex justify-between items-center mb-2">
               <div className="flex items-center">
@@ -2380,7 +2201,6 @@ export default function ProviderSimulation({
 
       {/* Modals */}
       <SuccessModal />
-      <CompletionModal />
       {bookingSummary && <BookingSummaryComponent />}
     </div>
   )

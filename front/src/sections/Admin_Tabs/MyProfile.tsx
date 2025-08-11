@@ -4,7 +4,6 @@ import MyFloatingDock from "../Styles/MyFloatingDock"
 import { Dialog } from "@headlessui/react"
 import { MapPin, Camera, X } from "lucide-react"
 import image1 from "../../assets/No_Image_Available.jpg"
-import Footer from "../Styles/Footer"
 
 interface PersonalInfo {
   id: number
@@ -23,7 +22,7 @@ interface PersonalInfo {
 function MyProfile() {
   const [activeTab, setActiveTab] = useState("personal")
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [selectedInfo, setSelectedInfo] = useState<PersonalInfo | null>(null)
+  const [selectedInfo,] = useState<PersonalInfo | null>(null)
   const [editedInfo, setEditedInfo] = useState<Partial<PersonalInfo>>({})
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
 
@@ -42,90 +41,7 @@ function MyProfile() {
   }
 
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo[]>([
-    {
-      id: 1,
-      type: "education",
-      title: "Computer Science",
-      description: "Bachelor's degree in Computer Science with focus on software engineering and data structures.",
-      startDate: "2010-09-01",
-      endDate: "2014-06-30",
-      organization: "Stanford University",
-      location: "Stanford, CA",
-      image: "https://cdn.pixabay.com/photo/2017/01/24/03/53/plant-2004483_1280.jpg",
-    },
-    {
-      id: 2,
-      type: "education",
-      title: "Machine Learning",
-      description: "Master's degree in Machine Learning and Artificial Intelligence.",
-      startDate: "2014-09-01",
-      endDate: "2016-06-30",
-      organization: "MIT",
-      location: "Cambridge, MA",
-      image: "https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923_1280.jpg",
-    },
-    {
-      id: 3,
-      type: "experience",
-      title: "Senior Developer",
-      description: "Led a team of 5 developers to build and maintain enterprise-level web applications.",
-      startDate: "2020-01-15",
-      endDate: "Present",
-      organization: "Tech Solutions Inc.",
-      location: "San Francisco, CA",
-      hasNotification: true,
-      notificationCount: 2,
-      image: "https://cdn.pixabay.com/photo/2024/07/23/09/14/ai-generated-8914595_1280.jpg",
-    },
-    {
-      id: 4,
-      type: "experience",
-      title: "Web Developer",
-      description: "Developed and maintained client websites using React, Node.js, and MongoDB.",
-      startDate: "2016-08-01",
-      endDate: "2019-12-31",
-      organization: "Digital Creations",
-      location: "Los Angeles, CA",
-      image: "https://cdn.pixabay.com/photo/2014/02/17/14/28/vacuum-cleaner-268179_1280.jpg",
-    },
-    {
-      id: 5,
-      type: "skills",
-      title: "Frontend Development",
-      description:
-        "Proficient in React, Vue.js, HTML5, CSS3, and JavaScript. Experienced in building responsive and accessible web applications.",
-      image: "https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923_1280.jpg",
-    },
-    {
-      id: 6,
-      type: "skills",
-      title: "Backend Development",
-      description:
-        "Experienced with Node.js, Express, Python, Django, and RESTful API design. Familiar with database design and optimization.",
-      hasNotification: true,
-      notificationCount: 1,
-      image: "https://cdn.pixabay.com/photo/2024/07/23/09/14/ai-generated-8914595_1280.jpg",
-    },
   ])
-
-  const handleEditInfo = (info: PersonalInfo) => {
-    setSelectedInfo(info)
-    setEditedInfo({
-      title: info.title,
-      description: info.description,
-      startDate: info.startDate,
-      endDate: info.endDate,
-      organization: info.organization,
-      location: info.location,
-      image: info.image,
-    })
-    setIsEditModalOpen(true)
-  }
-
-  const handleDeleteInfo = (info: PersonalInfo) => {
-    setSelectedInfo(info)
-    setIsDeleteConfirmOpen(true)
-  }
 
   const handleSaveInfo = () => {
     if (!selectedInfo) return
@@ -202,278 +118,6 @@ function MyProfile() {
               <p className="text-gray-900">{userDetails.description}</p>
             </div>
           </div>
-
-          {/* Education */}
-          <div className="bg-white rounded-3xl shadow-sm p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">Education</h3>
-              <button className="text-sky-500 hover:text-sky-600 flex items-center gap-1">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="lucide lucide-plus"
-                >
-                  <path d="M5 12h14" />
-                  <path d="M12 5v14" />
-                </svg>
-                Add Education
-              </button>
-            </div>
-            <div className="space-y-6">
-              {personalInfo
-                .filter((info) => info.type === "education")
-                .map((edu) => (
-                  <div
-                    key={edu.id}
-                    className="flex flex-col md:flex-row gap-4 pb-4 border-b border-gray-100 last:border-0 last:pb-0"
-                  >
-                    <div className="md:w-1/4">
-                      <div className="w-full h-24 rounded-lg overflow-hidden bg-gray-100">
-                        <img src={edu.image || image1} alt={edu.title} className="w-full h-full object-cover" />
-                      </div>
-                    </div>
-                    <div className="md:w-3/4">
-                      <div className="flex justify-between">
-                        <h4 className="text-lg font-medium">{edu.title}</h4>
-                        <div className="flex space-x-2">
-                          <button onClick={() => handleEditInfo(edu)} className="text-gray-500 hover:text-gray-700">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="lucide lucide-pencil"
-                            >
-                              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                              <path d="m15 5 4 4" />
-                            </svg>
-                          </button>
-                          <button onClick={() => handleDeleteInfo(edu)} className="text-gray-500 hover:text-red-500">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="lucide lucide-trash-2"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                              <line x1="10" x2="10" y1="11" y2="17" />
-                              <line x1="14" x2="14" y1="11" y2="17" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                      <p className="text-gray-700 text-sm">
-                        {edu.organization} {edu.location && `• ${edu.location}`}
-                      </p>
-                      <p className="text-gray-600 text-sm mb-2">
-                        {new Date(edu.startDate || "").toLocaleDateString("en-US", { year: "numeric", month: "short" })}{" "}
-                        -
-                        {edu.endDate === "Present"
-                          ? " Present"
-                          : edu.endDate
-                            ? ` ${new Date(edu.endDate).toLocaleDateString("en-US", { year: "numeric", month: "short" })}`
-                            : ""}
-                      </p>
-                      <p className="text-gray-600 text-sm">{edu.description}</p>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-
-          {/* Experience */}
-          <div className="bg-white rounded-3xl shadow-sm p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">Work Experience</h3>
-              <button className="text-sky-500 hover:text-sky-600 flex items-center gap-1">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="lucide lucide-plus"
-                >
-                  <path d="M5 12h14" />
-                  <path d="M12 5v14" />
-                </svg>
-                Add Experience
-              </button>
-            </div>
-            <div className="space-y-6">
-              {personalInfo
-                .filter((info) => info.type === "experience")
-                .map((exp) => (
-                  <div
-                    key={exp.id}
-                    className="flex flex-col md:flex-row gap-4 pb-4 border-b border-gray-100 last:border-0 last:pb-0"
-                  >
-                    <div className="md:w-1/4">
-                      <div className="w-full h-24 rounded-lg overflow-hidden bg-gray-100">
-                        <img src={exp.image || image1} alt={exp.title} className="w-full h-full object-cover" />
-                      </div>
-                    </div>
-                    <div className="md:w-3/4">
-                      <div className="flex justify-between">
-                        <h4 className="text-lg font-medium">{exp.title}</h4>
-                        <div className="flex space-x-2">
-                          <button onClick={() => handleEditInfo(exp)} className="text-gray-500 hover:text-gray-700">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="lucide lucide-pencil"
-                            >
-                              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                              <path d="m15 5 4 4" />
-                            </svg>
-                          </button>
-                          <button onClick={() => handleDeleteInfo(exp)} className="text-gray-500 hover:text-red-500">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="lucide lucide-trash-2"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                              <line x1="10" x2="10" y1="11" y2="17" />
-                              <line x1="14" x2="14" y1="11" y2="17" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                      <p className="text-gray-700 text-sm">
-                        {exp.organization} {exp.location && `• ${exp.location}`}
-                      </p>
-                      <p className="text-gray-600 text-sm mb-2">
-                        {new Date(exp.startDate || "").toLocaleDateString("en-US", { year: "numeric", month: "short" })}{" "}
-                        -
-                        {exp.endDate === "Present"
-                          ? " Present"
-                          : exp.endDate
-                            ? ` ${new Date(exp.endDate).toLocaleDateString("en-US", { year: "numeric", month: "short" })}`
-                            : ""}
-                      </p>
-                      <p className="text-gray-600 text-sm">{exp.description}</p>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-
-          {/* Skills */}
-          <div className="bg-white rounded-3xl shadow-sm p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">Skills & Expertise</h3>
-              <button className="text-sky-500 hover:text-sky-600 flex items-center gap-1">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="lucide lucide-plus"
-                >
-                  <path d="M5 12h14" />
-                  <path d="M12 5v14" />
-                </svg>
-                Add Skill
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {personalInfo
-                .filter((info) => info.type === "skills")
-                .map((skill) => (
-                  <div key={skill.id} className="bg-gray-50 rounded-xl p-4 relative">
-                    <div className="flex justify-between items-start">
-                      <h4 className="text-lg font-medium">{skill.title}</h4>
-                      <div className="flex space-x-2">
-                        <button onClick={() => handleEditInfo(skill)} className="text-gray-500 hover:text-gray-700">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="lucide lucide-pencil"
-                          >
-                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                            <path d="m15 5 4 4" />
-                          </svg>
-                        </button>
-                        <button onClick={() => handleDeleteInfo(skill)} className="text-gray-500 hover:text-red-500">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="lucide lucide-trash-2"
-                          >
-                            <path d="M3 6h18" />
-                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                            <line x1="10" x2="10" y1="11" y2="17" />
-                            <line x1="14" x2="14" y1="11" y2="17" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    <p className="text-gray-600 text-sm mt-2">{skill.description}</p>
-                  </div>
-                ))}
-            </div>
-          </div>
         </div>
       )
     }
@@ -525,138 +169,6 @@ function MyProfile() {
               </button>
             </div>
           </form>
-
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <h3 className="text-xl font-semibold mb-6">Two-Factor Authentication</h3>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-700 font-medium">Protect your account with 2FA</p>
-                <p className="text-gray-500 text-sm mt-1">
-                  Add an extra layer of security to your account by requiring both your password and authentication
-                  code.
-                </p>
-              </div>
-              <button className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-all">
-                Enable 2FA
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <h3 className="text-xl font-semibold mb-6">Login Sessions</h3>
-            <div className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-xl">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-medium">Current Session</p>
-                    <p className="text-gray-500 text-sm mt-1">San Francisco, CA • Chrome on Windows</p>
-                    <p className="text-gray-500 text-sm">Started: March 18, 2025 at 1:42 PM</p>
-                  </div>
-                  <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Active</span>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-xl">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-medium">Mobile App</p>
-                    <p className="text-gray-500 text-sm mt-1">Los Angeles, CA • iPhone App</p>
-                    <p className="text-gray-500 text-sm">Last active: March 17, 2025 at 8:30 AM</p>
-                  </div>
-                  <button className="text-red-500 text-sm hover:text-red-600">Revoke</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    }
-
-    if (activeTab === "earnings") {
-      return (
-        <div className="space-y-8">
-          <div className="bg-white rounded-3xl shadow-sm p-6">
-            <h3 className="text-xl font-semibold mb-6">Commission Overview</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-sky-50 rounded-xl p-4">
-                <p className="text-sky-500 text-sm font-medium">Total Commissions</p>
-                <p className="text-3xl font-bold mt-1">₱124,850</p>
-                <p className="text-gray-500 text-sm mt-2">Lifetime earnings</p>
-              </div>
-              <div className="bg-green-50 rounded-xl p-4">
-                <p className="text-green-500 text-sm font-medium">This Month</p>
-                <p className="text-3xl font-bold mt-1">₱12,450</p>
-                <p className="text-gray-500 text-sm mt-2">+18% from last month</p>
-              </div>
-              <div className="bg-purple-50 rounded-xl p-4">
-                <p className="text-purple-500 text-sm font-medium">Pending</p>
-                <p className="text-3xl font-bold mt-1">₱4,250</p>
-                <p className="text-gray-500 text-sm mt-2">From 3 service providers</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-3xl shadow-sm p-6">
-            <h3 className="text-xl font-semibold mb-6">Recent Commission Transactions</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Date</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Service Provider</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Service Type</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Total Amount</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Commission</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-sm">Mar 15, 2025</td>
-                    <td className="py-3 px-4 text-sm">Michael Rodriguez</td>
-                    <td className="py-3 px-4 text-sm">Plumbing Services</td>
-                    <td className="py-3 px-4 text-sm">₱8,500</td>
-                    <td className="py-3 px-4 text-sm font-medium">₱850</td>
-                    <td className="py-3 px-4 text-sm">
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Paid</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-sm">Mar 14, 2025</td>
-                    <td className="py-3 px-4 text-sm">Sarah Williams</td>
-                    <td className="py-3 px-4 text-sm">Cleaning Services</td>
-                    <td className="py-3 px-4 text-sm">₱4,350</td>
-                    <td className="py-3 px-4 text-sm font-medium">₱435</td>
-                    <td className="py-3 px-4 text-sm">
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Paid</span>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-sm">Mar 10, 2025</td>
-                    <td className="py-3 px-4 text-sm">David Chen</td>
-                    <td className="py-3 px-4 text-sm">Electrical Repairs</td>
-                    <td className="py-3 px-4 text-sm">₱6,800</td>
-                    <td className="py-3 px-4 text-sm font-medium">₱680</td>
-                    <td className="py-3 px-4 text-sm">
-                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Pending</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="py-3 px-4 text-sm">Mar 05, 2025</td>
-                    <td className="py-3 px-4 text-sm">Lisa Thompson</td>
-                    <td className="py-3 px-4 text-sm">Home Renovation</td>
-                    <td className="py-3 px-4 text-sm">₱15,800</td>
-                    <td className="py-3 px-4 text-sm font-medium">₱1,580</td>
-                    <td className="py-3 px-4 text-sm">
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Paid</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-4 text-right">
-              <button className="text-sky-500 hover:text-sky-600 text-sm font-medium">View All Transactions</button>
-            </div>
-          </div>
         </div>
       )
     }
@@ -734,7 +246,7 @@ function MyProfile() {
       return (
         <div className="bg-white rounded-3xl shadow-sm p-6">
           <h3 className="text-xl font-semibold mb-6">Booking Settings</h3>
-          <p className="text-gray-600 mb-6">Configure system-wide booking timers and commission settings.</p>
+          <p className="text-gray-600 mb-6">Configure system-wide booking timers and auto cancellation settings.</p>
 
           <div className="space-y-8">
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
@@ -742,12 +254,12 @@ function MyProfile() {
               <ul className="list-disc pl-5 space-y-2 text-blue-700 text-sm">
                 <li>Changes to these settings will affect all future bookings</li>
                 <li>Timer values are in minutes</li>
-                <li>Commission settings affect platform revenue</li>
+                <li>Booking settings affect platform revenue</li>
               </ul>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
-              {/* Commission Timer Settings */}
+              {/* Booking Timer Settings */}
               <div className="border border-gray-200 rounded-xl p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-2 rounded-lg bg-sky-100 text-sky-600">
@@ -770,20 +282,20 @@ function MyProfile() {
                     </svg>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-lg">Commission Timer</h4>
-                    <p className="text-sm text-gray-500">Time before commission is automatically processed</p>
+                    <h4 className="font-semibold text-lg">Booking Timer</h4>
+                    <p className="text-sm text-gray-500">Time before booking is automatically processed</p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="commission-timer" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="booking-timer" className="block text-sm font-medium text-gray-700 mb-1">
                       Timer Duration (minutes)
                     </label>
                     <div className="flex">
                       <input
                         type="number"
-                        id="commission-timer"
+                        id="booking-timer"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
                         defaultValue={1}
                         min={1}
@@ -792,26 +304,29 @@ function MyProfile() {
                     </div>
                     <p className="text-xs text-gray-500 mt-1">Default: 1 minute. Recommended range: 1-5 minutes.</p>
                   </div>
-
-                  <div className="pt-2">
-                    <label htmlFor="commission-rate" className="block text-sm font-medium text-gray-700 mb-1">
-                      Commission Rate (%)
+                </div>
+                <div className="pt-2 mt-5">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="enable-notifications" className="text-sm font-medium text-gray-700">
+                      Send Reminder Notifications
                     </label>
-                    <div className="flex">
-                      <input
-                        type="number"
-                        id="commission-rate"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                        defaultValue={0.5}
-                        min={1}
-                        max={20}
-                        step={0.5}
-                      />
+                    <div className="relative inline-block w-10 mr-2 align-middle select-none">
+                      <input type="checkbox" id="enable-notifications" defaultChecked className="sr-only" />
+                      <div className="block h-6 bg-gray-300 rounded-full w-10"></div>
+                      <div className="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
+                      <style>{`
+                          input:checked ~ .dot {
+                            transform: translateX(100%);
+                          }
+                          input:checked ~ .block {
+                            background-color: #3b82f6;
+                          }
+                        `}</style>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Default: 0.5%. This is the percentage taken from each transaction.
-                    </p>
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Send notifications to customers before auto-cancellation.
+                  </p>
                 </div>
               </div>
 
@@ -971,8 +486,8 @@ function MyProfile() {
               <button
                 onClick={() => setActiveTab("personal")}
                 className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 whitespace-nowrap ${activeTab === "personal"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-sky-500 text-sky-500"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
               >
                 <svg
@@ -995,8 +510,8 @@ function MyProfile() {
               <button
                 onClick={() => setActiveTab("security")}
                 className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 whitespace-nowrap ${activeTab === "security"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-sky-500 text-sky-500"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
               >
                 <svg
@@ -1017,35 +532,10 @@ function MyProfile() {
                 Security
               </button>
               <button
-                onClick={() => setActiveTab("earnings")}
-                className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 whitespace-nowrap ${activeTab === "earnings"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="lucide lucide-banknote"
-                >
-                  <rect width="20" height="12" x="2" y="6" rx="2" />
-                  <circle cx="12" cy="12" r="2" />
-                  <path d="M6 12h.01M18 12h.01" />
-                </svg>
-                Commission Earnings
-              </button>
-              <button
                 onClick={() => setActiveTab("delete")}
                 className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 whitespace-nowrap ${activeTab === "delete"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-sky-500 text-sky-500"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
               >
                 <svg
@@ -1071,8 +561,8 @@ function MyProfile() {
               <button
                 onClick={() => setActiveTab("booking")}
                 className={`py-4 px-6 font-medium text-sm border-b-2 flex items-center gap-2 whitespace-nowrap ${activeTab === "booking"
-                    ? "border-sky-500 text-sky-500"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? "border-sky-500 text-sky-500"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
               >
                 <svg
@@ -1104,11 +594,9 @@ function MyProfile() {
                 ? "Personal Information"
                 : activeTab === "security"
                   ? "Security Settings"
-                  : activeTab === "earnings"
-                    ? "Commission Earnings"
-                    : activeTab === "booking"
-                      ? "Booking Settings"
-                      : "Delete Account"}
+                  : activeTab === "booking"
+                    ? "Booking Settings"
+                    : "Delete Account"}
             </h2>
             {activeTab === "personal" && (
               <button className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-all">
@@ -1209,85 +697,6 @@ function MyProfile() {
                       />
                     </div>
 
-                    {(selectedInfo.type === "education" || selectedInfo.type === "experience") && (
-                      <>
-                        <div>
-                          <label htmlFor="organization" className="block text-sm font-medium text-gray-700 mb-1">
-                            {selectedInfo.type === "education" ? "Institution" : "Company"}
-                          </label>
-                          <input
-                            type="text"
-                            id="organization"
-                            name="organization"
-                            value={editedInfo.organization || ""}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                          />
-                        </div>
-
-                        <div>
-                          <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-                            Location
-                          </label>
-                          <input
-                            type="text"
-                            id="location"
-                            name="location"
-                            value={editedInfo.location || ""}
-                            onChange={handleInputChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
-                              Start Date
-                            </label>
-                            <input
-                              type="date"
-                              id="startDate"
-                              name="startDate"
-                              value={editedInfo.startDate || ""}
-                              onChange={handleInputChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            />
-                          </div>
-
-                          <div>
-                            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
-                              End Date
-                            </label>
-                            <input
-                              type="date"
-                              id="endDate"
-                              name="endDate"
-                              value={editedInfo.endDate === "Present" ? "" : editedInfo.endDate || ""}
-                              onChange={handleInputChange}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
-                            />
-                            <div className="flex items-center mt-1">
-                              <input
-                                type="checkbox"
-                                id="currentlyHere"
-                                checked={editedInfo.endDate === "Present"}
-                                onChange={(e) => {
-                                  setEditedInfo({
-                                    ...editedInfo,
-                                    endDate: e.target.checked ? "Present" : "",
-                                  })
-                                }}
-                                className="mr-2"
-                              />
-                              <label htmlFor="currentlyHere" className="text-sm text-gray-600">
-                                Currently {selectedInfo.type === "education" ? "studying here" : "working here"}
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    )}
-
                     <div>
                       <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
                         Image URL
@@ -1387,7 +796,6 @@ function MyProfile() {
           </Dialog.Panel>
         </div>
       </Dialog>
-      <Footer />
     </div>
   )
 }

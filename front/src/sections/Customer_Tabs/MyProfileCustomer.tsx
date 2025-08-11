@@ -1,5 +1,3 @@
-"use client"
-
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import axios from "axios"
 import { Dialog, Transition } from "@headlessui/react"
@@ -28,7 +26,7 @@ import {
   CheckCircle2,
 } from "lucide-react"
 
-import MyFloatingDockCustomer from "../Styles/MyFloatingDock-Customer" // This import path is from MyProfileProvider.tsx
+import MyFloatingDockCustomer from "../Styles/MyFloatingDock-Customer"
 import LocationSelector from "../Styles/LocationSelectionModal"
 import OTP from "../Styles/OTP"
 import ImagePopup from "../Styles/ImagePopup"
@@ -254,9 +252,9 @@ interface UserDetails {
     distance: number
     zipCode?: string
   }
-  accountType: string // Changed from 'type' to 'accountType'
+  accountType: string
   status: string
-  isVerified: boolean // Changed from 'verification: string' to 'isVerified: boolean'
+  isVerified: boolean
   createdAt: string
   idDocuments?: {
     front?: string
@@ -281,12 +279,10 @@ function MyProfile() {
   const [originalProfilePicture, setOriginalProfilePicture] = useState<string | undefined>(undefined)
   const [originalCoverPhoto, setOriginalCoverPhoto] = useState<string | undefined>(undefined)
   const [isResettingImages, setIsResettingImages] = useState(false)
-
-  // NEW states for inline editing of profile details
-  const [isEditingDetails, setIsEditingDetails] = useState(false) // Replaces isEditDetailsModalOpen
+  const [isEditingDetails, setIsEditingDetails] = useState(false)
   const [editedDetails, setEditedDetails] = useState<Partial<UserDetails>>({})
-  const [isSavingDetails, setIsSavingDetails] = useState(false) // Renamed from isSaving
-  const [saveDetailsError, setSaveDetailsError] = useState<string | null>(null) // Renamed from saveError
+  const [isSavingDetails, setIsSavingDetails] = useState(false)
+  const [saveDetailsError, setSaveDetailsError] = useState<string | null>(null)
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [showOtpModal, setShowOtpModal] = useState(false)
@@ -299,18 +295,13 @@ function MyProfile() {
   const [emailValidationStatus, setEmailValidationStatus] = useState<"idle" | "checking" | "available" | "unavailable">(
     "idle",
   )
-
-  // NEW: States for ID documents and secret question/answer
   const [frontIdPreview, setFrontIdPreview] = useState<string | null>(null)
   const [backIdPreview, setBackIdPreview] = useState<string | null>(null)
   const [secretQuestion, setSecretQuestion] = useState("")
   const [secretAnswer, setSecretAnswer] = useState("")
   const [secretCode, setSecretCode] = useState<string | null>(null)
-  // State for toggling visibility of secret answer
   const [showSecretAnswerInput, setShowSecretAnswerInput] = useState(false)
   const [showSecretAnswerView, setShowSecretAnswerView] = useState(false)
-
-  // NEW: States for upload modals and image popup
   const [showWarningModal, setShowWarningModal] = useState(false)
   const [currentFileInputRef, setCurrentFileInputRef] = useState<HTMLInputElement | null>(null)
   const [hasWarningBeenShownOnce, setHasWarningBeenShownOnce] = useState(false)
@@ -319,16 +310,11 @@ function MyProfile() {
   const [genericUploadErrorMessage, setGenericUploadErrorMessage] = useState("")
   const [popupImage, setPopupImage] = useState<string | null>(null)
   const [isImagePopupOpen, setIsImagePopupOpen] = useState(false)
-  // NEW: State for account observation modal
   const [showObservationModal, setShowObservationModal] = useState(false)
-
-  // NEW: Refs for file inputs
   const frontIdRef = useRef<HTMLInputElement>(null)
   const backIdRef = useRef<HTMLInputElement>(null)
-
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo[]>([])
 
-  // Generate secret code based on question and answer
   useEffect(() => {
     const generateSecretCode = async () => {
       if (secretQuestion.trim() !== "" && secretAnswer.trim() !== "") {
@@ -2098,9 +2084,8 @@ function MyProfile() {
 
                 {userDetails?.isVerified !== undefined && (
                   <span
-                    className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                      userDetails.isVerified ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                    }`}
+                    className={`px-2 py-0.5 text-xs font-medium rounded-full ${userDetails.isVerified ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                      }`}
                   >
                     {userDetails.isVerified ? "Verified" : "Unverified"}
                   </span>
@@ -2149,11 +2134,10 @@ function MyProfile() {
             <nav className="flex -mb-px overflow-x-auto">
               <button
                 onClick={() => setActiveTab("personal")}
-                className={`flex items-center gap-2 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium ${
-                  activeTab === "personal"
+                className={`flex items-center gap-2 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium ${activeTab === "personal"
                     ? "border-sky-500 text-sky-500"
                     : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                }`}
+                  }`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -2175,11 +2159,10 @@ function MyProfile() {
               </button>
               <button
                 onClick={() => setActiveTab("security")}
-                className={`flex items-center gap-2 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium ${
-                  activeTab === "security"
+                className={`flex items-center gap-2 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium ${activeTab === "security"
                     ? "border-sky-500 text-sky-500"
                     : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                }`}
+                  }`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -2200,11 +2183,10 @@ function MyProfile() {
               </button>
               <button
                 onClick={() => setActiveTab("delete")}
-                className={`flex items-center gap-2 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium ${
-                  activeTab === "delete"
+                className={`flex items-center gap-2 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium ${activeTab === "delete"
                     ? "border-sky-500 text-sky-500"
                     : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                }`}
+                  }`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

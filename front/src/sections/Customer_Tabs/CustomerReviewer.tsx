@@ -265,7 +265,7 @@ export default function CustomerReviewer({ account, onClose, onAccountAction }: 
                       <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-white">
                         {account.profilePicturePreview ? (
                           <img
-                            src={account.profilePicturePreview || "/placeholder.svg"}
+                            src={account.profilePicturePreview || "https://cdn.pixabay.com/photo/2023/04/16/10/55/nature-7929920_1280.jpg"}
                             alt="Profile"
                             className="w-full h-full object-cover"
                           />

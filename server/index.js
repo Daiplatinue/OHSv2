@@ -35,7 +35,15 @@ import {
 } from "./controller/chatController.js"
 import { User } from "./models/user.js"
 import fetch from "node-fetch"
-import { createBookings, getBookingsByUserId, updateBookingStatus } from "./controller/bookingController.js" // Import the new controller and getBookingsByUserId
+import {
+  createBookings,
+  getBookingsByUserId,
+  updateBookingStatus,
+  getAllActiveBookings,
+  getCompletedBookingsByProviderId,
+  getAllPendingBookings,
+  getAcceptedBookingsByProviderId,
+} from "./controller/bookingController.js"
 
 dotenv.config()
 
@@ -44,23 +52,20 @@ const PORT = process.env.PORT || 3000
 
 const upload = multer({ storage: multer.memoryStorage() })
 
-// Middleware
 app.use(cors())
 app.use(express.json({ limit: "50mb" }))
 app.use(express.urlencoded({ limit: "50mb", extended: true }))
 
-// New: Request timing middleware (replaces previous logging middleware)
 app.use((req, res, next) => {
   const start = process.hrtime.bigint()
   res.on("finish", () => {
     const end = process.hrtime.bigint()
-    const duration = Number(end - start) / 1_000_000 // Convert to milliseconds
+    const duration = Number(end - start) / 1_000_000
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - ${duration.toFixed(2)}ms`)
   })
   next()
 })
 
-// New: Authentication Middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"]
   const token = authHeader && authHeader.split(" ")[1] // Bearer TOKEN
@@ -114,7 +119,6 @@ const io = new Server(server, {
 const users = {} // Stores active users with their socket IDs and user info
 const typingUsers = new Map() // Map to track who is typing to whom: { receiverId: Set<senderId> }
 
-// NEW: In-memory store for email verification codes (NOT for production)
 const emailVerificationCodes = new Map() // email -> { code, expiresAt }
 
 io.use((socket, next) => {
@@ -599,6 +603,17 @@ app.post("/api/bookings", authenticateToken, createBookings)
 app.get("/api/bookings/user", authenticateToken, getBookingsByUserId)
 // NEW: Route to update booking status
 app.put("/api/bookings/:id/status", authenticateToken, updateBookingStatus)
+
+// NEW: Route to fetch ALL active bookings (for all providers to see)
+app.get("/api/bookings/all-active", authenticateToken, getAllActiveBookings)
+// NEW: Route to fetch completed bookings for a specific provider
+app.get("/api/bookings/completed-by-provider", authenticateToken, getCompletedBookingsByProviderId)
+// NEW: Route to fetch all pending bookings
+app.get("/api/bookings/all-pending", authenticateToken, getAllPendingBookings)
+
+// Add the new route for accepted bookings by provider
+// NEW: Route to fetch accepted bookings for the current provider
+app.get("/api/bookings/accepted-by-provider", authenticateToken, getAcceptedBookingsByProviderId)
 
 // Start the server using the HTTP server instance
 server.listen(PORT, () => {

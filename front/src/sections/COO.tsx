@@ -37,7 +37,7 @@ export default function Ceo() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Welcome section */}
         <div className="bg-gradient-to-r from-[#0A84FF] to-[#5AC8FA] rounded-2xl p-6 text-white mb-8 shadow-sm">
-          <h2 className="text-2xl font-semibold mb-2">Dashboard Overview</h2>
+          <h2 className="text-2xl font-medium mb-2">Dashboard Overview</h2>
           <p className="text-white/90 mb-4 font-light">
             Here's what's happening with your home services business today.
           </p>

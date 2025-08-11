@@ -237,7 +237,7 @@ const initialSampleAccounts: Account[] = [
     status: "Pending",
     joinDate: "May 5, 2023",
     lastLogin: "3 days ago",
-    avatar: "https://cdn.pixabay.com/photo/2025/04/16/06/25/duck-9536937_1280.jpg",
+    avatar: "https://cdn.pixabay.com/photo/2024/05/22/21/51/dog-8781844_960_720.jpg",
     phone: "+1 (555) 567-8901",
     location: "Seattle, USA",
     rating: 0,
@@ -253,7 +253,7 @@ const initialSampleAccounts: Account[] = [
     propertyDamagePreview: null,
     businessInterruptionPreview: null,
     bondingInsurancePreview: null,
-    coverPhoto: "https://cdn.pixabay.com/photo/2025/04/16/06/25/duck-9536937_1280.jpg", // New cover photo
+    coverPhoto: "https://cdn.pixabay.com/photo/2022/08/16/05/50/straw-bales-7389396_1280.jpg", // New cover photo
     secRegistrationAnomaly: false,
     businessPermitAnomaly: false,
     birRegistrationAnomaly: false,
@@ -320,7 +320,7 @@ const initialSampleAccounts: Account[] = [
     status: "Pending",
     joinDate: "Jun 20, 2024",
     lastLogin: "N/A",
-    avatar: "/placeholder.svg?height=40&width=40",
+    avatar: "https://cdn.pixabay.com/photo/2025/04/07/13/59/friends-9519331_1280.jpg",
     phone: "+1 (555) 987-6543",
     location: "San Francisco, USA",
     rating: 0,
@@ -331,7 +331,7 @@ const initialSampleAccounts: Account[] = [
     frontIdPreview: "/placeholder.svg?height=150&width=200",
     backIdPreview: "/placeholder.svg?height=150&width=200",
     profilePicturePreview: "/placeholder.svg?height=100&width=100",
-    coverPhoto: "/placeholder.svg?height=200&width=800",
+    coverPhoto: "https://cdn.pixabay.com/photo/2023/04/16/10/55/nature-7929920_1280.jpg",
     selectedLocation: {
       name: "San Francisco, USA",
       lat: 37.7749,

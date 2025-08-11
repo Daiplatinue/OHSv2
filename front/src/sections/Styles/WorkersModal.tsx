@@ -2,9 +2,11 @@ import "leaflet/dist/leaflet.css"
 import { useState, useEffect, useRef } from "react"
 import { Share, Flag, MapPin, X, Check, ArrowLeft, Users } from "lucide-react"
 import L from "leaflet"
+
 import LocationSelectionModal from "./LocationSelectionModal"
 import CompanyModal from "./CompanyModal"
 import { getMockCompanyData } from "./company-data"
+
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"

@@ -3,7 +3,7 @@ import mongoose from "mongoose"
 const BookingSchema = new mongoose.Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId, // Reference to the User model
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
@@ -23,7 +23,8 @@ const BookingSchema = new mongoose.Schema(
       required: true,
     },
     providerId: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
     workerCount: {
@@ -58,7 +59,7 @@ const BookingSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "active", "ongoing", "cancelled", "completed"], // Updated enum
+      enum: ["pending", "active", "ongoing", "cancelled", "completed"],
       default: "pending",
     },
     autoCancelDate: {
@@ -66,10 +67,17 @@ const BookingSchema = new mongoose.Schema(
       required: false,
     },
     providerAccepted: {
-      // NEW: Add providerAccepted boolean
       type: Boolean,
       default: false,
     },
+    // UPDATED: Array to store assigned workers with their IDs
+    assignedWorkers: [
+      {
+        workerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Reference to User model
+        name: { type: String, required: true },
+        assignedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true },
 )

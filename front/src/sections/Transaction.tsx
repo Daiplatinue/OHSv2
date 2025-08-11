@@ -634,14 +634,6 @@ function Transaction() {
                     </p>
                   </div>
                 )}
-
-                {/* Additional Fees */}
-                {bookingDetails.additionalFees && bookingDetails.additionalFees > 0 && (
-                  <div className="flex justify-between items-center border-b border-gray-300 pb-4 mb-4">
-                    <p className="text-gray-700">Additional Fees</p>
-                    <p className="text-gray-800 font-medium">₱{bookingDetails.additionalFees.toLocaleString()}</p>
-                  </div>
-                )}
               </>
             ) : (
               <div className="flex justify-between items-center border-b border-gray-300 pb-4 mb-4">
