@@ -162,6 +162,7 @@ io.on("connection", async (socket) => {
     fullUserDetails = await User.findById(userId).select("firstName lastName middleName profilePicture")
     if (!fullUserDetails) {
       console.warn(`User with ID ${userId} not found in DB during socket connection.`)
+
       // Fallback to basic info if not found
       fullUserDetails = { id: userId, username: username, profilePicture: null }
     } else {
