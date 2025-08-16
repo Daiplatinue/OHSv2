@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from "uuid"
 import {
   registerCustomer,
   registerCOO,
+  registerAccount, // Added new unified registration function
   loginUser,
   sendOtpEmail,
   verifyOtp,
@@ -25,8 +26,7 @@ import {
   sendEmailVerificationCode,
   verifyEmailVerificationCode,
   getAllUsers,
-  // updateUserStatus,
-  // deleteUserAccount,
+  deleteUserAccount, // Added new route for user account deletion
 } from "./controller/userController.js"
 import { createService, getServices, deleteService } from "./controller/serviceController.js"
 import {
@@ -162,7 +162,7 @@ const requireAdmin = async (req, res, next) => {
     }
 
     // Check if user has admin role or is a COO (assuming COOs have admin privileges)
-    if (user.accountType !== "coo" && user.role !== "admin") {
+    if (user.accountType !== "coo" && user.accountType !== "admin") {
       return res.status(403).json({ message: "Access denied. Admin privileges required." })
     }
 
@@ -505,6 +505,7 @@ app.get("/api/shared-files", (req, res) => {
 // Routes
 app.post("/api/users/register/customer", registerCustomer)
 app.post("/api/users/register/coo", registerCOO)
+app.post("/api/admin/create-account", authenticateToken, requireAdmin, registerAccount)
 app.post("/api/users/login", loginUser)
 app.post("/api/users/send-otp", sendOtpEmail) // New route for sending OTP
 app.post("/api/users/verify-otp", verifyOtp) // New route for verifying OTP
@@ -690,12 +691,15 @@ app.get("/api/bookings/accepted-by-provider", authenticateToken, getAcceptedBook
 
 app.get("/api/admin/users", authenticateToken, requireAdmin, getAllUsers)
 // app.put("/api/admin/users/:userId/status", authenticateToken, requireAdmin, updateUserStatus)
-app.put("/api/admin/users/:userId/status", authenticateToken, requireAdmin)
+app.put("/api/admin/users/:id/status", authenticateToken, requireAdmin) // Changed :userId to :id
 // app.delete("/api/admin/users/:userId", authenticateToken, requireAdmin, deleteUserAccount)
-app.delete("/api/admin/users/:userId", authenticateToken, requireAdmin)
+app.delete("/api/admin/users/:id", authenticateToken, requireAdmin, deleteUserAccount) // Changed :userId to :id and Added DELETE route for user account deletion
 
 // NEW: Route to get all users for accounts management (with less strict permissions)
 app.get("/api/accounts/users", authenticateToken, getAllUsers)
+
+// NEW: Add new endpoint for provider and admin registration that bypasses requireAdmin middleware
+app.post("/api/admin/create-provider-admin", authenticateToken, registerAccount)
 
 app.get("/api/health", (req, res) => {
   const uptime = process.uptime()

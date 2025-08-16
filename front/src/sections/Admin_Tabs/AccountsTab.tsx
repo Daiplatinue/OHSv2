@@ -23,6 +23,7 @@ import {
   Phone,
   MapPin,
   User,
+  AlertCircle,
 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -104,6 +105,69 @@ interface Account {
   backIdAnomaly?: boolean
 }
 
+const transformBackendUserToAccount = (backendUser: any): Account => {
+  const accountTypeToRole = {
+    customer: "Customer",
+    coo: "COO",
+    provider: "Provider",
+    admin: "Admin",
+  }
+
+  return {
+    id: backendUser._id ? Number.parseInt(backendUser._id.slice(-6), 16) : Math.random() * 1000000, // Convert MongoDB _id to number
+    name: `${backendUser.firstName || "User"} ${backendUser.lastName || ""}`.trim(),
+    email: backendUser.email || "N/A",
+    role: accountTypeToRole[backendUser.accountType as keyof typeof accountTypeToRole] || "Customer",
+    status: backendUser.isActive ? "Active" : "Pending",
+    joinDate: backendUser.createdAt
+      ? new Date(backendUser.createdAt).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "N/A",
+    lastLogin: "N/A", // Backend doesn't provide this
+    avatar: backendUser.profilePicture || "/placeholder.svg?height=40&width=40",
+    phone: backendUser.mobileNumber || "N/A",
+    location: backendUser.location?.name || "N/A",
+    rating: 0, // Backend doesn't provide this
+    paymentMethod: "N/A", // Backend doesn't provide this
+    verificationStatus: backendUser.isActive ? "Verified" : "Pending",
+    // COO document previews
+    secRegistrationPreview: backendUser.secRegistration || null,
+    businessPermitPreview: backendUser.businessPermit || null,
+    birRegistrationPreview: backendUser.birRegistration || null,
+    eccCertificatePreview: backendUser.eccCertificate || null,
+    generalLiabilityPreview: backendUser.generalLiability || null,
+    workersCompPreview: backendUser.workersCompPreview || null,
+    professionalIndemnityPreview: backendUser.professionalIndemnityPreview || null,
+    propertyDamagePreview: backendUser.propertyDamagePreview || null,
+    businessInterruptionPreview: backendUser.businessInterruptionPreview || null,
+    bondingInsurancePreview: backendUser.bondingInsurancePreview || null,
+    // COO anomaly status - default to false
+    secRegistrationAnomaly: false,
+    businessPermitAnomaly: false,
+    birRegistrationAnomaly: false,
+    eccCertificateAnomaly: false,
+    generalLiabilityAnomaly: false,
+    workersCompAnomaly: false,
+    professionalIndemnityAnomaly: false,
+    propertyDamageAnomaly: false,
+    businessInterruptionAnomaly: false,
+    bondingInsuranceAnomaly: false,
+    // Customer fields
+    gender: backendUser.gender || "prefer-not-to-say",
+    bio: backendUser.bio || "",
+    frontIdPreview: backendUser.idDocuments?.front || null,
+    backIdPreview: backendUser.idDocuments?.back || null,
+    profilePicturePreview: backendUser.profilePicture || null,
+    coverPhoto: backendUser.coverPhoto || null,
+    selectedLocation: backendUser.location || null,
+    frontIdAnomaly: false,
+    backIdAnomaly: false,
+  }
+}
+
 function AccountsTab() {
   const [activeTab, setActiveTab] = useState("all")
   const [currentTime, setCurrentTime] = useState(new Date())
@@ -111,7 +175,7 @@ function AccountsTab() {
 
   const [newAccountFirstName, setNewAccountFirstName] = useState("")
   const [newAccountLastName, setNewAccountLastName] = useState("")
-  const [newAccountContact, setNewAccountContact] = useState("")
+  const [newAccountGender, setNewAccountGender] = useState("")
 
   const [isAddAccountModalOpen, setIsAddAccountModalOpen] = useState(false)
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
@@ -119,7 +183,7 @@ function AccountsTab() {
   const [newAccountPassword, setNewAccountPassword] = useState("")
   const [newAccountType, setNewAccountType] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [newAccountData, setNewAccountData] = useState<any>(null)
+  const [, setNewAccountData] = useState<any>(null)
 
   const [accounts, setAccounts] = useState<Account[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -141,6 +205,31 @@ function AccountsTab() {
   const [showAdminReviewer, setShowAdminReviewer] = useState(false)
   const [adminToReview, setAdminToReview] = useState<Account | null>(null)
 
+  const checkAdminPrivileges = () => {
+    const token = localStorage.getItem("token")
+    if (!token) {
+      return { isAdmin: false, error: "No authentication token found. Please log in." }
+    }
+
+    try {
+      const tokenPayload = JSON.parse(atob(token.split(".")[1]))
+      console.log("[v0] Current user token payload:", tokenPayload)
+
+      if (tokenPayload.accountType !== "admin") {
+        return {
+          isAdmin: false,
+          error: `Current user has '${tokenPayload.accountType}' privileges. Admin privileges required for account management.`,
+          userType: tokenPayload.accountType,
+        }
+      }
+
+      return { isAdmin: true, error: null }
+    } catch (tokenError) {
+      console.log("[v0] Token validation error:", tokenError)
+      return { isAdmin: false, error: "Invalid authentication token. Please log in again." }
+    }
+  }
+
   const fetchAccounts = async (forceRefresh = false) => {
     try {
       setIsLoading(true)
@@ -161,6 +250,27 @@ function AccountsTab() {
             return
           }
         }
+      }
+
+      const adminCheck = checkAdminPrivileges()
+      if (!adminCheck.isAdmin) {
+        setError(adminCheck.error || "Admin privileges required")
+
+        const mockAccounts = [
+          {
+            _id: "demo1",
+            email: "demo@example.com",
+            accountType: "customer",
+            firstName: "Demo",
+            lastName: "User",
+            isActive: true,
+            createdAt: new Date().toISOString(),
+          },
+        ]
+        setAccounts(mockAccounts.map(transformBackendUserToAccount))
+        toast.warning("Showing demo data - Admin access required for real account management")
+        setIsLoading(false)
+        return
       }
 
       // Fetch from API
@@ -207,10 +317,10 @@ function AccountsTab() {
                 : "Inactive",
         joinDate: user.createdAt
           ? new Date(user.createdAt).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })
           : "N/A",
         lastLogin: user.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : "N/A",
         avatar: user.profilePicture || "/placeholder.svg?height=40&width=40",
@@ -234,9 +344,9 @@ function AccountsTab() {
         eccCertificatePreview: user.documents?.eccCertificate || undefined,
         generalLiabilityPreview: user.documents?.generalLiability || undefined,
         workersCompPreview: user.documents?.workersComp || undefined,
-        professionalIndemnityPreview: user.documents?.professionalIndemnity || undefined,
+        professionalIndemnityPreview: user.documents?.professionalIndemnityPreview || undefined,
         propertyDamagePreview: user.documents?.propertyDamage || undefined,
-        businessInterruptionPreview: user.documents?.businessInterruption || undefined,
+        businessInterruptionPreview: user.documents?.businessInterruptionPreview || undefined,
         bondingInsurancePreview: user.documents?.bondingInsurance || undefined,
         // Anomaly flags
         frontIdAnomaly: user.anomalies?.frontId || false,
@@ -246,11 +356,11 @@ function AccountsTab() {
         birRegistrationAnomaly: user.anomalies?.birRegistration || false,
         eccCertificateAnomaly: user.anomalies?.eccCertificate || false,
         generalLiabilityAnomaly: user.anomalies?.generalLiability || false,
-        workersCompAnomaly: user.anomalies?.workersComp || false,
-        professionalIndemnityAnomaly: user.anomalies?.professionalIndemnity || false,
-        propertyDamageAnomaly: user.anomalies?.propertyDamage || false,
-        businessInterruptionAnomaly: user.anomalies?.businessInterruption || false,
-        bondingInsuranceAnomaly: user.anomalies?.bondingInsurance || false,
+        workersCompAnomaly: user.anomalies?.workersCompAnomaly || false,
+        professionalIndemnityAnomaly: user.anomalies?.professionalIndemnityAnomaly || false,
+        propertyDamageAnomaly: user.anomalies?.propertyDamageAnomaly || false,
+        businessInterruptionAnomaly: user.anomalies?.businessInterruptionAnomaly || false,
+        bondingInsuranceAnomaly: user.anomalies?.bondingInsuranceAnomaly || false,
       }))
 
       setAccounts(transformedAccounts)
@@ -449,93 +559,202 @@ function AccountsTab() {
   }
 
   const handleAddAccount = async () => {
-    if (
-      !newAccountEmail ||
-      !newAccountPassword ||
-      !newAccountType ||
-      !newAccountFirstName ||
-      !newAccountLastName ||
-      !newAccountContact
-    ) {
-      toast(
-        <div>
-          <div className="font-semibold">Missing fields</div>
-          <div className="text-sm text-gray-600">Please fill in all required fields.</div>
-        </div>,
-        { className: "bg-red-50 text-red-700 border-red-200", duration: 4000 },
-      )
-      return
-    }
-
-    setIsSubmitting(true)
+    if (isLoading) return
 
     try {
-      // Simulate API call success
-      await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate network delay
+      setIsLoading(true)
+      setError("")
 
-      const newId = Math.max(...accounts.map((a) => a.id)) + 1
-      const newAccountRole =
-        newAccountType === "manager" || newAccountType === "coo"
-          ? "COO" // Updated from "Service Provider" to "COO"
-          : newAccountType === "provider"
-            ? "Provider" // Updated from "Service Provider" to "Provider"
-            : newAccountType === "admin"
-              ? "Admin"
-              : "Customer"
-      const newAccountStatus = newAccountType === "admin" || newAccountType === "provider" ? "Active" : "Pending"
-
-      const newAccount: Account = {
-        id: newId,
-        name: `${newAccountFirstName} ${newAccountLastName}`,
-        email: newAccountEmail,
-        role: newAccountRole,
-        status: newAccountStatus,
-        joinDate: new Date().toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }),
-        lastLogin: "Just now",
-        avatar: "/placeholder.svg?height=40&width=40",
-        phone: newAccountContact,
-        location: "N/A", // Default location
-        rating: 0, // Default rating
-        paymentMethod: "N/A", // Default payment method
-        verificationStatus: newAccountStatus === "Active" ? "Verified" : "Pending",
-        // Default placeholder for new document fields (for both types)
-        secRegistrationPreview: null,
-        businessPermitPreview: null,
-        birRegistrationPreview: null,
-        eccCertificatePreview: null,
-        generalLiabilityPreview: null,
-        workersCompPreview: null,
-        professionalIndemnityPreview: null,
-        propertyDamagePreview: null,
-        businessInterruptionPreview: null,
-        bondingInsurancePreview: null,
-        coverPhoto: null, // Default cover photo
-        secRegistrationAnomaly: false,
-        businessPermitAnomaly: false,
-        birRegistrationAnomaly: false,
-        eccCertificateAnomaly: false,
-        generalLiabilityAnomaly: false,
-        workersCompAnomaly: false,
-        professionalIndemnityAnomaly: false,
-        propertyDamageAnomaly: false,
-        businessInterruptionAnomaly: false,
-        bondingInsuranceAnomaly: false,
-        frontIdPreview: null,
-        backIdPreview: null,
-        profilePicturePreview: null,
-        selectedLocation: null,
-        gender: "prefer-not-to-say", // Default gender
-        bio: "", // Default bio
-        frontIdAnomaly: false,
-        backIdAnomaly: false,
+      const adminCheck = checkAdminPrivileges()
+      if (!adminCheck.isAdmin) {
+        throw new Error(adminCheck.error || "Admin privileges required")
       }
 
-      setAccounts((prevAccounts) => [...prevAccounts, newAccount])
-      setNewAccountData(newAccount) // Set new account data for success modal
+      const token = localStorage.getItem("token")
+      if (!token) {
+        throw new Error("Authentication required. Please log in as an admin.")
+      }
+
+      try {
+        const tokenPayload = JSON.parse(atob(token.split(".")[1]))
+        console.log("[v0] Token payload:", tokenPayload)
+
+        if (tokenPayload.accountType !== "admin" && tokenPayload.accountType !== "coo") {
+          throw new Error("Admin privileges required. Current user is not an admin or COO.")
+        }
+      } catch (tokenError) {
+        console.log("[v0] Token validation error:", tokenError)
+        throw new Error("Invalid authentication token. Please log in again.")
+      }
+
+      // Validation - only email and password are required
+      if (!newAccountEmail || !newAccountPassword || !newAccountType) {
+        toast.error("Please fill in all required fields (Email, Password, Account Type)")
+        return
+      }
+
+      setIsSubmitting(true)
+
+      const endpoint =
+        newAccountType === "provider" || newAccountType === "admin"
+          ? "/api/admin/create-provider-admin"
+          : "/api/admin/create-account"
+
+      const requestBody: {
+        email: string
+        password: string
+        accountType: string
+        firstName?: string
+        lastName?: string
+        gender?: string
+        minimalMode: boolean
+        businessName?: string
+      } = {
+        email: newAccountEmail,
+        password: newAccountPassword,
+        accountType: newAccountType,
+        firstName: newAccountFirstName || undefined,
+        lastName: newAccountLastName || undefined,
+        gender: newAccountGender || undefined,
+        minimalMode: true,
+      }
+
+      // Add account type specific fields
+      if (newAccountType === "coo") {
+        requestBody.businessName = `${newAccountFirstName || "Business"} ${newAccountLastName || "Name"}`.trim()
+      }
+
+      console.log("[v0] Making API call to:", `http://localhost:3000${endpoint}`)
+      console.log("[v0] Request body:", requestBody)
+
+      const response = await fetch(`http://localhost:3000${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      })
+
+      console.log("[v0] Response status:", response.status)
+
+      let data: any
+      const contentType = response.headers.get("content-type")
+
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json()
+      } else {
+        const textResponse = await response.text()
+        console.log("[v0] Non-JSON response received:", textResponse.substring(0, 200))
+
+        if (!response.ok) {
+          throw new Error(
+            `Server error (${response.status}): The endpoint ${endpoint} was not found. Please check if the server is running and the endpoint exists.`,
+          )
+        }
+
+        data = { message: "Account created successfully" }
+      }
+
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            if (response.status === 403) {
+              errorMessage =
+                data.message ||
+                "Access denied. Admin privileges required. Please ensure you are logged in as an admin user."
+            } else {
+              errorMessage = data.message || data.error || errorMessage
+            }
+          } catch (parseError) {
+            console.log("[v0] Failed to parse error response as JSON:", parseError)
+          }
+        } else {
+          if (response.status === 403) {
+            errorMessage = "Access denied. Admin privileges required. Please ensure you are logged in as an admin user."
+          }
+        }
+
+        throw new Error(errorMessage)
+      }
+
+      console.log("[v0] Account creation successful:", data)
+
+      if (data.user) {
+        const newAccount = transformBackendUserToAccount(data.user)
+        setAccounts((prevAccounts) => [...prevAccounts, newAccount])
+        setNewAccountData(newAccount)
+      } else {
+        // Fallback if backend doesn't return user data
+        const newId = Math.max(...accounts.map((a) => a.id)) + 1
+        const newAccountRole =
+          newAccountType === "coo"
+            ? "COO"
+            : newAccountType === "provider"
+              ? "Provider"
+              : newAccountType === "admin"
+                ? "Admin"
+                : "Customer"
+
+        const newAccountStatus = newAccountType === "admin" || newAccountType === "provider" ? "Active" : "Pending"
+
+        const newAccountContact = "" // Define newAccountContact here
+
+        const newAccount: Account = {
+          id: newId,
+          name: `${newAccountFirstName || "User"} ${newAccountLastName || ""}`.trim(),
+          email: newAccountEmail,
+          role: newAccountRole,
+          status: newAccountStatus,
+          joinDate: new Date().toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }),
+          lastLogin: "Just now",
+          avatar: "/placeholder.svg?height=40&width=40",
+          phone: newAccountContact || "N/A",
+          location: "N/A",
+          rating: 0,
+          paymentMethod: "N/A",
+          verificationStatus: newAccountStatus === "Active" ? "Verified" : "Pending",
+          secRegistrationPreview: null,
+          businessPermitPreview: null,
+          birRegistrationPreview: null,
+          eccCertificatePreview: null,
+          generalLiabilityPreview: null,
+          workersCompPreview: null,
+          professionalIndemnityPreview: null,
+          propertyDamagePreview: null,
+          businessInterruptionPreview: null,
+          bondingInsurancePreview: null,
+          coverPhoto: null,
+          secRegistrationAnomaly: false,
+          businessPermitAnomaly: false,
+          birRegistrationAnomaly: false,
+          eccCertificateAnomaly: false,
+          generalLiabilityAnomaly: false,
+          workersCompAnomaly: false,
+          professionalIndemnityAnomaly: false,
+          propertyDamageAnomaly: false,
+          businessInterruptionAnomaly: false,
+          bondingInsuranceAnomaly: false,
+          frontIdPreview: null,
+          backIdPreview: null,
+          profilePicturePreview: null,
+          selectedLocation: null,
+          gender: "prefer-not-to-say",
+          bio: "",
+          frontIdAnomaly: false,
+          backIdAnomaly: false,
+        }
+
+        setAccounts((prevAccounts) => [...prevAccounts, newAccount])
+        setNewAccountData(newAccount)
+      }
+
       setIsAddAccountModalOpen(false)
       setIsSuccessModalOpen(true)
 
@@ -545,17 +764,39 @@ function AccountsTab() {
       setNewAccountType("")
       setNewAccountFirstName("")
       setNewAccountLastName("")
-      setNewAccountContact("")
-    } catch (error) {
-      console.error("Error creating account:", error)
+      setNewAccountGender("")
+
+      const newAccountRole =
+        newAccountType === "coo"
+          ? "COO"
+          : newAccountType === "provider"
+            ? "Provider"
+            : newAccountType === "admin"
+              ? "Admin"
+              : "Customer"
+
       toast(
         <div>
-          <div className="font-semibold">Account creation failed</div>
-          <div className="text-sm text-gray-600">An unexpected error occurred.</div>
+          <div className="font-semibold">Account created successfully</div>
+          <div className="text-sm text-gray-600">New {newAccountRole} account has been created.</div>
         </div>,
-        { className: "bg-red-50 text-red-700 border-red-200" },
+        { className: "bg-green-50 text-green-700 border-green-200", duration: 4000 },
       )
+    } catch (error) {
+      console.log("[v0] Error creating account:", error)
+      if (error instanceof Error) {
+        if (error.message.includes("Admin privileges required") || error.message.includes("Access denied")) {
+          setError(
+            `${error.message} Please contact your system administrator if you believe you should have admin access.`,
+          )
+        } else {
+          setError(error.message)
+        }
+      } else {
+        setError("An unexpected error occurred while creating the account.")
+      }
     } finally {
+      setIsLoading(false)
       setIsSubmitting(false)
     }
   }
@@ -614,11 +855,11 @@ function AccountsTab() {
       prevAccounts.map((acc) =>
         acc.id === accountId
           ? {
-            ...acc,
-            status: newStatus,
-            verificationStatus: newVerificationStatus,
-            ...updatedAnomalies, // Apply updated anomaly states
-          }
+              ...acc,
+              status: newStatus,
+              verificationStatus: newVerificationStatus,
+              ...updatedAnomalies, // Apply updated anomaly states
+            }
           : acc,
       ),
     )
@@ -694,6 +935,22 @@ function AccountsTab() {
     <div className="space-y-6">
       <style>{keyframes}</style>
       {/* Header */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-start">
+            <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+            <div>
+              <p className="text-red-700 font-medium">Access Error</p>
+              <p className="text-red-600 text-sm mt-1">{error}</p>
+              {error.includes("Admin privileges required") && (
+                <p className="text-red-500 text-xs mt-2">
+                  💡 Tip: Make sure you're logged in with an admin account to manage user accounts.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {isLoading && (
         <div className="flex items-center justify-center py-12">
@@ -701,19 +958,6 @@ function AccountsTab() {
             <RefreshCw className="h-6 w-6 animate-spin text-blue-600" />
             <span className="text-gray-600">Loading accounts...</span>
           </div>
-        </div>
-      )}
-
-      {error && !isLoading && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center gap-2">
-            <XCircle className="h-5 w-5 text-red-600" />
-            <span className="text-red-800 font-medium">Error loading accounts</span>
-          </div>
-          <p className="text-red-700 mt-1">{error}</p>
-          <Button variant="outline" onClick={refreshAccounts} className="mt-3 bg-transparent" size="sm">
-            Try Again
-          </Button>
         </div>
       )}
 
@@ -1071,14 +1315,15 @@ function AccountsTab() {
                             <div className="flex justify-between items-center">
                               <div className="flex items-center gap-2">
                                 <div
-                                  className={`w-3 h-3 rounded-full ${index === 0
+                                  className={`w-3 h-3 rounded-full ${
+                                    index === 0
                                       ? "bg-[#0A84FF]"
                                       : index === 1
                                         ? "bg-[#5E5CE6]"
                                         : index === 2
                                           ? "bg-[#5AC8FA]"
                                           : "bg-[#007AFF]" // New color for Employees
-                                    }`}
+                                  }`}
                                 ></div>
                                 <span className="text-sm font-medium">{item.role}</span>
                               </div>
@@ -1086,14 +1331,15 @@ function AccountsTab() {
                             </div>
                             <div className="h-1.5 bg-[#F2F2F7] rounded-full">
                               <div
-                                className={`h-full rounded-full ${index === 0
+                                className={`h-full rounded-full ${
+                                  index === 0
                                     ? "bg-[#0A84FF]"
                                     : index === 1
                                       ? "bg-[#5E5CE6]"
                                       : index === 2
                                         ? "bg-[#5AC8FA]"
                                         : "bg-[#007AFF]" // New color for Employees
-                                  }`}
+                                }`}
                                 style={{ width: `${item.percentage}%` }}
                               ></div>
                             </div>
@@ -1118,14 +1364,15 @@ function AccountsTab() {
                             <div className="text-xs text-gray-500 font-light">{status.status}</div>
                             <div className="text-lg font-medium text-gray-800">{status.count}</div>
                             <div
-                              className={`text-xs ${status.status === "Active"
+                              className={`text-xs ${
+                                status.status === "Active"
                                   ? "text-[#30D158]"
                                   : status.status === "Inactive"
                                     ? "text-[#8E8E93]"
                                     : status.status === "Pending"
                                       ? "text-[#FF9500]"
                                       : "text-[#FF453A]"
-                                }`}
+                              }`}
                             >
                               {status.percentage}%
                             </div>
@@ -1139,14 +1386,15 @@ function AccountsTab() {
                             <div className="flex justify-between items-center">
                               <div className="flex items-center gap-2">
                                 <div
-                                  className={`w-3 h-3 rounded-full ${status.status === "Active"
+                                  className={`w-3 h-3 rounded-full ${
+                                    status.status === "Active"
                                       ? "bg-[#30D158]"
                                       : status.status === "Inactive"
                                         ? "bg-[#8E8E93]"
                                         : status.status === "Pending"
                                           ? "bg-[#FF9500]"
                                           : "bg-[#FF453A]"
-                                    }`}
+                                  }`}
                                 ></div>
                                 <span className="text-sm font-medium">{status.status}</span>
                               </div>
@@ -1154,14 +1402,15 @@ function AccountsTab() {
                             </div>
                             <div className="h-1.5 bg-[#F2F2F7] rounded-full">
                               <div
-                                className={`h-full rounded-full ${status.status === "Active"
+                                className={`h-full rounded-full ${
+                                  status.status === "Active"
                                     ? "bg-[#30D158]"
                                     : status.status === "Inactive"
                                       ? "bg-[#8E8E93]"
                                       : status.status === "Pending"
                                         ? "bg-[#FF9500]"
                                         : "bg-[#FF453A]"
-                                  }`}
+                                }`}
                                 style={{ width: `${status.percentage}%` }}
                               ></div>
                             </div>
@@ -1188,40 +1437,43 @@ function AccountsTab() {
                     <div className="grid gap-4" style={{ animation: "slideInUp 0.3s ease-out" }}>
                       <div className="grid gap-2">
                         <Label htmlFor="firstName" className="text-gray-700">
-                          First Name
+                          First Name <span className="text-gray-400 text-sm">(Optional)</span>
                         </Label>
                         <Input
                           id="firstName"
                           value={newAccountFirstName}
                           onChange={(e) => setNewAccountFirstName(e.target.value)}
                           className="bg-gray-100 border-gray-200 focus:ring-2 focus:ring-[#0A84FF] transition-all duration-200"
+                          placeholder="Enter first name (optional)"
                         />
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="lastName" className="text-gray-700">
-                          Last Name
+                          Last Name <span className="text-gray-400 text-sm">(Optional)</span>
                         </Label>
                         <Input
                           id="lastName"
                           value={newAccountLastName}
                           onChange={(e) => setNewAccountLastName(e.target.value)}
                           className="bg-gray-100 border-gray-200 focus:ring-2 focus:ring-[#0A84FF] transition-all duration-200"
+                          placeholder="Enter last name (optional)"
                         />
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="email" className="text-gray-700">
-                          Email
+                          Email <span className="text-red-500">*</span>
                         </Label>
                         <Input
                           id="email"
                           value={newAccountEmail}
                           onChange={(e) => setNewAccountEmail(e.target.value)}
                           className="bg-gray-100 border-gray-200 focus:ring-2 focus:ring-[#0A84FF] transition-all duration-200"
+                          placeholder="Enter email address"
                         />
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="password" className="text-gray-700">
-                          Password
+                          Password <span className="text-red-500">*</span>
                         </Label>
                         <Input
                           id="password"
@@ -1229,35 +1481,42 @@ function AccountsTab() {
                           value={newAccountPassword}
                           onChange={(e) => setNewAccountPassword(e.target.value)}
                           className="bg-gray-100 border-gray-200 focus:ring-2 focus:ring-[#0A84FF] transition-all duration-200"
+                          placeholder="Enter password"
                         />
                       </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="type" className="text-gray-700">
-                          Account Type
-                        </Label>
-                        <Select value={newAccountType} onValueChange={setNewAccountType}>
-                          <SelectTrigger className="bg-gray-100 border-gray-200 focus:ring-2 focus:ring-[#0A84FF] transition-all duration-200">
-                            <SelectValue placeholder="Select account type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="coo">COO</SelectItem>
-                            <SelectItem value="provider">Provider</SelectItem>
-                            <SelectItem value="customer">Customer</SelectItem>
-                            <SelectItem value="manager">Manager</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="contact" className="text-gray-700">
-                          Contact
-                        </Label>
-                        <Input
-                          id="contact"
-                          value={newAccountContact}
-                          onChange={(e) => setNewAccountContact(e.target.value)}
-                          className="bg-gray-100 border-gray-200 focus:ring-2 focus:ring-[#0A84FF] transition-all duration-200"
-                        />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="type" className="text-gray-700">
+                            Account Type <span className="text-red-500">*</span>
+                          </Label>
+                          <Select value={newAccountType} onValueChange={setNewAccountType}>
+                            <SelectTrigger className="bg-gray-100 border-gray-200 focus:ring-2 focus:ring-[#0A84FF] transition-all duration-200">
+                              <SelectValue placeholder="Select account type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin">Admin</SelectItem>
+                              <SelectItem value="coo">COO</SelectItem>
+                              <SelectItem value="provider">Provider</SelectItem>
+                              <SelectItem value="customer">Customer</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="gender" className="text-gray-700">
+                            Gender <span className="text-gray-400 text-sm">(Optional)</span>
+                          </Label>
+                          <Select value={newAccountGender} onValueChange={setNewAccountGender}>
+                            <SelectTrigger className="bg-gray-100 border-gray-200 focus:ring-2 focus:ring-[#0A84FF] transition-all duration-200">
+                              <SelectValue placeholder="Select gender" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="male">Male</SelectItem>
+                              <SelectItem value="female">Female</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                              <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
 
                       <div className="flex justify-end gap-2">
@@ -1278,7 +1537,7 @@ function AccountsTab() {
                         <h3 className="text-lg font-medium text-gray-800 mb-2">Account Information</h3>
                         <p className="text-sm text-gray-600">
                           Create a new user account to provide access to the system. Different account types have
-                          different permissions.
+                          different permissions. <span className="text-red-500">*</span> indicates required fields.
                         </p>
                       </div>
 
@@ -1329,39 +1588,6 @@ function AccountsTab() {
                           </div>
                         </div>
                       </div>
-
-                      {newAccountData && (
-                        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-5 shadow-sm border border-gray-100">
-                          <h4 className="text-sm font-medium text-gray-700 mb-3">New Account Preview</h4>
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                              <div className="bg-gray-100 rounded-full p-2">
-                                <User className="h-5 w-5 text-gray-700" />
-                              </div>
-                              <div>
-                                <div className="text-sm font-medium text-gray-700">{newAccountData.name}</div>
-                                <div className="text-xs text-gray-500">{newAccountData.email}</div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <div className="bg-gray-100 rounded-full p-2">
-                                <Phone className="h-5 w-5 text-gray-700" />
-                              </div>
-                              <div>
-                                <div className="text-sm font-medium text-gray-700">{newAccountData.phone}</div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <div className="bg-gray-100 rounded-full p-2">
-                                <Shield className="h-5 w-5 text-gray-700" />
-                              </div>
-                              <div>
-                                <div className="text-sm font-medium text-gray-700">{newAccountData.role}</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>

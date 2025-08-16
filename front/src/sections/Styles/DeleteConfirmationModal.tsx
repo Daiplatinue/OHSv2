@@ -2,7 +2,7 @@ import React from "react"
 import { Trash2 } from "lucide-react"
 
 interface Account {
-  id: number
+  id: number | string // Allow both number and string for MongoDB ObjectId compatibility
   name: string
   email: string
   role: string
@@ -34,29 +34,7 @@ interface DeleteConfirmationModalProps {
   onConfirmDelete: () => void
 }
 
-const keyframes = `
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideInUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes bounceIn {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.2); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-`
+const keyframes = `@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } @keyframes slideInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } } @keyframes bounceIn { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.2); } 100% { transform: scale(1); opacity: 1; } } @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }`
 
 export default function DeleteConfirmationModal({
   isOpen,
@@ -64,6 +42,47 @@ export default function DeleteConfirmationModal({
   account,
   onConfirmDelete,
 }: DeleteConfirmationModalProps) {
+  const [isDeleting, setIsDeleting] = React.useState(false)
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true)
+    try {
+      const token = localStorage.getItem("token") // Adjust based on your auth implementation
+
+      const userId = String(account.id)
+      console.log("[v0] Attempting to delete user with ID:", userId)
+
+      const response = await fetch(`http://localhost:3000/api/admin/users/${userId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      console.log("[v0] Delete response status:", response.status)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error("[v0] Delete error response:", errorData)
+        throw new Error(errorData.message || "Failed to delete account")
+      }
+
+      const result = await response.json()
+      console.log("Account deleted successfully:", result)
+
+      // Call the parent's onConfirmDelete to handle UI updates
+      onConfirmDelete()
+    } catch (error) {
+      console.error("Error deleting account:", error)
+      // You might want to show an error toast here
+      const errorMessage = error instanceof Error ? error.message : "Unknown error"
+      alert(`Failed to delete account: ${errorMessage}`)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   React.useEffect(() => {
     const styleElement = document.createElement("style")
     styleElement.innerHTML = keyframes
@@ -103,15 +122,17 @@ export default function DeleteConfirmationModal({
           <div className="flex gap-3 w-full" style={{ animation: "fadeIn 0.5s ease-out 0.4s both" }}>
             <button
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-full font-medium hover:bg-gray-50 active:scale-95 transition-all duration-200"
+              disabled={isDeleting}
+              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-full font-medium hover:bg-gray-50 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
-              onClick={onConfirmDelete}
-              className="flex-1 px-6 py-3 bg-red-500 text-white rounded-full font-medium shadow-sm hover:bg-red-600 active:scale-95 transition-all duration-200"
+              onClick={handleDeleteAccount}
+              disabled={isDeleting}
+              className="flex-1 px-6 py-3 bg-red-500 text-white rounded-full font-medium shadow-sm hover:bg-red-600 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Delete Account
+              {isDeleting ? "Deleting..." : "Delete Account"}
             </button>
           </div>
         </div>

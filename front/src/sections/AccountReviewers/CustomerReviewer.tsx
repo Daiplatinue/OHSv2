@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
 interface Account {
-  id: number
+  id: number | string // Allow both number and string for MongoDB ObjectId compatibility
   name: string
   email: string
   role: string
@@ -76,7 +76,7 @@ interface CustomerReviewerProps {
   account: Account
   onClose: () => void
   onAccountAction: (
-    accountId: number,
+    accountId: number | string, // Allow both number and string for MongoDB ObjectId compatibility
     newStatus: string,
     newVerificationStatus: string,
     updatedAnomalies: { [key: string]: boolean },
@@ -261,10 +261,22 @@ export default function CustomerReviewer({ account, onClose, onAccountAction }: 
     toast.success(`Account status changed to ${statusMessage}`, { duration: 2000 })
   }
 
-  const handleConfirmDelete = () => {
-    toast.error(`Account deleted for ${account.name}`, { duration: 2000 })
-    setIsDeleteModalOpen(false)
-    // Implement actual delete logic here
+  const handleConfirmDelete = async () => {
+    try {
+      // The actual API call is now handled in DeleteConfirmationModal
+      // This function will be called after successful deletion
+      toast.success(`Account deleted successfully for ${account.name}`, { duration: 3000 })
+      setIsDeleteModalOpen(false)
+
+      // Close the reviewer after successful deletion
+      setTimeout(() => {
+        onClose()
+      }, 1000)
+    } catch (error) {
+      console.error("Error in delete confirmation:", error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      toast.error(`Failed to delete account: ${errorMessage}`, { duration: 3000 })
+    }
   }
 
   return (
@@ -309,6 +321,8 @@ export default function CustomerReviewer({ account, onClose, onAccountAction }: 
                             src={
                               account.profilePicturePreview ||
                               "https://cdn.pixabay.com/photo/2023/04/16/10/55/nature-7929920_1280.jpg" ||
+                              "/placeholder.svg" ||
+                              "/placeholder.svg" ||
                               "/placeholder.svg" ||
                               "/placeholder.svg" ||
                               "/placeholder.svg"
@@ -394,7 +408,7 @@ export default function CustomerReviewer({ account, onClose, onAccountAction }: 
                         <Button
                           onClick={handleEditMode}
                           size="sm"
-                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                          className="flex items-center gap-2 bg-blue-600 text-white rounded-full font-medium hover:bg-blue-700 active:scale-95 transition-all duration-200"
                         >
                           <CheckCircle className="h-4 w-4" />
                           Save Changes

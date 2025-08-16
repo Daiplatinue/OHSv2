@@ -13,8 +13,10 @@ import {
   Shield,
   Edit,
   Trash2,
+  Settings,
 } from "lucide-react"
 import DeclineModal from "../Styles/DeclineModal"
+import DeleteConfirmationModal from "../Styles/DeleteConfirmationModal"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
@@ -106,8 +108,21 @@ export default function EmployeeReviewer({ account, onClose, onAccountAction }: 
   }, [keyframes])
 
   const [isDeclineModalOpen, setIsDeclineModalOpen] = React.useState(false)
+  const [isEditMode, setIsEditMode] = React.useState(false)
+  const [isChangeStatusModalOpen, setIsChangeStatusModalOpen] = React.useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false)
+  const [selectedStatus, setSelectedStatus] = React.useState(account.status)
+  const [suspensionDuration, setSuspensionDuration] = React.useState({
+    value: 1,
+    unit: "days",
+  })
+  const [editableFields, setEditableFields] = React.useState({
+    name: account.name,
+    email: account.email,
+    phone: account.phone,
+    bio: account.bio || "",
+  })
 
-  // For Employee/Admin, anomalies are not typically tracked via documents, so this will be empty
   const documentAnomalies = {}
 
   const handleAcceptApplication = () => {
@@ -123,42 +138,66 @@ export default function EmployeeReviewer({ account, onClose, onAccountAction }: 
     setIsDeclineModalOpen(false)
   }
 
-  const handleUpdateAccount = () => {
-    toast.info(`Update Account for ${account.name} clicked.`, { duration: 2000 })
-    // Implement actual update logic here
+  const handleEditMode = () => {
+    if (isEditMode) {
+      // Save changes
+      toast.success(`Account updated for ${editableFields.name}`, { duration: 2000 })
+      setIsEditMode(false)
+    } else {
+      // Enter edit mode
+      setIsEditMode(true)
+      toast.info(`Edit mode enabled for ${account.name}`, { duration: 2000 })
+    }
   }
 
-  const handleSuspendAccount = () => {
-    toast.warning(`Suspend Account for ${account.name} clicked.`, { duration: 2000 })
-    // Implement actual suspend logic here
+  const handleFieldChange = (field: string, value: string) => {
+    setEditableFields((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
   }
 
-  const handleDeleteAccount = () => {
-    toast.error(`Delete Account for ${account.name} clicked.`, { duration: 2000 })
+  const handleCancelEdit = () => {
+    setIsEditMode(false)
+    setEditableFields({
+      name: account.name,
+      email: account.email,
+      phone: account.phone,
+      bio: account.bio || "",
+    })
+    toast.info("Edit mode cancelled", { duration: 2000 })
+  }
+
+  const handleConfirmStatusChange = () => {
+    let statusMessage = selectedStatus
+    if (selectedStatus === "Suspended") {
+      statusMessage = `Suspended for ${suspensionDuration.value} ${suspensionDuration.unit}`
+    }
+    onAccountAction(account.id, selectedStatus, account.verificationStatus, documentAnomalies)
+    setIsChangeStatusModalOpen(false)
+    toast.success(`Account status changed to ${statusMessage}`, { duration: 2000 })
+  }
+
+  const handleConfirmDelete = () => {
+    toast.error(`Account deleted for ${account.name}`, { duration: 2000 })
+    setIsDeleteModalOpen(false)
     // Implement actual delete logic here
   }
 
-  const handleEmailAccount = () => {
-    toast.info(`Email Account for ${account.name} clicked.`, { duration: 2000 })
-    // Implement actual email logic here
-  }
-
   return (
-    <div className="py-4 px-2 min-h-screen bg-[#F5F5F7] font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif]">
+    <div className="py-4 px-2 min-h-screen bg-[#F5F5F7] font-['SF_Pro_Display',-apple-system,BlinkMacSystemFont,sans-serif] mt-10">
       <style>{keyframes}</style>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold mb-1">Account Details</h1>
-          <h2 className="text-3xl font-bold text-sky-400">Provider Profile Review</h2>
+          <h1 className="text-2xl font-medium mb-1 text-gray-700">Account Details</h1>
+          <h2 className="text-3xl font-medium text-sky-500">Provider Profile Review</h2>
         </div>
 
         {/* Form content */}
-        <div className="bg-white rounded-xl shadow-sm">
+        <div className="bg-white rounded-xl shadow-sm text-gray-700">
           <div className="p-6">
             <div>
-              <h3 className="text-xl font-semibold mb-6">Review  Profile</h3>
-
               {/* Profile Header */}
               <div className="bg-white rounded-xl overflow-hidden mb-6 border border-gray-100">
                 {/* Cover Photo */}
@@ -206,15 +245,29 @@ export default function EmployeeReviewer({ account, onClose, onAccountAction }: 
                         <div className="flex items-center gap-2">
                           <h1 className="text-2xl font-bold text-gray-900">{account.name}</h1>
                           <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
-                            
+                            {account.role}
                           </span>
                         </div>
-                        {account.location && (
+                        {account.selectedLocation && (
                           <div className="flex items-center gap-2 mt-1 text-gray-600">
                             <MapPin className="h-4 w-4" />
-                            <span>{account.location}</span>
+                            <span>{account.selectedLocation.name}</span>
+                            {account.selectedLocation.zipCode && (
+                              <span className="text-sky-600 text-sm">({account.selectedLocation.zipCode})</span>
+                            )}
                           </div>
                         )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => setIsDeleteModalOpen(true)}
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-2 text-red-600 hover:text-red-700 bg-transparent"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </Button>
                       </div>
                     </div>
 
@@ -237,26 +290,95 @@ export default function EmployeeReviewer({ account, onClose, onAccountAction }: 
               <div className="bg-white rounded-xl p-6 mb-6 border border-gray-100">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-semibold">Basic Information</h2>
+                  <div className="flex gap-2">
+                    {isEditMode ? (
+                      <>
+                        <Button
+                          onClick={handleCancelEdit}
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center gap-2 bg-transparent"
+                        >
+                          <X className="h-4 w-4" />
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleEditMode}
+                          size="sm"
+                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Save Changes
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        onClick={handleEditMode}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2 bg-transparent"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Edit Mode
+                      </Button>
+                    )}
+                    <Button
+                      onClick={() => setIsChangeStatusModalOpen(true)}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2 bg-transparent"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Change Status
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-1">Full Name</h4>
-                    <p className="text-gray-900">{account.name}</p>
+                    {isEditMode ? (
+                      <input
+                        type="text"
+                        value={editableFields.name}
+                        onChange={(e) => handleFieldChange("name", e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    ) : (
+                      <p className="text-gray-900">{editableFields.name}</p>
+                    )}
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-1">Email</h4>
-                    <p className="text-gray-900 flex items-center gap-1">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                      {account.email}
-                    </p>
+                    {isEditMode ? (
+                      <input
+                        type="email"
+                        value={editableFields.email}
+                        onChange={(e) => handleFieldChange("email", e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    ) : (
+                      <p className="text-gray-900 flex items-center gap-1">
+                        <Mail className="h-4 w-4 text-gray-400" />
+                        {editableFields.email}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-1">Phone</h4>
-                    <p className="text-gray-900 flex items-center gap-1">
-                      <Phone className="h-4 w-4 text-gray-400" />
-                      {account.phone}
-                    </p>
+                    {isEditMode ? (
+                      <input
+                        type="tel"
+                        value={editableFields.phone}
+                        onChange={(e) => handleFieldChange("phone", e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    ) : (
+                      <p className="text-gray-900 flex items-center gap-1">
+                        <Phone className="h-4 w-4 text-gray-400" />
+                        {editableFields.phone}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-gray-500 mb-1">Location</h4>
@@ -283,7 +405,10 @@ export default function EmployeeReviewer({ account, onClose, onAccountAction }: 
                     <h4 className="text-sm font-medium text-gray-500 mb-1">Account Type</h4>
                     <p className="text-gray-900">
                       <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
-                        
+                        {account.role}
+                      </span>
+                      <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                        {account.status}
                       </span>
                     </p>
                   </div>
@@ -299,10 +424,20 @@ export default function EmployeeReviewer({ account, onClose, onAccountAction }: 
                     </p>
                   </div>
                 </div>
-                {account.bio && (
+                {(account.bio || isEditMode) && (
                   <div className="mt-6">
                     <h4 className="text-sm font-medium text-gray-500 mb-1">Bio</h4>
-                    <p className="text-gray-900">{account.bio}</p>
+                    {isEditMode ? (
+                      <textarea
+                        value={editableFields.bio}
+                        onChange={(e) => handleFieldChange("bio", e.target.value)}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter bio..."
+                      />
+                    ) : (
+                      <p className="text-gray-900">{editableFields.bio}</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -330,77 +465,140 @@ export default function EmployeeReviewer({ account, onClose, onAccountAction }: 
                 <>
                   <Button
                     onClick={handleDeclineApplicationClick}
-                    className="px-4 py-2 flex items-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-300 hover:shadow-sm"
+                    variant="destructive"
+                    className="flex items-center gap-2"
                   >
-                    <X className="mr-1 h-4 w-4" />
-                    Decline Account
+                    <X className="h-4 w-4" />
+                    Decline
                   </Button>
                   <Button
                     onClick={handleAcceptApplication}
-                    className="px-4 py-2 flex items-center rounded-full bg-green-500 text-white hover:bg-green-600 transition-all duration-300 hover:shadow-sm"
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
                   >
-                    <CheckCircle className="mr-1 h-4 w-4" />
-                    Accept Account
+                    <CheckCircle className="h-4 w-4" />
+                    Accept
                   </Button>
                 </>
               ) : (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={handleUpdateAccount}
-                    className="px-4 py-2 flex items-center rounded-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-300 hover:shadow-sm"
-                  >
-                    <Edit className="mr-1 h-4 w-4" />
-                    Update Account
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleSuspendAccount}
-                    className="px-4 py-2 flex items-center rounded-full bg-yellow-500 text-white hover:bg-yellow-600 transition-all duration-300 hover:shadow-sm"
-                  >
-                    <X className="mr-1 h-4 w-4" />
-                    Suspend Account
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleDeleteAccount}
-                    className="px-4 py-2 flex items-center rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-300 hover:shadow-sm"
-                  >
-                    <Trash2 className="mr-1 h-4 w-4" />
-                    Delete Account
-                  </Button>
-                  <Button
-                    onClick={handleEmailAccount}
-                    className="px-4 py-2 flex items-center rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-all duration-300 hover:shadow-sm"
-                  >
-                    <Mail className="mr-1 h-4 w-4" />
-                    Email Account
-                  </Button>
-                </>
+                <></>
               )}
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className={`group px-4 py-2 flex items-center rounded-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all duration-300 hover:shadow-sm`}
-              >
-                <ChevronLeft className="mr-1 h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
-                <span>Close Details</span>
+              <Button variant="outline" onClick={onClose} className="flex items-center gap-2 bg-transparent">
+                <ChevronLeft className="h-4 w-4" />
+                Close
               </Button>
             </div>
           </div>
         </div>
       </div>
-      {/* Image Popup (not used in this component, but kept for consistency if needed later) */}
-      {/* <ImagePopup imageUrl={null} isOpen={false} onClose={() => {}} /> */}
 
       {/* Decline Modal */}
       <DeclineModal
         isOpen={isDeclineModalOpen}
         onClose={() => setIsDeclineModalOpen(false)}
         account={account}
-        anomalies={documentAnomalies} // This will be empty, so no anomaly section will show
+        anomalies={documentAnomalies}
         onConfirmDecline={handleConfirmDecline}
       />
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <DeleteConfirmationModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          account={account}
+          onConfirmDelete={handleConfirmDelete}
+        />
+      )}
+
+      {/* Change Status Modal */}
+      {isChangeStatusModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          style={{ animation: "fadeIn 0.3s ease-out" }}
+        >
+          <div
+            className="mx-auto max-w-md w-full bg-white/90 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-white/20 p-6"
+            style={{ animation: "fadeIn 0.5s ease-out 0.2s both" }}
+          >
+            <div className="flex flex-col items-center text-center">
+              <div
+                className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mb-6"
+                style={{ animation: "pulse 2s ease-in-out infinite" }}
+              >
+                <Settings className="h-10 w-10 text-blue-500" style={{ animation: "bounceIn 0.6s ease-out" }} />
+              </div>
+
+              <h3 className="text-xl font-medium text-gray-900 mb-2" style={{ animation: "slideInUp 0.4s ease-out" }}>
+                Change Account Status
+              </h3>
+
+              <p className="text-gray-600 mb-6" style={{ animation: "fadeIn 0.5s ease-out 0.3s both" }}>
+                Select the new status for {account.name}'s account
+              </p>
+
+              <div className="w-full mb-4" style={{ animation: "fadeIn 0.5s ease-out 0.3s both" }}>
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="Active">Active</option>
+                  <option value="On Review">On Review</option>
+                  <option value="Suspended">Suspended</option>
+                  <option value="Declined">Declined</option>
+                </select>
+              </div>
+
+              {selectedStatus === "Suspended" && (
+                <div className="w-full mb-4" style={{ animation: "fadeIn 0.3s ease-out" }}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Suspension Duration</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="999"
+                      value={suspensionDuration.value}
+                      onChange={(e) =>
+                        setSuspensionDuration((prev) => ({ ...prev, value: Number.parseInt(e.target.value) || 1 }))
+                      }
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <select
+                      value={suspensionDuration.unit}
+                      onChange={(e) => setSuspensionDuration((prev) => ({ ...prev, unit: e.target.value }))}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="days">Days</option>
+                      <option value="weeks">Weeks</option>
+                      <option value="months">Months</option>
+                      <option value="years">Years</option>
+                    </select>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Account will be suspended for {suspensionDuration.value} {suspensionDuration.unit}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-3 w-full" style={{ animation: "fadeIn 0.5s ease-out 0.4s both" }}>
+                <button
+                  onClick={() => setIsChangeStatusModalOpen(false)}
+                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-full font-medium hover:bg-gray-50 active:scale-95 transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmStatusChange}
+                  className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-full font-medium shadow-sm hover:bg-blue-600 active:scale-95 transition-all duration-200"
+                >
+                  {selectedStatus === "Suspended" ? "Suspend Account" : "Update Status"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

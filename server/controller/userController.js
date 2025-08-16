@@ -192,6 +192,142 @@ export const verifyEmailVerificationCode = async (req, res, emailVerificationCod
   }
 }
 
+// Unified account registration function for admin use
+export const registerAccount = async (req, res) => {
+  try {
+    const {
+      email,
+      password,
+      accountType,
+      firstName,
+      lastName,
+      mobileNumber,
+      gender,
+      location,
+      minimalMode,
+      middleName,
+      bio,
+      secretQuestion,
+      secretAnswer,
+      secretCode,
+      profilePicture,
+      coverPhoto,
+      idDocuments,
+      // COO-specific fields
+      businessName,
+      foundedDate,
+      teamSize,
+      companyNumber,
+      tinNumber,
+      cityCoverage,
+      aboutCompany,
+      secRegistration,
+      businessPermit,
+      birRegistration,
+      eccCertificate,
+      generalLiability,
+      workersComp,
+      professionalIndemnity,
+      propertyDamage,
+      businessInterruption,
+      bondingInsurance,
+    } = req.body
+
+    // Validate account type
+    if (!accountType || !["customer", "coo", "provider", "admin"].includes(accountType)) {
+      return res.status(400).json({ message: "Valid account type is required (customer, coo, provider, admin)." })
+    }
+
+    const passwordError = validatePassword(password)
+    if (passwordError) {
+      if (password) {
+        return res.status(400).json({ message: passwordError })
+      }
+    }
+
+    // Check if user already exists (only if email is provided and not empty)
+    if (email) {
+      const existingUser = await User.findOne({ email })
+      if (existingUser) {
+        return res.status(409).json({ message: "User with this email already exists." })
+      }
+    }
+
+    // Base user data common to all account types
+    const userData = {
+      email: email || null,
+      password: password || null,
+      accountType,
+      firstName: getOptionalValue(firstName),
+      lastName: getOptionalValue(lastName),
+      mobileNumber: getOptionalValue(mobileNumber),
+      gender: getOptionalValue(gender),
+      secretQuestion: getOptionalValue(secretQuestion),
+      secretAnswer: getOptionalValue(secretAnswer),
+      secretCode: getOptionalValue(secretCode),
+      location: location
+        ? {
+            name: getOptionalValue(location.name),
+            lat: getOptionalValue(location.lat),
+            lng: getOptionalValue(location.lng),
+            distance: getOptionalValue(location.distance),
+            zipCode: getOptionalValue(location.zipCode),
+          }
+        : null,
+      middleName: getOptionalValue(middleName),
+      bio: getOptionalValue(bio),
+      profilePicture: getOptionalValue(profilePicture),
+      coverPhoto: getOptionalValue(coverPhoto),
+      idDocuments: idDocuments
+        ? {
+            front: getOptionalValue(idDocuments.front),
+            back: getOptionalValue(idDocuments.back),
+          }
+        : null,
+      status: minimalMode ? "active" : "pending",
+      isVerified: minimalMode ? true : false,
+    }
+
+    // Add COO-specific fields if account type is COO
+    if (accountType === "coo") {
+      Object.assign(userData, {
+        businessName: getOptionalValue(businessName),
+        foundedDate: getOptionalValue(foundedDate),
+        teamSize: getOptionalValue(teamSize),
+        companyNumber: getOptionalValue(companyNumber),
+        tinNumber: getOptionalValue(tinNumber),
+        cityCoverage: cityCoverage || [],
+        aboutCompany: getOptionalValue(aboutCompany),
+        secRegistration: getOptionalValue(secRegistration),
+        businessPermit: getOptionalValue(businessPermit),
+        birRegistration: getOptionalValue(birRegistration),
+        eccCertificate: getOptionalValue(eccCertificate),
+        generalLiability: getOptionalValue(generalLiability),
+        workersComp: getOptionalValue(workersComp),
+        professionalIndemnity: getOptionalValue(professionalIndemnity),
+        propertyDamage: getOptionalValue(propertyDamage),
+        businessInterruption: getOptionalValue(businessInterruption),
+        bondingInsurance: getOptionalValue(bondingInsurance),
+      })
+    }
+
+    const newUser = new User(userData)
+    await newUser.save()
+
+    res.status(201).json({
+      message: `${accountType.charAt(0).toUpperCase() + accountType.slice(1)} account created successfully!`,
+      user: newUser,
+    })
+  } catch (error) {
+    console.error("Account registration error:", error)
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message)
+      return res.status(400).json({ message: messages.join(", ") })
+    }
+    res.status(500).json({ message: "Server error during account registration." })
+  }
+}
+
 // Register Customer
 export const registerCustomer = async (req, res) => {
   try {
@@ -279,7 +415,7 @@ export const registerCustomer = async (req, res) => {
   }
 }
 
-// Register coo
+// Register COO
 export const registerCOO = async (req, res) => {
   try {
     const {
@@ -680,6 +816,36 @@ export const checkEmailAvailability = async (req, res) => {
   }
 }
 
+export const registerProviderAdmin = async (req, res) => {
+  try {
+    const { accountType } = req.body
+
+    // Only allow provider and admin account types for this endpoint
+    if (!accountType || !["provider", "admin"].includes(accountType)) {
+      return res.status(400).json({ message: "This endpoint only supports provider and admin account types." })
+    }
+
+    // Check if the requesting user has appropriate permissions
+    const requestingUser = await User.findById(req.userId)
+    if (!requestingUser) {
+      return res.status(404).json({ message: "Requesting user not found." })
+    }
+
+    // Allow admin and COO account types to create provider/admin accounts
+    if (requestingUser.accountType !== "admin" && requestingUser.accountType !== "coo") {
+      return res
+        .status(403)
+        .json({ message: "Access denied. Only admin or COO users can create provider/admin accounts." })
+    }
+
+    // Use the existing registerAccount logic
+    return await registerAccount(req, res)
+  } catch (error) {
+    console.error("Provider/Admin registration error:", error)
+    res.status(500).json({ message: "Server error during provider/admin registration." })
+  }
+}
+
 export const getAllUsers = async (req, res) => {
   try {
     // Fetch all users with pagination support
@@ -689,6 +855,11 @@ export const getAllUsers = async (req, res) => {
 
     // Build filter based on query parameters
     const filter = {}
+
+    if (req.userId) {
+      filter._id = { $ne: req.userId }
+    }
+
     if (req.query.accountType) {
       filter.accountType = req.query.accountType
     }
@@ -719,5 +890,63 @@ export const getAllUsers = async (req, res) => {
   } catch (error) {
     console.error("Error fetching users:", error)
     res.status(500).json({ message: "Internal server error" })
+  }
+}
+
+export const deleteUserAccount = async (req, res) => {
+  try {
+    const { id } = req.params
+    const adminId = req.userId // From authenticateToken middleware
+
+    console.log("[v0] Delete request for user ID:", id)
+    console.log("[v0] Admin ID:", adminId)
+
+    if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID format.",
+      })
+    }
+
+    // Check if the requesting user is an admin
+    const admin = await User.findById(adminId)
+    if (!admin || (admin.accountType !== "admin" && admin.accountType !== "coo")) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Admin privileges required.",
+      })
+    }
+
+    // Find and delete the user
+    const userToDelete = await User.findById(id)
+    if (!userToDelete) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      })
+    }
+
+    // Prevent admin from deleting themselves
+    if (userToDelete._id.toString() === adminId) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot delete your own account.",
+      })
+    }
+
+    await User.findByIdAndDelete(id)
+
+    console.log("[v0] User deleted successfully:", id)
+
+    res.status(200).json({
+      success: true,
+      message: "User account deleted successfully.",
+    })
+  } catch (error) {
+    console.error("[v0] Error deleting user account:", error)
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while deleting account.",
+    })
   }
 }

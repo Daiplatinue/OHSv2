@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
     },
     accountType: {
       type: String,
-      enum: ["customer", "coo", "provider"],
+      enum: ["customer", "coo", "provider", "admin"],
     },
     status: {
       type: String,
@@ -57,12 +57,10 @@ const userSchema = new mongoose.Schema(
     firstName: {
       type: String,
       trim: true,
-      required: true, // Added required
     },
     lastName: {
       type: String,
       trim: true,
-      required: true, // Added required
     },
     middleName: {
       type: String,
