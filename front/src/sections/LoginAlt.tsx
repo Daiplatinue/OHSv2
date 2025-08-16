@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { X, AlertTriangle, XCircle, Clock, CheckCircle2, AlertCircle } from "lucide-react"
@@ -168,9 +166,7 @@ function LoginAlt() {
   const [showUnverifiedWarning, setShowUnverifiedWarning] = useState(false)
   const [customerMinimalMode, setCustomerMinimalMode] = useState(false)
 
-  // Define the API base URL using Next.js's process.env for client-side
-  // Provide a fallback for local development if the env var isn't set
-  const API_BASE_URL = process.env.VITE_API_URL
+  // Removed: const router = useRouter() // Not used in Vite
 
   const handleLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
@@ -183,12 +179,6 @@ function LoginAlt() {
       return
     }
 
-    if (!API_BASE_URL) {
-      setError("API Base URL is not configured. Please check environment variables.")
-      setLoading(false)
-      return
-    }
-
     try {
       if (showPasswordField) {
         // Login with password
@@ -197,7 +187,7 @@ function LoginAlt() {
           setLoading(false)
           return
         }
-        const response = await fetch(`${API_BASE_URL}/api/users/login`, {
+        const response = await fetch("http://localhost:3000/api/users/login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -205,24 +195,10 @@ function LoginAlt() {
           body: JSON.stringify({ email, password }),
         })
 
-        // Check if the response is OK before trying to parse JSON
-        if (!response.ok) {
-          const errorText = await response.text() // Get raw text for debugging
-          console.error("Server error response (password login):", response.status, errorText)
-          setUnsuccessMessage(
-            `Login failed: ${response.status} ${response.statusText}. ${errorText.substring(0, 100)}...`,
-          )
-          setShowUnsuccessModal(true)
-          setTimeout(() => setShowUnsuccessModal(false), 2000)
-          setLoading(false)
-          return
-        }
-
         const data = await response.json()
         console.log("Server response data (password login):", data) // Debugging log
 
         if (response.ok) {
-          // This check is redundant after the !response.ok check above, but harmless
           setSuccessMessage(data.message)
           setShowSuccessModal(true)
           // Store user data and token separately
@@ -279,7 +255,7 @@ function LoginAlt() {
         }
       } else {
         // Magic link: Send OTP
-        const response = await fetch(`${API_BASE_URL}/api/users/send-otp`, {
+        const response = await fetch("http://localhost:3000/api/users/send-otp", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -287,24 +263,10 @@ function LoginAlt() {
           body: JSON.stringify({ email }),
         })
 
-        // Check if the response is OK before trying to parse JSON
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error("Server error response (send OTP):", response.status, errorText)
-          setUnsuccessMessage(
-            `Failed to send magic link: ${response.status} ${response.statusText}. ${errorText.substring(0, 100)}...`,
-          )
-          setShowUnsuccessModal(true)
-          setTimeout(() => setShowUnsuccessModal(false), 2000)
-          setLoading(false)
-          return
-        }
-
         const data = await response.json()
         console.log("Server response data (send OTP):", data) // Debugging log
 
         if (response.ok) {
-          // This check is redundant after the !response.ok check above, but harmless
           setSuccessMessage(data.message)
           setShowSuccessModal(true)
           setTimeout(() => {
@@ -371,31 +333,28 @@ function LoginAlt() {
     }, 1500)
   }, [])
 
-  const handleResendOtp = useCallback(
-    async (email: string) => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/users/send-otp`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email }),
-        })
-        const data = await response.json()
-        if (response.ok) {
-          console.log("Resend OTP successful:", data.message)
-          return true
-        } else {
-          console.error("Resend OTP failed:", data.message)
-          return false
-        }
-      } catch (error) {
-        console.error("Error during resend OTP:", error)
+  const handleResendOtp = useCallback(async (email: string) => {
+    try {
+      const response = await fetch("http://localhost:3000/api/users/send-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      })
+      const data = await response.json()
+      if (response.ok) {
+        console.log("Resend OTP successful:", data.message)
+        return true
+      } else {
+        console.error("Resend OTP failed:", data.message)
         return false
       }
-    },
-    [API_BASE_URL],
-  )
+    } catch (error) {
+      console.error("Error during resend OTP:", error)
+      return false
+    }
+  }, [])
 
   const closeStatusModal = () => {
     setModalVisible(false)
@@ -632,7 +591,7 @@ function LoginAlt() {
           <button
             onClick={handleLogin}
             className={`w-full bg-gray-200 text-gray-500 hover:bg-gray-300 rounded-full h-12 font-medium transition-colors
-  ${!email || (showPasswordField && !password) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
+    ${!email || (showPasswordField && !password) || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"}`}
             disabled={!email || (showPasswordField && !password) || loading}
           >
             {loading
@@ -681,7 +640,7 @@ function LoginAlt() {
             <button className="flex items-center justify-center gap-2 rounded-full text-sm font-medium border border-gray-300 py-2 hover:bg-gray-50 transition-colors">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
-                  d="M14.0756 10.5C14.0654 9.25225 14.6607 8.10938 15.6725 7.4165C15.0908 6.54163 14.1432 5.97488 13.1166 5.9165C12.0287 5.80925 10.8854 6.56188 10.3332 6.56188C9.74844 6.56188 8.76660 5.94275 7.91094 5.94275C6.42969 5.96675 4.82656 7.07613 4.82656 9.34275C4.82656 10.0166 4.94219 10.7155 5.17344 11.4395C5.49531 12.4155 6.74219 15.2249 8.04219 15.1916C8.84844 15.1749 9.39844 14.6124 10.4332 14.6124C11.4322 14.6124 11.9412 15.1916 12.8412 15.1916C14.1578 15.1749 15.2791 12.6082 15.5834 11.6291C13.8537 10.8207 14.0756 10.5498 14.0756 10.5Z"
+                  d="M14.0756 10.5C14.0654 9.25225 14.6607 8.10938 15.6725 7.4165C15.0908 6.54163 14.1432 5.97488 13.1166 5.9165C12.0287 5.80925 10.8854 6.56188 10.3332 6.56188C9.74844 6.56188 8.7666 5.94275 7.91094 5.94275C6.42969 5.96675 4.82656 7.07613 4.82656 9.34275C4.82656 10.0166 4.94219 10.7155 5.17344 11.4395C5.49531 12.4155 6.74219 15.2249 8.04219 15.1916C8.84844 15.1749 9.39844 14.6124 10.4332 14.6124C11.4322 14.6124 11.9412 15.1916 12.8412 15.1916C14.1578 15.1749 15.2791 12.6082 15.5834 11.6291C13.8537 10.8207 14.0756 10.5498 14.0756 10.5Z"
                   fill="black"
                 />
                 <path
@@ -753,7 +712,9 @@ function LoginAlt() {
                     }}
                     disabled={!termsAccepted} // Disabled if terms not accepted
                     className={`flex flex-col items-center justify-center p-6 border-2 rounded-xl transition-all w-[13rem] cursor-pointer
-              ${termsAccepted ? "hover:border-sky-400 hover:bg-sky-50" : "opacity-50 cursor-not-allowed bg-gray-100"}`}
+                ${
+                  termsAccepted ? "hover:border-sky-400 hover:bg-sky-50" : "opacity-50 cursor-not-allowed bg-gray-100"
+                }`}
                   >
                     <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mb-4">
                       <svg
@@ -783,7 +744,9 @@ function LoginAlt() {
                     }}
                     disabled={!termsAccepted} // Disabled if terms not accepted
                     className={`flex flex-col items-center justify-center p-6 border-2 rounded-xl transition-all w-[13rem] cursor-pointer
-              ${termsAccepted ? "hover:border-sky-400 hover:bg-sky-50" : "opacity-50 cursor-not-allowed bg-gray-100"}`}
+                ${
+                  termsAccepted ? "hover:border-sky-400 hover:bg-sky-50" : "opacity-50 cursor-not-allowed bg-gray-100"
+                }`}
                   >
                     <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mb-4">
                       <svg

@@ -679,3 +679,45 @@ export const checkEmailAvailability = async (req, res) => {
     res.status(500).json({ message: "Server error checking email availability." })
   }
 }
+
+export const getAllUsers = async (req, res) => {
+  try {
+    // Fetch all users with pagination support
+    const page = Number.parseInt(req.query.page) || 1
+    const limit = Number.parseInt(req.query.limit) || 100
+    const skip = (page - 1) * limit
+
+    // Build filter based on query parameters
+    const filter = {}
+    if (req.query.accountType) {
+      filter.accountType = req.query.accountType
+    }
+    if (req.query.status) {
+      filter.status = req.query.status
+    }
+
+    const users = await User.find(filter)
+      .select("-password -otp -otpExpires -secretAnswer -secretCode -secretQuestion")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+
+    const totalUsers = await User.countDocuments(filter)
+    const totalPages = Math.ceil(totalUsers / limit)
+
+    res.status(200).json({
+      users,
+      success: true,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalUsers,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    })
+  } catch (error) {
+    console.error("Error fetching users:", error)
+    res.status(500).json({ message: "Internal server error" })
+  }
+}

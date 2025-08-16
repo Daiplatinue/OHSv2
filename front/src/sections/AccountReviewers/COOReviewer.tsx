@@ -297,7 +297,7 @@ export default function AccountReviewer({ account, onClose, onAccountAction }: A
         {/* Header */}
         <div className="mb-6 text-center mt-10">
           <h1 className="text-2xl font-medium mb-1 text-gray-700">Account Details</h1>
-          <h2 className="text-3xl font-medium text-sky-500">Service Provider Profile Review</h2>
+          <h2 className="text-3xl font-medium text-sky-500">Chief Operating Officer Profile Review</h2>
         </div>
 
         {/* Form content */}

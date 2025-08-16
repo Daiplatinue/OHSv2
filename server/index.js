@@ -24,6 +24,9 @@ import {
   checkEmailAvailability,
   sendEmailVerificationCode,
   verifyEmailVerificationCode,
+  getAllUsers,
+  // updateUserStatus,
+  // deleteUserAccount,
 } from "./controller/userController.js"
 import { createService, getServices, deleteService } from "./controller/serviceController.js"
 import {
@@ -55,6 +58,56 @@ const upload = multer({ storage: multer.memoryStorage() })
 app.use(cors())
 app.use(express.json({ limit: "50mb" }))
 app.use(express.urlencoded({ limit: "50mb", extended: true }))
+
+const requestLogger = (req, res, next) => {
+  const start = Date.now()
+  const originalSend = res.send
+
+  res.send = function (data) {
+    const duration = Date.now() - start
+    console.log(
+      `[${new Date().toISOString()}] ${req.method} ${req.url} - ${res.statusCode} - ${duration}ms - IP: ${req.ip}`,
+    )
+    originalSend.call(this, data)
+  }
+
+  next()
+}
+
+const rateLimitMap = new Map()
+
+const rateLimit = (maxRequests = 100, windowMs = 15 * 60 * 1000) => {
+  return (req, res, next) => {
+    const clientId = req.ip || req.connection.remoteAddress
+    const now = Date.now()
+
+    if (!rateLimitMap.has(clientId)) {
+      rateLimitMap.set(clientId, { count: 1, resetTime: now + windowMs })
+      return next()
+    }
+
+    const clientData = rateLimitMap.get(clientId)
+
+    if (now > clientData.resetTime) {
+      rateLimitMap.set(clientId, { count: 1, resetTime: now + windowMs })
+      return next()
+    }
+
+    if (clientData.count >= maxRequests) {
+      return res.status(429).json({
+        message: "Too many requests. Please try again later.",
+        retryAfter: Math.ceil((clientData.resetTime - now) / 1000),
+      })
+    }
+
+    clientData.count++
+    next()
+  }
+}
+
+// Apply middlewares
+app.use(requestLogger)
+app.use(rateLimit(200, 15 * 60 * 1000)) // 200 requests per 15 minutes
 
 app.use((req, res, next) => {
   const start = process.hrtime.bigint()
@@ -99,6 +152,25 @@ const authenticateToken = (req, res, next) => {
     req.accountType = user.accountType // Attach account type to the request
     next()
   })
+}
+
+const requireAdmin = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.userId)
+    if (!user) {
+      return res.status(404).json({ message: "User not found." })
+    }
+
+    // Check if user has admin role or is a COO (assuming COOs have admin privileges)
+    if (user.accountType !== "coo" && user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied. Admin privileges required." })
+    }
+
+    next()
+  } catch (error) {
+    console.error("Error in admin middleware:", error)
+    res.status(500).json({ message: "Server error checking admin privileges." })
+  }
 }
 
 // MongoDB Connection
@@ -615,6 +687,31 @@ app.get("/api/bookings/all-pending", authenticateToken, getAllPendingBookings)
 // Add the new route for accepted bookings by provider
 // NEW: Route to fetch accepted bookings for the current provider
 app.get("/api/bookings/accepted-by-provider", authenticateToken, getAcceptedBookingsByProviderId)
+
+app.get("/api/admin/users", authenticateToken, requireAdmin, getAllUsers)
+// app.put("/api/admin/users/:userId/status", authenticateToken, requireAdmin, updateUserStatus)
+app.put("/api/admin/users/:userId/status", authenticateToken, requireAdmin)
+// app.delete("/api/admin/users/:userId", authenticateToken, requireAdmin, deleteUserAccount)
+app.delete("/api/admin/users/:userId", authenticateToken, requireAdmin)
+
+// NEW: Route to get all users for accounts management (with less strict permissions)
+app.get("/api/accounts/users", authenticateToken, getAllUsers)
+
+app.get("/api/health", (req, res) => {
+  const uptime = process.uptime()
+  const memoryUsage = process.memoryUsage()
+
+  res.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`,
+    memory: {
+      used: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`,
+      total: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)}MB`,
+    },
+    environment: process.env.NODE_ENV || "development",
+  })
+})
 
 // Start the server using the HTTP server instance
 server.listen(PORT, () => {

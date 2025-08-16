@@ -150,14 +150,14 @@ export default function EmployeeReviewer({ account, onClose, onAccountAction }: 
         {/* Header */}
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold mb-1">Account Details</h1>
-          <h2 className="text-3xl font-bold text-sky-400">{account.role} Profile Review</h2>
+          <h2 className="text-3xl font-bold text-sky-400">Provider Profile Review</h2>
         </div>
 
         {/* Form content */}
         <div className="bg-white rounded-xl shadow-sm">
           <div className="p-6">
             <div>
-              <h3 className="text-xl font-semibold mb-6">Review {account.role} Profile</h3>
+              <h3 className="text-xl font-semibold mb-6">Review  Profile</h3>
 
               {/* Profile Header */}
               <div className="bg-white rounded-xl overflow-hidden mb-6 border border-gray-100">
@@ -206,7 +206,7 @@ export default function EmployeeReviewer({ account, onClose, onAccountAction }: 
                         <div className="flex items-center gap-2">
                           <h1 className="text-2xl font-bold text-gray-900">{account.name}</h1>
                           <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
-                            {account.role}
+                            
                           </span>
                         </div>
                         {account.location && (
@@ -283,7 +283,7 @@ export default function EmployeeReviewer({ account, onClose, onAccountAction }: 
                     <h4 className="text-sm font-medium text-gray-500 mb-1">Account Type</h4>
                     <p className="text-gray-900">
                       <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
-                        {account.role}
+                        
                       </span>
                     </p>
                   </div>

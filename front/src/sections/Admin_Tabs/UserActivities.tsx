@@ -509,8 +509,6 @@ function UserActivities() {
                               size="sm"
                               className="text-[#0A84FF] hover:text-[#0A84FF] hover:bg-[#E9F6FF] text-xs"
                             >
-                              View Details
-                              <ChevronRight className="ml-1 h-3 w-3" />
                             </Button>
                           </div>
                         </div>
